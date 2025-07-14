@@ -42,6 +42,10 @@ Item {
         }
     }
 
+    onWorkspaceGroupChanged: {
+        updateWorkspaceOccupied();
+    }
+
     implicitWidth: rowLayout.implicitWidth + rowLayout.spacing * 2
     implicitHeight: 40
 
