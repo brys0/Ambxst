@@ -2,7 +2,6 @@ pragma Singleton
 import QtQuick
 
 QtObject {
-
     property color foreground: "#f1dedd"
     property color background: "#1a1111"
     property color cursor: "#f1dedd"
