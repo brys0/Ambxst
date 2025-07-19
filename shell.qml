@@ -3,6 +3,7 @@ import QtQuick
 import Quickshell
 import "./modules/bar/"
 import "./modules/launcher/"
+import "./modules/notch/"
 import "./modules/workspaces/"
 import "./modules/notifications/"
 import "./modules/wallpaper/"
@@ -47,7 +48,7 @@ ShellRoot {
 
     Loader {
         active: true
-        sourceComponent: LauncherWindow {}
+        sourceComponent: NotchFinal {}
     }
 
     Loader {
