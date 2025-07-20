@@ -21,7 +21,7 @@ PanelWindow {
 
     color: "transparent"
 
-    WlrLayershell.keyboardFocus: (GlobalStates.launcherOpen || GlobalStates.dashboardOpen) ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
+    WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
 
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: WlrLayer.Top
@@ -42,7 +42,7 @@ PanelWindow {
                 cursorShape: Qt.PointingHandCursor
 
                 onClicked: {
-                    GlobalStates.dashboardOpen = !GlobalStates.dashboardOpen;
+                    GlobalStates.dashboardOpen = true;
                 }
 
                 Rectangle {
@@ -139,9 +139,9 @@ PanelWindow {
         layer.effect: DropShadow {
             horizontalOffset: 0
             verticalOffset: 0
-            radius: GlobalStates.launcherOpen ? 16 : 8
-            samples: GlobalStates.launcherOpen ? 32 : 16
-            color: GlobalStates.launcherOpen ? Qt.rgba(Colors.shadow.r, Colors.shadow.g, Colors.shadow.b, 0.7) : Qt.rgba(Colors.shadow.r, Colors.shadow.g, Colors.shadow.b, 0.5)
+            radius: (GlobalStates.launcherOpen || GlobalStates.dashboardOpen) ? 16 : 8
+            samples: (GlobalStates.launcherOpen || GlobalStates.dashboardOpen) ? 32 : 16
+            color: (GlobalStates.launcherOpen || GlobalStates.dashboardOpen) ? Qt.rgba(Colors.shadow.r, Colors.shadow.g, Colors.shadow.b, 0.7) : Qt.rgba(Colors.shadow.r, Colors.shadow.g, Colors.shadow.b, 0.5)
             transparentBorder: true
         }
 

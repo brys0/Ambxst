@@ -14,9 +14,9 @@ Item {
     property bool isExpanded: stackViewInternal.currentItem !== stackViewInternal.initialItem
 
     // implicitWidth: Math.max(stackContainer.width, 250)
-    implicitWidth: GlobalStates.launcherOpen ? Math.max(stackContainer.width + 40, 290) : 290
+    implicitWidth: (GlobalStates.launcherOpen || GlobalStates.dashboardOpen) ? Math.max(stackContainer.width + 40, 290) : 290
     // implicitHeight: Math.max(stackContainer.height, 40)
-    implicitHeight: GlobalStates.launcherOpen ? Math.max(stackContainer.height, 40) : 40
+    implicitHeight: (GlobalStates.launcherOpen || GlobalStates.dashboardOpen) ? Math.max(stackContainer.height, 40) : 40
 
     Behavior on implicitWidth {
         NumberAnimation {
