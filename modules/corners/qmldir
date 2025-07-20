@@ -1,0 +1,2 @@
+module corners
+RoundCorner 1.0 RoundCorner.qml

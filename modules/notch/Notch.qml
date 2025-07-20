@@ -3,8 +3,9 @@ import QtQuick.Controls
 import Qt5Compat.GraphicalEffects
 import "../workspaces"
 import "../theme"
+import "../corners"
 
-Rectangle {
+Item {
     id: notchContainer
 
     property Component defaultViewComponent
@@ -17,22 +18,6 @@ Rectangle {
     implicitWidth: GlobalStates.launcherOpen ? Math.max(stackContainer.width, 250) : 250
     // implicitHeight: Math.max(stackContainer.height, 40)
     implicitHeight: GlobalStates.launcherOpen ? Math.max(stackContainer.height, 40) : 40
-
-    color: Colors.surface
-    topLeftRadius: 0
-    topRightRadius: 0
-    bottomLeftRadius: 36
-    bottomRightRadius: 36
-
-    layer.enabled: true
-    layer.effect: DropShadow {
-        horizontalOffset: 0
-        verticalOffset: 0
-        radius: 8
-        samples: 16
-        color: Qt.rgba(Colors.shadow.r, Colors.shadow.g, Colors.shadow.b, 1)
-        transparentBorder: true
-    }
 
     Behavior on implicitWidth {
         NumberAnimation {
@@ -50,85 +35,126 @@ Rectangle {
         }
     }
 
-    Item {
-        id: stackContainer
+    RoundCorner {
+        id: leftCorner
+        anchors.top: parent.top
+        anchors.right: notchRect.left
+        corner: RoundCorner.CornerEnum.TopRight
+        size: 25
+        color: Colors.surface
+    }
+
+    Rectangle {
+        id: notchRect
         anchors.centerIn: parent
-        width: stackViewInternal.currentItem ? stackViewInternal.currentItem.width : 0
-        height: stackViewInternal.currentItem ? stackViewInternal.currentItem.height : 0
+        width: parent.implicitWidth
+        height: parent.implicitHeight
 
-        StackView {
-            id: stackViewInternal
-            anchors.fill: parent
-            initialItem: defaultViewComponent
+        color: Colors.surface
+        topLeftRadius: 0
+        topRightRadius: 0
+        bottomLeftRadius: 36
+        bottomRightRadius: 36
 
-            pushEnter: Transition {
-                PropertyAnimation {
-                    property: "opacity"
-                    from: 0
-                    to: 1
-                    duration: 250
-                    easing.type: Easing.OutQuart
-                }
-                PropertyAnimation {
-                    property: "scale"
-                    from: 0.8
-                    to: 1
-                    duration: 250
-                    easing.type: Easing.OutBack
-                    easing.overshoot: 1.2
-                }
-            }
+        layer.enabled: true
+        layer.effect: DropShadow {
+            horizontalOffset: 0
+            verticalOffset: 0
+            radius: 8
+            samples: 16
+            color: Qt.rgba(Colors.shadow.r, Colors.shadow.g, Colors.shadow.b, 1)
+            transparentBorder: true
+        }
 
-            pushExit: Transition {
-                PropertyAnimation {
-                    property: "opacity"
-                    from: 1
-                    to: 0
-                    duration: 250
-                    easing.type: Easing.OutQuart
-                }
-                PropertyAnimation {
-                    property: "scale"
-                    from: 1
-                    to: 1.05
-                    duration: 250
-                    easing.type: Easing.OutQuart
-                }
-            }
+        Item {
+            id: stackContainer
+            anchors.centerIn: parent
+            width: stackViewInternal.currentItem ? stackViewInternal.currentItem.width : 0
+            height: stackViewInternal.currentItem ? stackViewInternal.currentItem.height : 0
 
-            popEnter: Transition {
-                PropertyAnimation {
-                    property: "opacity"
-                    from: 0
-                    to: 1
-                    duration: 250
-                    easing.type: Easing.OutQuart
-                }
-                PropertyAnimation {
-                    property: "scale"
-                    from: 1.05
-                    to: 1
-                    duration: 250
-                    easing.type: Easing.OutQuart
-                }
-            }
+            StackView {
+                id: stackViewInternal
+                anchors.fill: parent
+                initialItem: defaultViewComponent
 
-            popExit: Transition {
-                PropertyAnimation {
-                    property: "opacity"
-                    from: 1
-                    to: 0
-                    duration: 200
-                    easing.type: Easing.OutQuart
+                pushEnter: Transition {
+                    PropertyAnimation {
+                        property: "opacity"
+                        from: 0
+                        to: 1
+                        duration: 250
+                        easing.type: Easing.OutQuart
+                    }
+                    PropertyAnimation {
+                        property: "scale"
+                        from: 0.8
+                        to: 1
+                        duration: 250
+                        easing.type: Easing.OutBack
+                        easing.overshoot: 1.2
+                    }
                 }
-                PropertyAnimation {
-                    property: "scale"
-                    from: 1
-                    to: 0.95
-                    duration: 200
-                    easing.type: Easing.OutQuart
+
+                pushExit: Transition {
+                    PropertyAnimation {
+                        property: "opacity"
+                        from: 1
+                        to: 0
+                        duration: 250
+                        easing.type: Easing.OutQuart
+                    }
+                    PropertyAnimation {
+                        property: "scale"
+                        from: 1
+                        to: 1.05
+                        duration: 250
+                        easing.type: Easing.OutQuart
+                    }
+                }
+
+                popEnter: Transition {
+                    PropertyAnimation {
+                        property: "opacity"
+                        from: 0
+                        to: 1
+                        duration: 250
+                        easing.type: Easing.OutQuart
+                    }
+                    PropertyAnimation {
+                        property: "scale"
+                        from: 1.05
+                        to: 1
+                        duration: 250
+                        easing.type: Easing.OutQuart
+                    }
+                }
+
+                popExit: Transition {
+                    PropertyAnimation {
+                        property: "opacity"
+                        from: 1
+                        to: 0
+                        duration: 200
+                        easing.type: Easing.OutQuart
+                    }
+                    PropertyAnimation {
+                        property: "scale"
+                        from: 1
+                        to: 0.95
+                        duration: 200
+                        easing.type: Easing.OutQuart
+                    }
                 }
             }
         }
+    }
+
+    RoundCorner {
+        id: rightCorner
+        anchors.top: parent.top
+        anchors.left: notchRect.right
+        corner: RoundCorner.CornerEnum.TopLeft
+        size: 25
+        color: Colors.surface
     }
 }
