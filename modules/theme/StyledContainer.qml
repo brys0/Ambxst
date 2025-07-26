@@ -4,7 +4,7 @@ import "../theme"
 import "../globals"
 
 Rectangle {
-    color: Colors.surface
+    color: Colors.background
     radius: GlobalStates.roundness
     border.color: Colors.surfaceBright
     border.width: 0

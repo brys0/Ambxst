@@ -6,6 +6,7 @@ import Quickshell.Hyprland
 
 Singleton {
     id: root
+    property bool oledMode: true
     property bool sidebarLeftOpen: false
     property bool sidebarRightOpen: false
     property bool overviewOpen: false
