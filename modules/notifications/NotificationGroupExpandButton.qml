@@ -27,7 +27,7 @@ Button {
         text: root.expanded ? "−" : "+"
         font.family: Styling.defaultFont
         font.pixelSize: 20
-        color: Colors.foreground
+        color: Colors.overBackground
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
     }

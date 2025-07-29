@@ -74,7 +74,7 @@ PanelWindow {
                 id: userHostText
                 anchors.centerIn: parent
                 text: `${Quickshell.env("USER")}@${hostnameCollector.text.trim()}`
-                color: userHostArea.pressed ? Colors.foreground : (userHostArea.containsMouse ? Colors.primary : Colors.foreground)
+                color: userHostArea.pressed ? Colors.overBackground : (userHostArea.containsMouse ? Colors.primary : Colors.overBackground)
                 font.family: Styling.defaultFont
                 font.pixelSize: 14
                 font.weight: Font.Bold

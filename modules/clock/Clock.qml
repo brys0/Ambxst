@@ -15,7 +15,7 @@ StyledContainer {
         anchors.centerIn: parent
 
         text: clockContainer.currentTime
-        color: Colors.foreground
+        color: Colors.overBackground
         font.pixelSize: 14
         font.family: Styling.defaultFont
         font.bold: true

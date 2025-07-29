@@ -172,7 +172,7 @@ Item {
                             text: NotificationUtils.getFriendlyNotifTimeString(notificationGroup?.time)
                             font.family: Styling.defaultFont
                             font.pixelSize: topRow.fontSize
-                            color: Colors.foreground
+                            color: Colors.overBackground
                         }
                     }
                     NotificationGroupExpandButton {

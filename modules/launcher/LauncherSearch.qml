@@ -68,7 +68,7 @@ Rectangle {
                     placeholderTextColor: Colors.outline
                     font.family: Styling.defaultFont
                     font.pixelSize: 14
-                    color: Colors.foreground
+                    color: Colors.overBackground
                     background: null
 
                     onTextChanged: {
@@ -222,7 +222,7 @@ Rectangle {
                                 anchors.centerIn: parent
                                 text: "?"
                                 visible: parent.parent.status === Image.Error
-                                color: Colors.foreground
+                                color: Colors.overBackground
                                 font.family: Styling.defaultFont
                             }
                         }
@@ -231,7 +231,7 @@ Rectangle {
                     Text {
                         Layout.fillWidth: true
                         text: modelData.name
-                        color: Colors.foreground
+                        color: Colors.overBackground
                         font.family: Styling.defaultFont
                         font.pixelSize: 14
                         font.weight: Font.Bold

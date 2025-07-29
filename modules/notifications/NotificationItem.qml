@@ -170,7 +170,7 @@ Item {
                     Layout.fillWidth: true
                     font.family: Styling.defaultFont
                     font.pixelSize: root.fontSize
-                    color: Colors.foreground
+                    color: Colors.overBackground
                     elide: Text.ElideRight
                     maximumLineCount: 1
                     textFormat: Text.StyledText
@@ -194,7 +194,7 @@ Item {
                     }
                     Layout.fillWidth: true
                     font.pixelSize: 14
-                    color: Colors.foreground
+                    color: Colors.overBackground
                     wrapMode: Text.Wrap
                     elide: Text.ElideRight
                     textFormat: Text.RichText
