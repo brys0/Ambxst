@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import qs.modules.theme
+import qs.modules.globals
 import qs.modules.services
 
 Rectangle {
@@ -22,9 +23,6 @@ Rectangle {
     implicitWidth: 500
     implicitHeight: mainLayout.implicitHeight + 32
     color: "transparent"
-    radius: 32
-    border.color: Colors.adapter.outline
-    border.width: 0
 
     Behavior on height {
         NumberAnimation {
@@ -45,7 +43,7 @@ Rectangle {
             Layout.fillWidth: true
             implicitHeight: 48
             color: Colors.adapter.surfaceContainerHigh
-            radius: 16
+            radius: GlobalStates.roundness
             border.color: searchInput.activeFocus ? Colors.adapter.primary : Colors.adapter.outline
             border.width: 0
 
@@ -242,7 +240,7 @@ Rectangle {
 
             highlight: Rectangle {
                 color: Colors.adapter.surfaceBright
-                radius: 16
+                radius: GlobalStates.roundness
                 visible: root.selectedIndex >= 0
             }
 
