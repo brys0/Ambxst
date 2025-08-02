@@ -201,22 +201,7 @@ Item {
         Loader {
             id: loader
             anchors.fill: parent
-            
-            // Performance optimization: only load when visible or about to be visible
-            Component.onCompleted: active = Qt.binding(() => {
-                const currentIndex = root.state.currentTab
-                const myIndex = Array.prototype.indexOf.call(view.contentChildren, parent)
-                
-                // Load current page and adjacent pages for smooth transitions
-                return Math.abs(currentIndex - myIndex) <= 1
-            })
-
-            // Cache loaded items for better performance
-            property bool wasLoaded: false
-            onActiveChanged: {
-                if (active)
-                    wasLoaded = true;
-            }
+            active: true // Simplificamos: siempre cargar para debugging
         }
     }
 
