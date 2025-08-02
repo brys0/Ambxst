@@ -15,42 +15,37 @@ Singleton {
         onFileChanged: reload()
 
         adapter: JsonAdapter {
-            property bool oledMode: false
-            property int roundness: 16
-            property bool barBottom: false
-            property bool barBorderless: false
-            property string barTopLeftIcon: "spark"
-            property bool barShowBackground: true
-            property bool barVerbose: true
-            property list<string> barScreenList: []
-            property int workspacesShown: 10
-            property bool workspacesShowAppIcons: true
-            property bool workspacesAlwaysShowNumbers: false
-            property int workspacesShowNumberDelay: 300
-            property bool workspacesShowNumbers: false
+            property JsonObject theme: JsonObject {
+                property bool oledMode: false
+                property int roundness: 16
+            }
+            
+            property JsonObject bar: JsonObject {
+                property bool bottom: false
+                property bool borderless: false
+                property string topLeftIcon: "spark"
+                property bool showBackground: true
+                property bool verbose: true
+                property list<string> screenList: []
+            }
+            
+            property JsonObject workspaces: JsonObject {
+                property int shown: 10
+                property bool showAppIcons: true
+                property bool alwaysShowNumbers: false
+                property int showNumberDelay: 300
+                property bool showNumbers: false
+            }
         }
     }
 
     // Theme configuration
-    property bool oledMode: loader.adapter.oledMode
-    property int roundness: loader.adapter.roundness
+    property bool oledMode: loader.adapter.theme.oledMode
+    property int roundness: loader.adapter.theme.roundness
 
     // Bar configuration
-    property QtObject bar: QtObject {
-        property bool bottom: loader.adapter.barBottom
-        property bool borderless: loader.adapter.barBorderless
-        property string topLeftIcon: loader.adapter.barTopLeftIcon
-        property bool showBackground: loader.adapter.barShowBackground
-        property bool verbose: loader.adapter.barVerbose
-        property list<string> screenList: loader.adapter.barScreenList
-    }
+    property QtObject bar: loader.adapter.bar
 
     // Workspace configuration
-    property QtObject workspaces: QtObject {
-        property int shown: loader.adapter.workspacesShown
-        property bool showAppIcons: loader.adapter.workspacesShowAppIcons
-        property bool alwaysShowNumbers: loader.adapter.workspacesAlwaysShowNumbers
-        property int showNumberDelay: loader.adapter.workspacesShowNumberDelay
-        property bool showNumbers: loader.adapter.workspacesShowNumbers
-    }
+    property QtObject workspaces: loader.adapter.workspaces
 }
