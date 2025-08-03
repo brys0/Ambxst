@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import qs.modules.theme
 import qs.modules.globals
+import qs.config
 
 Item {
     id: root
@@ -23,8 +24,8 @@ Item {
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.topMargin: 16
-        anchors.margins: 20
+        // anchors.topMargin: 16
+        anchors.margins: 16
 
         spacing: 8
 
@@ -40,9 +41,8 @@ Item {
 
                 background: Rectangle {
                     color: root.state.currentTab === index ? Colors.adapter.primary : "transparent"
-                    radius: 8
-                    border.color: Colors.adapter.outline
-                    border.width: root.state.currentTab === index ? 0 : 1
+                    opacity: 0.1
+                    radius: Configuration.roundness
 
                     Behavior on color {
                         ColorAnimation {
@@ -54,9 +54,9 @@ Item {
 
                 contentItem: Text {
                     text: parent.text
-                    color: root.state.currentTab === index ? Colors.adapter.onPrimary : Colors.adapter.onSurface
+                    color: root.state.currentTab === index ? Colors.adapter.primary : Colors.adapter.overBackground
                     font.family: Styling.defaultFont
-                    font.pixelSize: 12
+                    font.pixelSize: 14
                     font.weight: Font.Medium
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
@@ -112,14 +112,14 @@ Item {
             id: view
 
             anchors.fill: parent
-            
+
             currentIndex: root.state.currentTab
-            
+
             implicitWidth: 400
             implicitHeight: 300
 
             onCurrentIndexChanged: {
-                root.state.currentTab = currentIndex
+                root.state.currentTab = currentIndex;
             }
 
             // Overview Tab
@@ -127,7 +127,7 @@ Item {
                 sourceComponent: overviewComponent
             }
 
-            // System Tab  
+            // System Tab
             DashboardPane {
                 sourceComponent: systemComponent
             }
@@ -147,10 +147,10 @@ Item {
     // Animated size properties for smooth transitions
     property real animatedWidth: implicitWidth
     property real animatedHeight: implicitHeight
-    
+
     width: animatedWidth
     height: animatedHeight
-    
+
     // Update animated properties when implicit properties change
     onImplicitWidthChanged: animatedWidth = implicitWidth
     onImplicitHeightChanged: animatedHeight = implicitHeight
@@ -195,7 +195,7 @@ Item {
     component DashboardPane: Item {
         implicitWidth: 400
         implicitHeight: 300
-        
+
         property alias sourceComponent: loader.sourceComponent
 
         Loader {
@@ -210,109 +210,13 @@ Item {
         implicitWidth: 400
         implicitHeight: 300
 
-        Column {
-            anchors.fill: parent
-            anchors.margins: 16
-            spacing: 12
-
-            // Date and Time with live updates
-            Column {
-                width: parent.width
-                spacing: 4
-
-                property var currentTime: new Date()
-
-                Timer {
-                    interval: 1000
-                    running: true
-                    repeat: true
-                    onTriggered: parent.currentTime = new Date()
-                }
-
-                Text {
-                    text: Qt.formatDateTime(parent.currentTime, "dddd, MMMM d")
-                    color: Colors.adapter.onSurface
-                    font.family: Styling.defaultFont
-                    font.pixelSize: 16
-                    font.weight: Font.Bold
-                }
-
-                Text {
-                    text: Qt.formatDateTime(parent.currentTime, "h:mm AP")
-                    color: Colors.adapter.onSurfaceVariant
-                    font.family: Styling.defaultFont
-                    font.pixelSize: 14
-                }
-            }
-
-            // User Info
-            Row {
-                width: parent.width
-                spacing: 12
-
-                Rectangle {
-                    width: 48
-                    height: 48
-                    radius: 24
-                    color: Colors.adapter.primary
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: Quickshell.env("USER").charAt(0).toUpperCase()
-                        color: Colors.adapter.onPrimary
-                        font.family: Styling.defaultFont
-                        font.pixelSize: 20
-                        font.weight: Font.Bold
-                    }
-                }
-
-                Column {
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: 2
-
-                    Text {
-                        text: Quickshell.env("USER")
-                        color: Colors.adapter.onSurface
-                        font.family: Styling.defaultFont
-                        font.pixelSize: 14
-                        font.weight: Font.Medium
-                    }
-
-                    Text {
-                        text: Quickshell.env("HOSTNAME")
-                        color: Colors.adapter.onSurfaceVariant
-                        font.family: Styling.defaultFont
-                        font.pixelSize: 12
-                    }
-                }
-            }
-
-            // Workspaces preview
-            Rectangle {
-                width: parent.width
-                height: 60
-                radius: 8
-                color: Colors.adapter.surface
-                border.color: Colors.adapter.outline
-                border.width: 1
-
-                MouseArea {
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-
-                    onEntered: parent.color = Colors.adapter.surfaceContainerHigh
-                    onExited: parent.color = Colors.adapter.surface
-                }
-
-                Text {
-                    anchors.centerIn: parent
-                    text: "Workspaces"
-                    color: Colors.adapter.onSurfaceVariant
-                    font.family: Styling.defaultFont
-                    font.pixelSize: 12
-                }
-            }
+        Text {
+            anchors.centerIn: parent
+            text: "Widgets"
+            color: Colors.adapter.overSurfaceVariant
+            font.family: Styling.defaultFont
+            font.pixelSize: 16
+            font.weight: Font.Medium
         }
     }
 
@@ -321,36 +225,13 @@ Item {
         implicitWidth: 400
         implicitHeight: 300
 
-        Column {
-            anchors.fill: parent
-            anchors.margins: 16
-            spacing: 12
-
-            Text {
-                text: "System Resources"
-                color: Colors.adapter.onSurface
-                font.family: Styling.defaultFont
-                font.pixelSize: 16
-                font.weight: Font.Bold
-            }
-
-            // CPU Usage placeholder
-            SystemCard {
-                title: "CPU Usage"
-                subtitle: "4 cores • 2.4 GHz"
-            }
-
-            // Memory Usage placeholder
-            SystemCard {
-                title: "Memory Usage"
-                subtitle: "8 GB available"
-            }
-
-            // Storage placeholder
-            SystemCard {
-                title: "Storage"
-                subtitle: "256 GB SSD"
-            }
+        Text {
+            anchors.centerIn: parent
+            text: "Pins"
+            color: Colors.adapter.overSurfaceVariant
+            font.family: Styling.defaultFont
+            font.pixelSize: 16
+            font.weight: Font.Medium
         }
     }
 
@@ -359,127 +240,13 @@ Item {
         implicitWidth: 400
         implicitHeight: 300
 
-        Column {
-            anchors.fill: parent
-            anchors.margins: 16
-            spacing: 12
-
-            Text {
-                text: "Quick Settings"
-                color: Colors.adapter.onSurface
-                font.family: Styling.defaultFont
-                font.pixelSize: 16
-                font.weight: Font.Bold
-            }
-
-            Grid {
-                width: parent.width
-                columns: 2
-                spacing: 8
-
-                Repeater {
-                    model: ["WiFi", "Bluetooth", "Night Light", "Do Not Disturb"]
-
-                    QuickSettingCard {
-                        title: modelData
-                    }
-                }
-            }
-        }
-    }
-
-    component SystemCard: Rectangle {
-        property string title: ""
-        property string subtitle: ""
-
-        width: parent.width
-        height: 60
-        radius: 8
-        color: Colors.adapter.surface
-        border.color: Colors.adapter.outline
-        border.width: 1
-
-        MouseArea {
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-
-            onEntered: parent.color = Colors.adapter.surfaceContainerHigh
-            onExited: parent.color = Colors.adapter.surface
-        }
-
-        Column {
-            anchors.centerIn: parent
-            spacing: 2
-
-            Text {
-                text: parent.title
-                color: Colors.adapter.onSurface
-                font.family: Styling.defaultFont
-                font.pixelSize: 12
-                font.weight: Font.Medium
-                anchors.horizontalCenter: parent.horizontalCenter
-            }
-
-            Text {
-                text: parent.subtitle
-                color: Colors.adapter.onSurfaceVariant
-                font.family: Styling.defaultFont
-                font.pixelSize: 10
-                anchors.horizontalCenter: parent.horizontalCenter
-            }
-        }
-
-        Behavior on color {
-            ColorAnimation {
-                duration: 150
-                easing.type: Easing.OutCubic
-            }
-        }
-    }
-
-    component QuickSettingCard: Rectangle {
-        property string title: ""
-
-        width: (parent.width - parent.spacing) / 2
-        height: 60
-        radius: 8
-        color: Colors.adapter.surface
-        border.color: Colors.adapter.outline
-        border.width: 1
-
-        MouseArea {
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-
-            onEntered: parent.color = Colors.adapter.surfaceContainerHigh
-            onExited: parent.color = Colors.adapter.surface
-            onPressed: parent.scale = 0.95
-            onReleased: parent.scale = 1.0
-        }
-
         Text {
             anchors.centerIn: parent
-            text: parent.title
-            color: Colors.adapter.onSurfaceVariant
+            text: "Kanban"
+            color: Colors.adapter.overSurfaceVariant
             font.family: Styling.defaultFont
-            font.pixelSize: 12
+            font.pixelSize: 16
             font.weight: Font.Medium
-        }
-
-        Behavior on color {
-            ColorAnimation {
-                duration: 150
-                easing.type: Easing.OutCubic
-            }
-        }
-
-        Behavior on scale {
-            NumberAnimation {
-                duration: 100
-                easing.type: Easing.OutCubic
-            }
         }
     }
 
@@ -495,7 +262,7 @@ Item {
 
             Text {
                 text: "Wallpapers"
-                color: Colors.adapter.onSurface
+                color: Colors.adapter.overSurface
                 font.family: Styling.defaultFont
                 font.pixelSize: 16
                 font.weight: Font.Bold
@@ -519,8 +286,7 @@ Item {
                         border.color: isCurrentWallpaper ? Colors.adapter.primary : Colors.adapter.outline
                         border.width: isCurrentWallpaper ? 2 : 1
 
-                        property bool isCurrentWallpaper: GlobalStates.wallpaperManager && 
-                            GlobalStates.wallpaperManager.currentIndex === index
+                        property bool isCurrentWallpaper: GlobalStates.wallpaperManager && GlobalStates.wallpaperManager.currentIndex === index
 
                         Behavior on border.color {
                             ColorAnimation {
