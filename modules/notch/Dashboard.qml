@@ -17,6 +17,25 @@ Item {
     implicitWidth: nonAnimWidth
     implicitHeight: mainLayout.implicitHeight
 
+    // Transition properties for opening animation
+    scale: GlobalStates.dashboardOpen ? 1.0 : 0.8
+    opacity: GlobalStates.dashboardOpen ? 1.0 : 0.0
+
+    Behavior on scale {
+        NumberAnimation {
+            duration: Configuration.animDuration - 50
+            easing.type: Easing.OutBack
+            easing.overshoot: 1.2
+        }
+    }
+
+    Behavior on opacity {
+        NumberAnimation {
+            duration: Configuration.animDuration - 50
+            easing.type: Easing.OutQuart
+        }
+    }
+
     Column {
         id: mainLayout
         anchors.fill: parent
