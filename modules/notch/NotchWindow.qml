@@ -89,7 +89,7 @@ PanelWindow {
 
                     Behavior on color {
                         ColorAnimation {
-                            duration: Configuration.animDuration / 2
+                            duration: Config.animDuration / 2
                         }
                     }
                 }
@@ -106,7 +106,7 @@ PanelWindow {
 
                 Behavior on color {
                     ColorAnimation {
-                        duration: Configuration.animDuration / 2
+                        duration: Config.animDuration / 2
                     }
                 }
             }
@@ -216,14 +216,14 @@ PanelWindow {
 
             Behavior on shadowBlur {
                 NumberAnimation {
-                    duration: Configuration.animDuration
+                    duration: Config.animDuration
                     easing.type: GlobalStates.notchOpen ? Easing.OutBack : Easing.OutQuart
                 }
             }
 
             Behavior on shadowOpacity {
                 NumberAnimation {
-                    duration: Configuration.animDuration
+                    duration: Config.animDuration
                     easing.type: GlobalStates.notchOpen ? Easing.OutBack : Easing.OutQuart
                 }
             }

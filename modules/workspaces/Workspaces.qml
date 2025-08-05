@@ -15,11 +15,11 @@ import qs.config
 Item {
     id: workspacesWidget
     required property var bar
-    property bool borderless: Configuration.bar.borderless
+    property bool borderless: Config.bar.borderless
     readonly property HyprlandMonitor monitor: Hyprland.monitorFor(bar.screen)
     readonly property Toplevel activeWindow: ToplevelManager.activeToplevel
 
-    readonly property int workspaceGroup: Math.floor((monitor?.activeWorkspace?.id - 1 || 0) / Configuration.workspaces.shown)
+    readonly property int workspaceGroup: Math.floor((monitor?.activeWorkspace?.id - 1 || 0) / Config.workspaces.shown)
     property list<bool> workspaceOccupied: []
     property int widgetPadding: 4
     property int workspaceButtonWidth: parent.height - widgetPadding * 2
@@ -27,13 +27,13 @@ Item {
     property real workspaceIconSizeShrinked: workspaceButtonWidth * 0.5
     property real workspaceIconOpacityShrinked: 1
     property real workspaceIconMarginShrinked: -4
-    property int workspaceIndexInGroup: (monitor?.activeWorkspace?.id - 1 || 0) % Configuration.workspaces.shown
+    property int workspaceIndexInGroup: (monitor?.activeWorkspace?.id - 1 || 0) % Config.workspaces.shown
 
     function updateWorkspaceOccupied() {
         workspaceOccupied = Array.from({
-            length: Configuration.workspaces.shown
+            length: Config.workspaces.shown
         }, (_, i) => {
-            return Hyprland.workspaces.values.some(ws => ws.id === workspaceGroup * Configuration.workspaces.shown + i + 1);
+            return Hyprland.workspaces.values.some(ws => ws.id === workspaceGroup * Config.workspaces.shown + i + 1);
         });
     }
 
@@ -95,17 +95,17 @@ Item {
         implicitHeight: workspaceButtonWidth
 
         Repeater {
-            model: Configuration.workspaces.shown
+            model: Config.workspaces.shown
 
             Rectangle {
                 z: 1
                 implicitWidth: workspaceButtonWidth
                 implicitHeight: workspaceButtonWidth
-                radius: Math.max(0, Configuration.roundness - widgetPadding)
+                radius: Math.max(0, Config.roundness - widgetPadding)
                 property var leftOccupied: (workspaceOccupied[index - 1] && !(!activeWindow?.activated && monitor?.activeWorkspace?.id === index))
                 property var rightOccupied: (workspaceOccupied[index + 1] && !(!activeWindow?.activated && monitor?.activeWorkspace?.id === index + 2))
-                property var radiusLeft: leftOccupied ? 0 : Math.max(0, Configuration.roundness - widgetPadding)
-                property var radiusRight: rightOccupied ? 0 : Math.max(0, Configuration.roundness - widgetPadding)
+                property var radiusLeft: leftOccupied ? 0 : Math.max(0, Config.roundness - widgetPadding)
+                property var radiusRight: rightOccupied ? 0 : Math.max(0, Config.roundness - widgetPadding)
 
                 topLeftRadius: radiusLeft
                 bottomLeftRadius: radiusLeft
@@ -117,20 +117,20 @@ Item {
 
                 Behavior on opacity {
                     NumberAnimation {
-                        duration: Configuration.animDuration - 100
+                        duration: Config.animDuration - 100
                         easing.type: Easing.OutQuad
                     }
                 }
                 Behavior on radiusLeft {
                     NumberAnimation {
-                        duration: Configuration.animDuration - 100
+                        duration: Config.animDuration - 100
                         easing.type: Easing.OutQuad
                     }
                 }
 
                 Behavior on radiusRight {
                     NumberAnimation {
-                        duration: Configuration.animDuration - 100
+                        duration: Config.animDuration - 100
                         easing.type: Easing.OutQuad
                     }
                 }
@@ -147,17 +147,17 @@ Item {
                 ws.id === (monitor?.activeWorkspace?.id || 1) && 
                 HyprlandData.windowList.some(w => w.workspace.id === ws.id)
             );
-            if (Configuration.roundness === 0) {
+            if (Config.roundness === 0) {
                 return 0;
             }
             return currentWorkspaceHasWindows 
-                ? Math.max(0, Configuration.roundness - parent.widgetPadding - activeWorkspaceMargin)
+                ? Math.max(0, Config.roundness - parent.widgetPadding - activeWorkspaceMargin)
                 : implicitHeight / 2;
         }
         
         Behavior on radius {
             NumberAnimation {
-                duration: Configuration.animDuration - 100
+                duration: Config.animDuration - 100
                 easing.type: Easing.OutQuad
             }
         }
@@ -171,19 +171,19 @@ Item {
 
         Behavior on activeWorkspaceMargin {
             NumberAnimation {
-                duration: Configuration.animDuration / 2
+                duration: Config.animDuration / 2
                 easing.type: Easing.OutQuad
             }
         }
         Behavior on idx1 {
             NumberAnimation {
-                duration: Configuration.animDuration / 3
+                duration: Config.animDuration / 3
                 easing.type: Easing.OutSine
             }
         }
         Behavior on idx2 {
             NumberAnimation {
-                duration: Configuration.animDuration
+                duration: Config.animDuration
                 easing.type: Easing.OutSine
             }
         }
@@ -199,11 +199,11 @@ Item {
         implicitHeight: workspaceButtonWidth
 
         Repeater {
-            model: Configuration.workspaces.shown
+            model: Config.workspaces.shown
 
             Button {
                 id: button
-                property int workspaceValue: workspaceGroup * Configuration.workspaces.shown + index + 1
+                property int workspaceValue: workspaceGroup * Config.workspaces.shown + index + 1
                 Layout.fillHeight: true
                 onPressed: Hyprland.dispatch(`workspace ${workspaceValue}`)
                 width: workspaceButtonWidth
@@ -223,7 +223,7 @@ Item {
                     property var mainAppIconSource: Quickshell.iconPath(AppSearch.guessIcon(biggestWindow?.class), "image-missing")
 
                     Text {
-                        opacity: Configuration.workspaces.alwaysShowNumbers || ((Configuration.workspaces.showNumbers && (!Configuration.workspaces.showAppIcons || !workspaceButtonBackground.biggestWindow || Configuration.workspaces.alwaysShowNumbers)) || (Configuration.workspaces.alwaysShowNumbers && !Configuration.workspaces.showAppIcons)) ? 1 : 0
+                        opacity: Config.workspaces.alwaysShowNumbers || ((Config.workspaces.showNumbers && (!Config.workspaces.showAppIcons || !workspaceButtonBackground.biggestWindow || Config.workspaces.alwaysShowNumbers)) || (Config.workspaces.alwaysShowNumbers && !Config.workspaces.showAppIcons)) ? 1 : 0
                         z: 3
 
                         anchors.centerIn: parent
@@ -243,7 +243,7 @@ Item {
                         }
                     }
                     Rectangle {
-                        opacity: (Configuration.workspaces.showNumbers || Configuration.workspaces.alwaysShowNumbers || (Configuration.workspaces.showAppIcons && workspaceButtonBackground.biggestWindow)) ? 0 : 1
+                        opacity: (Config.workspaces.showNumbers || Config.workspaces.alwaysShowNumbers || (Config.workspaces.showAppIcons && workspaceButtonBackground.biggestWindow)) ? 0 : 1
                         visible: opacity > 0
                         anchors.centerIn: parent
                         width: workspaceButtonWidth * 0.2
@@ -262,17 +262,17 @@ Item {
                         anchors.centerIn: parent
                         width: workspaceButtonWidth
                         height: workspaceButtonWidth
-                        opacity: !Configuration.workspaces.showAppIcons ? 0 : (workspaceButtonBackground.biggestWindow && !Configuration.workspaces.alwaysShowNumbers && Configuration.workspaces.showAppIcons) ? 1 : workspaceButtonBackground.biggestWindow ? workspaceIconOpacityShrinked : 0
+                        opacity: !Config.workspaces.showAppIcons ? 0 : (workspaceButtonBackground.biggestWindow && !Config.workspaces.alwaysShowNumbers && Config.workspaces.showAppIcons) ? 1 : workspaceButtonBackground.biggestWindow ? workspaceIconOpacityShrinked : 0
                         visible: opacity > 0
                         IconImage {
                             id: mainAppIcon
                             anchors.bottom: parent.bottom
                             anchors.right: parent.right
-                            anchors.bottomMargin: (!Configuration.workspaces.alwaysShowNumbers && Configuration.workspaces.showAppIcons) ? (workspaceButtonWidth - workspaceIconSize) / 2 : workspaceIconMarginShrinked
-                            anchors.rightMargin: (!Configuration.workspaces.alwaysShowNumbers && Configuration.workspaces.showAppIcons) ? (workspaceButtonWidth - workspaceIconSize) / 2 : workspaceIconMarginShrinked
+                            anchors.bottomMargin: (!Config.workspaces.alwaysShowNumbers && Config.workspaces.showAppIcons) ? (workspaceButtonWidth - workspaceIconSize) / 2 : workspaceIconMarginShrinked
+                            anchors.rightMargin: (!Config.workspaces.alwaysShowNumbers && Config.workspaces.showAppIcons) ? (workspaceButtonWidth - workspaceIconSize) / 2 : workspaceIconMarginShrinked
 
                             source: workspaceButtonBackground.mainAppIconSource
-                            implicitSize: (!Configuration.workspaces.alwaysShowNumbers && Configuration.workspaces.showAppIcons) ? workspaceIconSize : workspaceIconSizeShrinked
+                            implicitSize: (!Config.workspaces.alwaysShowNumbers && Config.workspaces.showAppIcons) ? workspaceIconSize : workspaceIconSizeShrinked
 
                             Behavior on opacity {
                                 NumberAnimation {

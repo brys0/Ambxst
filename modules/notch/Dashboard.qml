@@ -45,11 +45,11 @@ NotchAnimationBehavior {
 
                     background: Rectangle {
                         color: root.state.currentTab === index ? Colors.adapter.surfaceContainer : "transparent"
-                        radius: Configuration.roundness > 0 ? Configuration.roundness + 4 : 0
+                        radius: Config.roundness > 0 ? Config.roundness + 4 : 0
 
                         Behavior on color {
                             ColorAnimation {
-                                duration: Configuration.animDuration
+                                duration: Config.animDuration
                                 easing.type: Easing.OutCubic
                             }
                         }
@@ -66,7 +66,7 @@ NotchAnimationBehavior {
 
                         Behavior on color {
                             ColorAnimation {
-                                duration: Configuration.animDuration
+                                duration: Config.animDuration
                                 easing.type: Easing.OutCubic
                             }
                         }
@@ -76,7 +76,7 @@ NotchAnimationBehavior {
 
                     Behavior on scale {
                         NumberAnimation {
-                            duration: Configuration.animDuration / 3
+                            duration: Config.animDuration / 3
                             easing.type: Easing.OutCubic
                         }
                     }
@@ -100,7 +100,7 @@ NotchAnimationBehavior {
             width: parent.width
             height: parent.height - tabs.height - 8 // Adjust height to fit below tabs
 
-            radius: Configuration.roundness > 0 ? Configuration.roundness + 4 : 0
+            radius: Config.roundness > 0 ? Config.roundness + 4 : 0
             color: Colors.adapter.surfaceContainer
             clip: true
 
@@ -154,7 +154,7 @@ NotchAnimationBehavior {
 
     Behavior on animatedWidth {
         NumberAnimation {
-            duration: Configuration.animDuration
+            duration: Config.animDuration
             easing.type: Easing.OutBack
             easing.overshoot: 1.1
         }
@@ -162,7 +162,7 @@ NotchAnimationBehavior {
 
     Behavior on animatedHeight {
         NumberAnimation {
-            duration: Configuration.animDuration
+            duration: Config.animDuration
             easing.type: Easing.OutBack
             easing.overshoot: 1.1
         }
@@ -287,7 +287,7 @@ NotchAnimationBehavior {
 
                         Behavior on border.color {
                             ColorAnimation {
-                                duration: Configuration.animDuration
+                                duration: Config.animDuration
                                 easing.type: Easing.OutCubic
                             }
                         }
@@ -337,14 +337,14 @@ NotchAnimationBehavior {
 
                         Behavior on color {
                             ColorAnimation {
-                                duration: Configuration.animDuration / 2
+                                duration: Config.animDuration / 2
                                 easing.type: Easing.OutCubic
                             }
                         }
 
                         Behavior on scale {
                             NumberAnimation {
-                                duration: Configuration.animDuration / 3
+                                duration: Config.animDuration / 3
                                 easing.type: Easing.OutCubic
                             }
                         }

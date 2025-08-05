@@ -5,7 +5,7 @@ import qs.config
 
 Rectangle {
     color: Colors.background
-    radius: Configuration.roundness
+    radius: Config.roundness
     border.color: Colors.adapter.surfaceBright
     border.width: 0
 

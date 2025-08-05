@@ -21,7 +21,7 @@ Item {
 
     Behavior on implicitWidth {
         NumberAnimation {
-            duration: Configuration.animDuration
+            duration: Config.animDuration
             easing.type: isExpanded ? Easing.OutBack : Easing.OutQuart
             easing.overshoot: isExpanded ? 1.2 : 1.0
         }
@@ -29,7 +29,7 @@ Item {
 
     Behavior on implicitHeight {
         NumberAnimation {
-            duration: Configuration.animDuration
+            duration: Config.animDuration
             easing.type: isExpanded ? Easing.OutBack : Easing.OutQuart
             easing.overshoot: isExpanded ? 1.2 : 1.0
         }
@@ -40,7 +40,7 @@ Item {
         anchors.top: parent.top
         anchors.right: notchRect.left
         corner: RoundCorner.CornerEnum.TopRight
-        size: Configuration.roundness > 0 ? Configuration.roundness + 4 : 0
+        size: Config.roundness > 0 ? Config.roundness + 4 : 0
         color: Colors.background
     }
 
@@ -53,13 +53,13 @@ Item {
         color: Colors.background
         topLeftRadius: 0
         topRightRadius: 0
-        bottomLeftRadius: Configuration.roundness > 0 ? (GlobalStates.notchOpen ? Configuration.roundness + 20 : Configuration.roundness + 4) : 0
-        bottomRightRadius: Configuration.roundness > 0 ? (GlobalStates.notchOpen ? Configuration.roundness + 20 : Configuration.roundness + 4) : 0
+        bottomLeftRadius: Config.roundness > 0 ? (GlobalStates.notchOpen ? Config.roundness + 20 : Config.roundness + 4) : 0
+        bottomRightRadius: Config.roundness > 0 ? (GlobalStates.notchOpen ? Config.roundness + 20 : Config.roundness + 4) : 0
         clip: true
 
         Behavior on bottomLeftRadius {
             NumberAnimation {
-                duration: Configuration.animDuration
+                duration: Config.animDuration
                 easing.type: GlobalStates.notchOpen ? Easing.OutBack : Easing.OutQuart
                 easing.overshoot: GlobalStates.notchOpen ? 1.2 : 1.0
             }
@@ -67,7 +67,7 @@ Item {
 
         Behavior on bottomRightRadius {
             NumberAnimation {
-                duration: Configuration.animDuration
+                duration: Config.animDuration
                 easing.type: GlobalStates.notchOpen ? Easing.OutBack : Easing.OutQuart
                 easing.overshoot: GlobalStates.notchOpen ? 1.2 : 1.0
             }
@@ -91,14 +91,14 @@ Item {
                         property: "opacity"
                         from: 0
                         to: 1
-                        duration: Configuration.animDuration
+                        duration: Config.animDuration
                         easing.type: Easing.OutQuart
                     }
                     PropertyAnimation {
                         property: "scale"
                         from: 0.8
                         to: 1
-                        duration: Configuration.animDuration
+                        duration: Config.animDuration
                         easing.type: Easing.OutBack
                         easing.overshoot: 1.2
                     }
@@ -109,14 +109,14 @@ Item {
                         property: "opacity"
                         from: 1
                         to: 0
-                        duration: Configuration.animDuration
+                        duration: Config.animDuration
                         easing.type: Easing.OutQuart
                     }
                     PropertyAnimation {
                         property: "scale"
                         from: 1
                         to: 1.05
-                        duration: Configuration.animDuration
+                        duration: Config.animDuration
                         easing.type: Easing.OutQuart
                     }
                 }
@@ -126,14 +126,14 @@ Item {
                         property: "opacity"
                         from: 0
                         to: 1
-                        duration: Configuration.animDuration
+                        duration: Config.animDuration
                         easing.type: Easing.OutQuart
                     }
                     PropertyAnimation {
                         property: "scale"
                         from: 1.05
                         to: 1
-                        duration: Configuration.animDuration
+                        duration: Config.animDuration
                         easing.type: Easing.OutQuart
                     }
                 }
@@ -143,14 +143,14 @@ Item {
                         property: "opacity"
                         from: 1
                         to: 0
-                        duration: Configuration.animDuration
+                        duration: Config.animDuration
                         easing.type: Easing.OutQuart
                     }
                     PropertyAnimation {
                         property: "scale"
                         from: 1
                         to: 0.95
-                        duration: Configuration.animDuration
+                        duration: Config.animDuration
                         easing.type: Easing.OutQuart
                     }
                 }
@@ -163,7 +163,7 @@ Item {
         anchors.top: parent.top
         anchors.left: notchRect.right
         corner: RoundCorner.CornerEnum.TopLeft
-        size: Configuration.roundness > 0 ? Configuration.roundness + 4 : 0
+        size: Config.roundness > 0 ? Config.roundness + 4 : 0
         color: Colors.background
     }
 }

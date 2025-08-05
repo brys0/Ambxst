@@ -23,7 +23,7 @@ PanelWindow {
 
     RoundCorner {
         id: topLeft
-        size: Configuration.roundness > 0 ? Configuration.roundness + 4 : 0
+        size: Config.roundness > 0 ? Config.roundness + 4 : 0
         anchors.left: parent.left
         anchors.top: parent.top
         corner: RoundCorner.CornerEnum.TopLeft
@@ -31,7 +31,7 @@ PanelWindow {
 
     RoundCorner {
         id: topRight
-        size: Configuration.roundness > 0 ? Configuration.roundness + 4 : 0
+        size: Config.roundness > 0 ? Config.roundness + 4 : 0
         anchors.right: parent.right
         anchors.top: parent.top
         corner: RoundCorner.CornerEnum.TopRight
@@ -39,7 +39,7 @@ PanelWindow {
 
     RoundCorner {
         id: bottomLeft
-        size: Configuration.roundness > 0 ? Configuration.roundness + 4 : 0
+        size: Config.roundness > 0 ? Config.roundness + 4 : 0
         anchors.left: parent.left
         anchors.bottom: parent.bottom
         corner: RoundCorner.CornerEnum.BottomLeft
@@ -47,7 +47,7 @@ PanelWindow {
 
     RoundCorner {
         id: bottomRight
-        size: Configuration.roundness > 0 ? Configuration.roundness + 4 : 0
+        size: Config.roundness > 0 ? Config.roundness + 4 : 0
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         corner: RoundCorner.CornerEnum.BottomRight

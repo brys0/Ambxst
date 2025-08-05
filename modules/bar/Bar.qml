@@ -27,9 +27,9 @@ PanelWindow {
 
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
 
-    exclusiveZone: Configuration.bar.showBackground ? 44 : 40
+    exclusiveZone: Config.bar.showBackground ? 44 : 40
     exclusionMode: ExclusionMode.Ignore
-    implicitHeight: 44 + Configuration.roundness + 4
+    implicitHeight: 44 + Config.roundness + 4
     mask: Region {
         width: panel.width
         height: 44
@@ -44,11 +44,11 @@ PanelWindow {
 
         property color bgcolor: Qt.rgba(Qt.color(Colors.background).r, Qt.color(Colors.background).g, Qt.color(Colors.background).b, 0.5)
 
-        color: Configuration.bar.showBackground ? bgcolor : "transparent"
+        color: Config.bar.showBackground ? bgcolor : "transparent"
 
         RoundCorner {
             id: topLeft
-            size: Configuration.roundness > 0 ? Configuration.roundness + 4 : 0
+            size: Config.roundness > 0 ? Config.roundness + 4 : 0
             anchors.left: parent.left
             anchors.top: parent.bottom
             corner: RoundCorner.CornerEnum.TopLeft
@@ -57,7 +57,7 @@ PanelWindow {
 
         RoundCorner {
             id: topRight
-            size: Configuration.roundness > 0 ? Configuration.roundness + 4 : 0
+            size: Config.roundness > 0 ? Config.roundness + 4 : 0
             anchors.right: parent.right
             anchors.top: parent.bottom
             corner: RoundCorner.CornerEnum.TopRight

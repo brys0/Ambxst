@@ -15,7 +15,7 @@ Item {
     
     Behavior on scale {
         NumberAnimation {
-            duration: Configuration.animDuration
+            duration: Config.animDuration
             easing.type: Easing.OutBack
             easing.overshoot: 1.2
         }
@@ -23,7 +23,7 @@ Item {
     
     Behavior on opacity {
         NumberAnimation {
-            duration: Configuration.animDuration
+            duration: Config.animDuration
             easing.type: Easing.OutQuart
         }
     }

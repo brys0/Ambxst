@@ -13,11 +13,11 @@ import qs.config
 Item {
     id: overviewRoot
 
-    property real scale: Configuration.overview.scale
-    property int rows: Configuration.overview.rows
-    property int columns: Configuration.overview.columns
+    property real scale: Config.overview.scale
+    property int rows: Config.overview.rows
+    property int columns: Config.overview.columns
     property int workspacesShown: rows * columns
-    property real workspaceSpacing: Configuration.overview.workspaceSpacing
+    property real workspaceSpacing: Config.overview.workspaceSpacing
     property real workspacePadding: 8
     property color activeBorderColor: Colors.adapter.primary
 
@@ -57,7 +57,7 @@ Item {
 
         implicitWidth: workspaceColumnLayout.implicitWidth + 8
         implicitHeight: workspaceColumnLayout.implicitHeight + 8
-        radius: Configuration.roundness + 4
+        radius: Config.roundness + 4
         color: Colors.adapter.surfaceContainer
 
         ColumnLayout {
@@ -86,7 +86,7 @@ Item {
                             implicitWidth: overviewRoot.workspaceImplicitWidth + workspacePadding
                             implicitHeight: overviewRoot.workspaceImplicitHeight + workspacePadding
                             color: hoveredWhileDragging ? hoveredWorkspaceColor : defaultWorkspaceColor
-                            radius: Configuration.roundness
+                            radius: Config.roundness
                             border.width: 2
                             border.color: hoveredWhileDragging ? hoveredBorderColor : "transparent"
 
@@ -222,19 +222,19 @@ Item {
                 width: overviewRoot.workspaceImplicitWidth + workspacePadding
                 height: overviewRoot.workspaceImplicitHeight + workspacePadding
                 color: "transparent"
-                radius: Configuration.roundness
+                radius: Config.roundness
                 border.width: 2
                 border.color: overviewRoot.activeBorderColor
 
                 Behavior on x {
                     NumberAnimation {
-                        duration: Configuration.animDuration
+                        duration: Config.animDuration
                         easing.type: Easing.OutQuart
                     }
                 }
                 Behavior on y {
                     NumberAnimation {
-                        duration: Configuration.animDuration
+                        duration: Config.animDuration
                         easing.type: Easing.OutQuart
                     }
                 }

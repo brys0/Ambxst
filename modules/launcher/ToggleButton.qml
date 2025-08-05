@@ -21,13 +21,13 @@ Button {
 
         Behavior on color {
             ColorAnimation {
-                duration: Configuration.animDuration / 2
+                duration: Config.animDuration / 2
             }
         }
 
         Behavior on border.color {
             ColorAnimation {
-                duration: Configuration.animDuration / 2
+                duration: Config.animDuration / 2
             }
         }
     }
@@ -43,7 +43,7 @@ Button {
 
         Behavior on color {
             ColorAnimation {
-                duration: Configuration.animDuration / 2
+                duration: Config.animDuration / 2
             }
         }
     }

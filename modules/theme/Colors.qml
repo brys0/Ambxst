@@ -104,5 +104,5 @@ FileView {
         property string yellowValue: ""
         property string sourceColor: ""
     }
-    property string background: Configuration.oledMode ? "#000000" : adapter.background
+    property string background: Config.oledMode ? "#000000" : adapter.background
 }

@@ -31,7 +31,7 @@ Rectangle {
 
     Behavior on height {
         NumberAnimation {
-            duration: Configuration.animDuration
+            duration: Config.animDuration
             easing.type: Easing.OutQuart
         }
     }
@@ -47,7 +47,7 @@ Rectangle {
             Layout.fillWidth: true
             implicitHeight: 48
             color: Colors.adapter.surfaceContainerHighest
-            radius: Configuration.roundness > 0 ? Configuration.roundness + 4 : 0
+            radius: Config.roundness > 0 ? Config.roundness + 4 : 0
             border.color: searchInput.activeFocus ? Colors.adapter.primary : Colors.adapter.outline
             border.width: 0
 
@@ -245,7 +245,7 @@ Rectangle {
             highlight: Rectangle {
                 color: Colors.adapter.primary
                 opacity: 0.2
-                radius: Configuration.roundness > 0 ? Configuration.roundness + 4 : 0
+                radius: Config.roundness > 0 ? Config.roundness + 4 : 0
                 visible: root.selectedIndex >= 0
             }
 

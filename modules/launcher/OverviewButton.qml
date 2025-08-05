@@ -3,7 +3,7 @@ import qs.modules.globals
 import qs.config
 
 ToggleButton {
-    buttonIcon: Configuration.bar.overviewIcon
+    buttonIcon: Config.bar.overviewIcon
     tooltipText: "Open Window Overview"
 
     onToggle: function () {

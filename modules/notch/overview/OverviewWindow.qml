@@ -59,25 +59,25 @@ Item {
 
     Behavior on x {
         NumberAnimation {
-            duration: Configuration.animDuration
+            duration: Config.animDuration
             easing.type: Easing.OutQuart
         }
     }
     Behavior on y {
         NumberAnimation {
-            duration: Configuration.animDuration
+            duration: Config.animDuration
             easing.type: Easing.OutQuart
         }
     }
     Behavior on width {
         NumberAnimation {
-            duration: Configuration.animDuration
+            duration: Config.animDuration
             easing.type: Easing.OutQuart
         }
     }
     Behavior on height {
         NumberAnimation {
-            duration: Configuration.animDuration
+            duration: Config.animDuration
             easing.type: Easing.OutQuart
         }
     }
@@ -92,7 +92,7 @@ Item {
         Rectangle {
             id: previewBackground
             anchors.fill: parent
-            radius: Configuration.roundness - 4
+            radius: Config.roundness - 4
             color: pressed ? Colors.adapter.surfaceContainerHighest : hovered ? Colors.adapter.surfaceContainer : Colors.adapter.surface
             border.color: Colors.adapter.surfaceContainerHighest
             border.width: 2
@@ -101,7 +101,7 @@ Item {
 
             Behavior on color {
                 ColorAnimation {
-                    duration: Configuration.animDuration / 2
+                    duration: Config.animDuration / 2
                 }
             }
         }
@@ -125,13 +125,13 @@ Item {
 
                 Behavior on width {
                     NumberAnimation {
-                        duration: Configuration.animDuration
+                        duration: Config.animDuration
                         easing.type: Easing.OutQuart
                     }
                 }
                 Behavior on height {
                     NumberAnimation {
-                        duration: Configuration.animDuration
+                        duration: Config.animDuration
                         easing.type: Easing.OutQuart
                     }
                 }
@@ -152,7 +152,7 @@ Item {
 
                 Behavior on opacity {
                     NumberAnimation {
-                        duration: Configuration.animDuration / 2
+                        duration: Config.animDuration / 2
                     }
                 }
             }
@@ -162,7 +162,7 @@ Item {
         Rectangle {
             id: previewOverlay
             anchors.fill: parent
-            radius: Configuration.roundness - 4
+            radius: Config.roundness - 4
             color: pressed ? Qt.rgba(Colors.adapter.surfaceContainerHighest.r, Colors.adapter.surfaceContainerHighest.g, Colors.adapter.surfaceContainerHighest.b, 0.3) : hovered ? Qt.rgba(Colors.adapter.surfaceContainer.r, Colors.adapter.surfaceContainer.g, Colors.adapter.surfaceContainer.b, 0.2) : "transparent"
             border.color: Colors.adapter.surfaceContainerHighest
             border.width: 2
@@ -171,7 +171,7 @@ Item {
 
             Behavior on color {
                 ColorAnimation {
-                    duration: Configuration.animDuration / 2
+                    duration: Config.animDuration / 2
                 }
             }
         }
@@ -262,7 +262,7 @@ Item {
         width: tooltipText.implicitWidth + 16
         height: tooltipText.implicitHeight + 8
         color: Colors.adapter.inverseSurface
-        radius: Configuration.roundness / 2
+        radius: Config.roundness / 2
         opacity: 0.9
         z: 1000
 
