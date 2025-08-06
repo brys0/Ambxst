@@ -276,9 +276,6 @@ PanelWindow {
         function onDashboardChanged() {
             if (screenVisibilities.dashboard) {
                 notchContainer.stackView.push(dashboardViewComponent);
-                Qt.callLater(() => {
-                    notchPanel.forceActiveFocus();
-                });
             } else {
                 if (notchContainer.stackView.depth > 1) {
                     notchContainer.stackView.pop();
@@ -289,9 +286,6 @@ PanelWindow {
         function onOverviewChanged() {
             if (screenVisibilities.overview) {
                 notchContainer.stackView.push(overviewViewComponent);
-                Qt.callLater(() => {
-                    notchPanel.forceActiveFocus();
-                });
             } else {
                 if (notchContainer.stackView.depth > 1) {
                     notchContainer.stackView.pop();
