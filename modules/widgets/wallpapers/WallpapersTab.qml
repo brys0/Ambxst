@@ -6,20 +6,22 @@ import qs.modules.services
 import qs.config
 
 Rectangle {
-    color: "transparent"
+    color: Colors.background
     anchors.fill: parent
+    anchors.margins: 4
+    radius: Config.roundness > 0 ? Config.roundness : 0
 
     property string searchText: ""
     readonly property int gridColumns: 3
 
     function focusSearch() {
-        wallpaperSearchInput.focusInput()
+        wallpaperSearchInput.focusInput();
     }
 
     Component.onCompleted: {
         Qt.callLater(() => {
-            focusSearch()
-        })
+            focusSearch();
+        });
     }
 
     property var filteredWallpapers: {
@@ -49,25 +51,25 @@ Rectangle {
             SearchInput {
                 id: wallpaperSearchInput
                 width: parent.width
-                height: 36
                 text: searchText
                 placeholderText: "Search wallpapers..."
                 iconText: ""
                 clearOnEscape: false
+                radius: Config.roundness > 0 ? Config.roundness - 8 : 0
 
                 onSearchTextChanged: text => {
-                    searchText = text
+                    searchText = text;
                 }
 
                 onEscapePressed: {
-                    Visibilities.setActiveModule("")
+                    Visibilities.setActiveModule("");
                 }
             }
 
             // Área placeholder para opciones futuras
             Rectangle {
                 width: parent.width
-                height: parent.height - 36 - 12
+                height: parent.height - 36 - 16
                 color: Colors.surfaceContainer
                 radius: Config.roundness > 0 ? Config.roundness : 0
                 border.color: Colors.adapter.outline
