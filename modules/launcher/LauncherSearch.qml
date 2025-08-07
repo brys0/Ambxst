@@ -16,11 +16,11 @@ Rectangle {
 
     function clearSearch() {
         GlobalStates.clearLauncherState();
-        searchInput.forceActiveFocus();
+        searchInput.focus();
     }
 
     function focusSearchInput() {
-        searchInput.forceActiveFocus();
+        searchInput.focus();
     }
 
     implicitWidth: 500
@@ -40,129 +40,109 @@ Rectangle {
         spacing: 8
 
         // Search input
-        PaneRect {
-            id: searchInputContainer
+        SearchInput {
+            id: searchInput
             Layout.fillWidth: true
-            implicitHeight: 48
-            radius: Config.roundness > 0 ? Config.roundness + 4 : 0
+            text: GlobalStates.launcherSearchText
+            placeholderText: "Search applications..."
+            iconText: ""
 
-            RowLayout {
-                anchors.fill: parent
-                anchors.margins: 8
-                spacing: 8
-
-                Text {
-                    text: ""
-                    font.family: Styling.defaultFont
-                    font.pixelSize: 20
-                    color: Colors.adapter.primary
+            onSearchTextChanged: text => {
+                GlobalStates.launcherSearchText = text;
+                root.searchText = text;
+                // Auto-highlight first app when text is entered
+                if (text.length > 0) {
+                    GlobalStates.launcherSelectedIndex = 0;
+                    root.selectedIndex = 0;
+                    resultsList.currentIndex = 0;
+                } else {
+                    GlobalStates.launcherSelectedIndex = -1;
+                    root.selectedIndex = -1;
+                    resultsList.currentIndex = -1;
                 }
+            }
 
-                TextField {
-                    id: searchInput
-                    Layout.fillWidth: true
-                    text: GlobalStates.launcherSearchText
-                    placeholderText: "Search applications..."
-                    placeholderTextColor: Colors.adapter.outline
-                    font.family: Styling.defaultFont
-                    font.pixelSize: 14
-                    color: Colors.adapter.overBackground
-                    background: null
-
-                    onTextChanged: {
-                        GlobalStates.launcherSearchText = text;
-                        root.searchText = text;
-                        // Auto-highlight first app when text is entered
-                        if (text.length > 0) {
-                            GlobalStates.launcherSelectedIndex = 0;
-                            root.selectedIndex = 0;
-                            resultsList.currentIndex = 0;
-                        } else {
-                            GlobalStates.launcherSelectedIndex = -1;
-                            root.selectedIndex = -1;
-                            resultsList.currentIndex = -1;
-                        }
+            onAccepted: {
+                if (root.selectedIndex >= 0 && root.selectedIndex < resultsList.count) {
+                    let selectedApp = resultsList.model[root.selectedIndex];
+                    if (selectedApp) {
+                        selectedApp.execute();
+                        root.itemSelected();
                     }
+                }
+            }
 
-                    onAccepted: {
-                        if (root.selectedIndex >= 0 && root.selectedIndex < resultsList.count) {
-                            let selectedApp = resultsList.model[root.selectedIndex];
-                            if (selectedApp) {
-                                selectedApp.execute();
-                                root.itemSelected();
-                            }
-                        }
-                    }
+            onEscapePressed: {
+                root.itemSelected();
+            }
 
-                    Keys.onPressed: event => {
-                        if (event.key === Qt.Key_Escape) {
-                            root.itemSelected();
-                        } else if (event.key === Qt.Key_Down) {
-                            if (resultsList.count > 0) {
-                                if (root.selectedIndex < resultsList.count - 1) {
-                                    GlobalStates.launcherSelectedIndex++;
-                                    root.selectedIndex++;
-                                    resultsList.currentIndex = root.selectedIndex;
-                                } else if (root.selectedIndex === -1) {
-                                    // When no search text and nothing selected, start at first item
-                                    GlobalStates.launcherSelectedIndex = 0;
-                                    root.selectedIndex = 0;
-                                    resultsList.currentIndex = 0;
-                                }
-                            }
-                            event.accepted = true;
-                        } else if (event.key === Qt.Key_Up) {
-                            if (root.selectedIndex > 0) {
-                                GlobalStates.launcherSelectedIndex--;
-                                root.selectedIndex--;
-                                resultsList.currentIndex = root.selectedIndex;
-                            } else if (root.selectedIndex === 0 && root.searchText.length === 0) {
-                                // When no search text, allow going back to no selection
-                                GlobalStates.launcherSelectedIndex = -1;
-                                root.selectedIndex = -1;
-                                resultsList.currentIndex = -1;
-                            }
-                            event.accepted = true;
-                        } else if (event.key === Qt.Key_PageDown) {
-                            if (resultsList.count > 0) {
-                                let visibleItems = Math.floor(resultsList.height / 48);
-                                let newIndex = Math.min(root.selectedIndex + visibleItems, resultsList.count - 1);
-                                if (root.selectedIndex === -1) {
-                                    newIndex = Math.min(visibleItems - 1, resultsList.count - 1);
-                                }
-                                GlobalStates.launcherSelectedIndex = newIndex;
-                                root.selectedIndex = newIndex;
-                                resultsList.currentIndex = root.selectedIndex;
-                            }
-                            event.accepted = true;
-                        } else if (event.key === Qt.Key_PageUp) {
-                            if (resultsList.count > 0) {
-                                let visibleItems = Math.floor(resultsList.height / 48);
-                                let newIndex = Math.max(root.selectedIndex - visibleItems, 0);
-                                if (root.selectedIndex === -1) {
-                                    newIndex = Math.max(resultsList.count - visibleItems, 0);
-                                }
-                                GlobalStates.launcherSelectedIndex = newIndex;
-                                root.selectedIndex = newIndex;
-                                resultsList.currentIndex = root.selectedIndex;
-                            }
-                            event.accepted = true;
-                        } else if (event.key === Qt.Key_Home) {
-                            if (resultsList.count > 0) {
-                                GlobalStates.launcherSelectedIndex = 0;
-                                root.selectedIndex = 0;
-                                resultsList.currentIndex = 0;
-                            }
-                            event.accepted = true;
-                        } else if (event.key === Qt.Key_End) {
-                            if (resultsList.count > 0) {
-                                GlobalStates.launcherSelectedIndex = resultsList.count - 1;
-                                root.selectedIndex = resultsList.count - 1;
-                                resultsList.currentIndex = root.selectedIndex;
-                            }
-                            event.accepted = true;
-                        }
+            onDownPressed: {
+                if (resultsList.count > 0) {
+                    if (root.selectedIndex < resultsList.count - 1) {
+                        GlobalStates.launcherSelectedIndex++;
+                        root.selectedIndex++;
+                        resultsList.currentIndex = root.selectedIndex;
+                    } else if (root.selectedIndex === -1) {
+                        // When no search text and nothing selected, start at first item
+                        GlobalStates.launcherSelectedIndex = 0;
+                        root.selectedIndex = 0;
+                        resultsList.currentIndex = 0;
                     }
+                }
+            }
+
+            onUpPressed: {
+                if (root.selectedIndex > 0) {
+                    GlobalStates.launcherSelectedIndex--;
+                    root.selectedIndex--;
+                    resultsList.currentIndex = root.selectedIndex;
+                } else if (root.selectedIndex === 0 && root.searchText.length === 0) {
+                    // When no search text, allow going back to no selection
+                    GlobalStates.launcherSelectedIndex = -1;
+                    root.selectedIndex = -1;
+                    resultsList.currentIndex = -1;
+                }
+            }
+
+            onPageDownPressed: {
+                if (resultsList.count > 0) {
+                    let visibleItems = Math.floor(resultsList.height / 48);
+                    let newIndex = Math.min(root.selectedIndex + visibleItems, resultsList.count - 1);
+                    if (root.selectedIndex === -1) {
+                        newIndex = Math.min(visibleItems - 1, resultsList.count - 1);
+                    }
+                    GlobalStates.launcherSelectedIndex = newIndex;
+                    root.selectedIndex = newIndex;
+                    resultsList.currentIndex = root.selectedIndex;
+                }
+            }
+
+            onPageUpPressed: {
+                if (resultsList.count > 0) {
+                    let visibleItems = Math.floor(resultsList.height / 48);
+                    let newIndex = Math.max(root.selectedIndex - visibleItems, 0);
+                    if (root.selectedIndex === -1) {
+                        newIndex = Math.max(resultsList.count - visibleItems, 0);
+                    }
+                    GlobalStates.launcherSelectedIndex = newIndex;
+                    root.selectedIndex = newIndex;
+                    resultsList.currentIndex = root.selectedIndex;
+                }
+            }
+
+            onHomePressed: {
+                if (resultsList.count > 0) {
+                    GlobalStates.launcherSelectedIndex = 0;
+                    root.selectedIndex = 0;
+                    resultsList.currentIndex = 0;
+                }
+            }
+
+            onEndPressed: {
+                if (resultsList.count > 0) {
+                    GlobalStates.launcherSelectedIndex = resultsList.count - 1;
+                    root.selectedIndex = resultsList.count - 1;
+                    resultsList.currentIndex = root.selectedIndex;
                 }
             }
         }

@@ -297,44 +297,16 @@ NotchAnimationBehavior {
                 spacing: 8
 
                 // Barra de búsqueda
-                Rectangle {
+                SearchInput {
                     width: parent.width
                     height: 36
-                    color: Colors.surfaceContainer
-                    radius: Config.roundness > 0 ? Config.roundness : 0
-                    border.color: searchInput.activeFocus ? Colors.adapter.primary : Colors.adapter.outline
-                    border.width: 2
+                    text: searchText
+                    placeholderText: "Search wallpapers..."
+                    iconText: ""
+                    clearOnEscape: false
 
-                    Behavior on border.color {
-                        ColorAnimation {
-                            duration: Config.animDuration / 2
-                            easing.type: Easing.OutCubic
-                        }
-                    }
-
-                    TextInput {
-                        id: searchInput
-                        anchors.fill: parent
-                        anchors.leftMargin: 12
-                        anchors.rightMargin: 12
-                        verticalAlignment: TextInput.AlignVCenter
-                        text: searchText
-                        color: Colors.adapter.overSurfaceVariant
-                        font.family: Styling.defaultFont
-                        font.pixelSize: 12
-                        selectByMouse: true
-
-                        onTextChanged: searchText = text
-
-                        Text {
-                            anchors.fill: parent
-                            verticalAlignment: Text.AlignVCenter
-                            text: "Search wallpapers..."
-                            color: Colors.adapter.outline
-                            font.family: Styling.defaultFont
-                            font.pixelSize: 12
-                            visible: !parent.activeFocus && parent.text.length === 0
-                        }
+                    onSearchTextChanged: text => {
+                        searchText = text
                     }
                 }
 
