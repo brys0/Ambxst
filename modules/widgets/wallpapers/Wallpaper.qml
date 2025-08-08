@@ -173,14 +173,7 @@ PanelWindow {
             scanWallpapers.running = true;
         }
         
-        onLoadFailed: {
-            // Directory doesn't exist or can't be read, use fallback
-            if (!usingFallback) {
-                console.log("Main wallpaper directory not accessible, using fallback");
-                usingFallback = true;
-                scanFallback.running = true;
-            }
-        }
+        // Remove onLoadFailed to prevent premature fallback activation
     }
 
 
@@ -194,11 +187,9 @@ PanelWindow {
             onStreamFinished: {
                 let files = text.trim().split("\n").filter(f => f.length > 0);
                 if (files.length === 0) {
-                    if (!usingFallback) {
-                        console.log("No wallpapers found in main directory, using fallback");
-                        usingFallback = true;
-                        scanFallback.running = true;
-                    }
+                    console.log("No wallpapers found in main directory, using fallback");
+                    usingFallback = true;
+                    scanFallback.running = true;
                 } else {
                     usingFallback = false;
                     // Only update if the list has actually changed
@@ -232,8 +223,9 @@ PanelWindow {
             onStreamFinished: {
                 if (text.length > 0) {
                     console.warn("Error scanning wallpaper directory:", text);
-                    // Only fallback if we don't already have wallpapers loaded and not already using fallback
-                    if (wallpaperPaths.length === 0 && !usingFallback) {
+                    // Only fallback if we don't already have wallpapers loaded
+                    if (wallpaperPaths.length === 0) {
+                        console.log("Directory scan failed, using fallback");
                         usingFallback = true;
                         scanFallback.running = true;
                     }
