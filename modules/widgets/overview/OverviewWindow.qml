@@ -231,7 +231,13 @@ Item {
         acceptedButtons: Qt.LeftButton | Qt.MiddleButton
         drag.target: parent
 
-        onEntered: root.hovered = true
+        onEntered: {
+            root.hovered = true;
+            // Focus window on hover (same pattern as double-click)
+            if (root.windowData) {
+                Hyprland.dispatch(`focuswindow address:${windowData.address}`);
+            }
+        }
         onExited: root.hovered = false
 
         onPressed: mouse => {
