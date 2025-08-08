@@ -17,11 +17,15 @@ import qs.config
 PanelWindow {
     id: panel
 
+    // Determina la posición. Actualmente soporta "top" y "bottom".
+    // Si se provee un valor no reconocido, se usa "top" por defecto para evitar estados inconsistentes.
+    property string position: (Config.bar.position === "bottom" || Config.bar.position === "top") ? Config.bar.position : "top"
+
     anchors {
-        top: true
+        top: position === "top"
+        bottom: position === "bottom"
         left: true
         right: true
-        // bottom: true
     }
 
     color: "transparent"
@@ -30,17 +34,22 @@ PanelWindow {
 
     exclusiveZone: Config.bar.showBackground ? 44 : 40
     exclusionMode: ExclusionMode.Ignore
+
+    // Altura implícita incluye espacio extra para animaciones / futuros elementos.
     implicitHeight: 44 + Config.roundness + 64
+
+    // La máscara sigue a la barra principal para mantener correcta interacción en ambas posiciones.
     mask: Region {
-        width: panel.width
-        height: 44
+        item: bar
     }
 
     Rectangle {
         id: bar
-        anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
+        // La barra siempre se ancla al borde que corresponde; no desplazamos su Y internamente fuera del mask.
+        anchors.top: panel.position === "top" ? parent.top : undefined
+        anchors.bottom: panel.position === "bottom" ? parent.bottom : undefined
         implicitHeight: 44
         color: "transparent"
 
@@ -50,21 +59,24 @@ PanelWindow {
             property color bgColor: Qt.rgba(Colors.adapter.surfaceContainerLowest.r, Colors.adapter.surfaceContainerLowest.g, Colors.adapter.surfaceContainerLowest.b, Config.bar.bgOpacity)
             color: Config.bar.showBackground ? bgColor : "transparent"
 
+            // Esquinas visibles hacia fuera de la barra. Para bottom se invierten a BottomLeft/BottomRight y se posicionan arriba de la barra.
             RoundCorner {
-                id: topLeft
+                id: cornerLeft
                 size: Config.roundness > 0 ? Config.roundness + 4 : 0
                 anchors.left: parent.left
-                anchors.top: parent.bottom
-                corner: RoundCorner.CornerEnum.TopLeft
+                anchors.top: panel.position === "top" ? parent.bottom : undefined
+                anchors.bottom: panel.position === "bottom" ? parent.top : undefined
+                corner: panel.position === "top" ? RoundCorner.CornerEnum.TopLeft : RoundCorner.CornerEnum.BottomLeft
                 color: parent.color
             }
 
             RoundCorner {
-                id: topRight
+                id: cornerRight
                 size: Config.roundness > 0 ? Config.roundness + 4 : 0
                 anchors.right: parent.right
-                anchors.top: parent.bottom
-                corner: RoundCorner.CornerEnum.TopRight
+                anchors.top: panel.position === "top" ? parent.bottom : undefined
+                anchors.bottom: panel.position === "bottom" ? parent.top : undefined
+                corner: panel.position === "top" ? RoundCorner.CornerEnum.TopRight : RoundCorner.CornerEnum.BottomRight
                 color: parent.color
             }
         }
@@ -91,27 +103,32 @@ PanelWindow {
             }
 
             RoundCorner {
+                id: shadowCornerLeft
                 size: Config.roundness > 0 ? Config.roundness + 4 : 0
                 anchors.left: parent.left
-                anchors.top: parent.bottom
-                corner: RoundCorner.CornerEnum.TopLeft
+                anchors.top: panel.position === "top" ? parent.bottom : undefined
+                anchors.bottom: panel.position === "bottom" ? parent.top : undefined
+                corner: panel.position === "top" ? RoundCorner.CornerEnum.TopLeft : RoundCorner.CornerEnum.BottomLeft
                 color: parent.color
             }
 
             RoundCorner {
+                id: shadowCornerRight
                 size: Config.roundness > 0 ? Config.roundness + 4 : 0
                 anchors.right: parent.right
-                anchors.top: parent.bottom
-                corner: RoundCorner.CornerEnum.TopRight
+                anchors.top: panel.position === "top" ? parent.bottom : undefined
+                anchors.bottom: panel.position === "bottom" ? parent.top : undefined
+                corner: panel.position === "top" ? RoundCorner.CornerEnum.TopRight : RoundCorner.CornerEnum.BottomRight
                 color: parent.color
             }
         }
 
-        // Left side of bar
+        // Lado izquierdo de la barra
         RowLayout {
             id: leftSide
-            anchors.top: parent.top
             anchors.left: parent.left
+            anchors.top: panel.position === "top" ? parent.top : undefined
+            anchors.bottom: panel.position === "bottom" ? parent.bottom : undefined
             anchors.margins: 4
             spacing: 4
 
@@ -130,11 +147,12 @@ PanelWindow {
             }
         }
 
-        // Right side of bar
+        // Lado derecho de la barra
         RowLayout {
             id: rightSide
-            anchors.top: parent.top
             anchors.right: parent.right
+            anchors.top: panel.position === "top" ? parent.top : undefined
+            anchors.bottom: panel.position === "bottom" ? parent.bottom : undefined
             anchors.margins: 4
             spacing: 4
 
