@@ -215,7 +215,7 @@ Rectangle {
                                 text: "?"
                                 visible: parent.parent.status === Image.Error
                                 color: Colors.adapter.overBackground
-                                font.family: Styling.defaultFont
+                                font.family: Config.theme.font
                             }
                         }
                     }
@@ -224,7 +224,7 @@ Rectangle {
                         Layout.fillWidth: true
                         text: modelData.name
                         color: Colors.adapter.overBackground
-                        font.family: Styling.defaultFont
+                        font.family: Config.theme.font
                         font.pixelSize: 14
                         font.weight: Font.Bold
                         elide: Text.ElideRight

@@ -80,7 +80,7 @@ Rectangle {
                     anchors.centerIn: parent
                     text: "Placeholder\nfor future\noptions"
                     color: Colors.adapter.overSurfaceVariant
-                    font.family: Styling.defaultFont
+                    font.family: Config.theme.font
                     font.pixelSize: 12
                     horizontalAlignment: Text.AlignHCenter
                     lineHeight: 1.2

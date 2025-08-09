@@ -10,7 +10,7 @@ Rectangle {
         anchors.centerIn: parent
         text: "Pins"
         color: Colors.adapter.overSurfaceVariant
-        font.family: Styling.defaultFont
+        font.family: Config.theme.font
         font.pixelSize: 16
         font.weight: Font.Medium
     }

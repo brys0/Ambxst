@@ -11,23 +11,23 @@ PaneRect {
     property alias placeholderText: textField.placeholderText
     property string iconText: ""
     property bool clearOnEscape: true
-    
+
     signal searchTextChanged(string text)
-    signal accepted()
-    signal escapePressed()
-    signal downPressed()
-    signal upPressed()
-    signal pageDownPressed()
-    signal pageUpPressed()
-    signal homePressed()
-    signal endPressed()
+    signal accepted
+    signal escapePressed
+    signal downPressed
+    signal upPressed
+    signal pageDownPressed
+    signal pageUpPressed
+    signal homePressed
+    signal endPressed
 
     function focusInput() {
-        textField.forceActiveFocus()
+        textField.forceActiveFocus();
     }
 
     function clear() {
-        textField.text = ""
+        textField.text = "";
     }
 
     implicitHeight: 48
@@ -40,7 +40,7 @@ PaneRect {
 
         Text {
             text: root.iconText
-            font.family: Styling.defaultFont
+            font.family: Config.theme.font
             font.pixelSize: 20
             color: Colors.adapter.primary
             visible: root.iconText.length > 0
@@ -50,44 +50,44 @@ PaneRect {
             id: textField
             Layout.fillWidth: true
             placeholderTextColor: Colors.adapter.outline
-            font.family: Styling.defaultFont
+            font.family: Config.theme.font
             font.pixelSize: 14
             color: Colors.adapter.overBackground
             background: null
 
             onTextChanged: {
-                root.searchTextChanged(text)
+                root.searchTextChanged(text);
             }
 
             onAccepted: {
-                root.accepted()
+                root.accepted();
             }
 
             Keys.onPressed: event => {
                 if (event.key === Qt.Key_Escape) {
                     if (root.clearOnEscape) {
-                        clear()
+                        clear();
                     }
-                    root.escapePressed()
-                    event.accepted = true
+                    root.escapePressed();
+                    event.accepted = true;
                 } else if (event.key === Qt.Key_Down) {
-                    root.downPressed()
-                    event.accepted = true
+                    root.downPressed();
+                    event.accepted = true;
                 } else if (event.key === Qt.Key_Up) {
-                    root.upPressed()
-                    event.accepted = true
+                    root.upPressed();
+                    event.accepted = true;
                 } else if (event.key === Qt.Key_PageDown) {
-                    root.pageDownPressed()
-                    event.accepted = true
+                    root.pageDownPressed();
+                    event.accepted = true;
                 } else if (event.key === Qt.Key_PageUp) {
-                    root.pageUpPressed()
-                    event.accepted = true
+                    root.pageUpPressed();
+                    event.accepted = true;
                 } else if (event.key === Qt.Key_Home) {
-                    root.homePressed()
-                    event.accepted = true
+                    root.homePressed();
+                    event.accepted = true;
                 } else if (event.key === Qt.Key_End) {
-                    root.endPressed()
-                    event.accepted = true
+                    root.endPressed();
+                    event.accepted = true;
                 }
             }
         }

@@ -166,7 +166,7 @@ Item {
                 id: windowTitle
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: root.windowData?.title || ""
-                font.family: Styling.defaultFont
+                font.family: Config.theme.font
                 font.pixelSize: Math.max(8, Math.min(12, root.targetWindowHeight * 0.1))
                 font.weight: Font.Medium
                 color: Colors.adapter.overSurface
@@ -325,7 +325,7 @@ Item {
             id: tooltipText
             anchors.centerIn: parent
             text: `${root.windowData?.title || ""}\n[${root.windowData?.class || ""}]${root.windowData?.xwayland ? " [XWayland]" : ""}`
-            font.family: Styling.defaultFont
+            font.family: Config.theme.font
             font.pixelSize: 10
             color: Colors.adapter.inverseOnSurface
             horizontalAlignment: Text.AlignHCenter

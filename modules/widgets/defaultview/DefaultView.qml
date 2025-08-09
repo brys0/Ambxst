@@ -59,7 +59,7 @@ Item {
         anchors.centerIn: parent
         text: `${Quickshell.env("USER")}@${hostnameCollector.text.trim()}`
         color: userHostArea.pressed ? Colors.adapter.overBackground : (userHostArea.containsMouse ? Colors.adapter.primary : Colors.adapter.overBackground)
-        font.family: Styling.defaultFont
+        font.family: Config.theme.font
         font.pixelSize: 14
         font.weight: Font.Bold
 

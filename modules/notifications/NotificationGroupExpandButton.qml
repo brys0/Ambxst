@@ -25,7 +25,7 @@ Button {
 
     contentItem: Text {
         text: root.expanded ? "−" : "+"
-        font.family: Styling.defaultFont
+        font.family: Config.theme.font
         font.pixelSize: 20
         color: Colors.adapter.overBackground
         horizontalAlignment: Text.AlignHCenter

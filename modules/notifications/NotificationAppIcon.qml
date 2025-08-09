@@ -35,7 +35,7 @@ Rectangle {
             text: NotificationUtils.findSuitableMaterialSymbol(root.summary)
             anchors.fill: parent
             color: (root.urgency == NotificationUrgency.Critical) ? Colors.adapter.error : Colors.adapter.primary
-            font.family: Styling.defaultFont
+            font.family: Config.theme.font
             font.pixelSize: root.materialIconSize
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter

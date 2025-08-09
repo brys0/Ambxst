@@ -160,7 +160,7 @@ Item {
                             elide: Text.ElideRight
                             Layout.fillWidth: true
                             text: (topRow.showAppName ? notificationGroup?.appName : notificationGroup?.notifications[0]?.summary) || ""
-                            font.family: Styling.defaultFont
+                            font.family: Config.theme.font
                             font.pixelSize: topRow.showAppName ? topRow.fontSize : 14
                             font.weight: Font.Bold
                             color: topRow.showAppName ? Colors.adapter.outline : Colors.adapter.primary
@@ -170,7 +170,7 @@ Item {
                             Layout.rightMargin: 10
                             horizontalAlignment: Text.AlignLeft
                             text: NotificationUtils.getFriendlyNotifTimeString(notificationGroup?.time)
-                            font.family: Styling.defaultFont
+                            font.family: Config.theme.font
                             font.pixelSize: topRow.fontSize
                             color: Colors.adapter.overBackground
                         }

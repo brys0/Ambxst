@@ -153,7 +153,7 @@ Item {
                 Text {
                     id: summaryText
                     visible: !root.onlyNotification
-                    font.family: Styling.defaultFont
+                    font.family: Config.theme.font
                     font.pixelSize: root.fontSize
                     color: Colors.adapter.primary
                     elide: Text.ElideRight
@@ -168,7 +168,7 @@ Item {
                         }
                     }
                     Layout.fillWidth: true
-                    font.family: Styling.defaultFont
+                    font.family: Config.theme.font
                     font.pixelSize: root.fontSize
                     color: Colors.adapter.overBackground
                     elide: Text.ElideRight
@@ -245,7 +245,7 @@ Item {
                             }
 
                             contentItem: Text {
-                                font.family: Styling.defaultFont
+                                font.family: Config.theme.font
                                 font.pixelSize: 14
                                 horizontalAlignment: Text.AlignHCenter
                                 color: (notificationObject.urgency == NotificationUrgency.Critical) ? "#d32f2f" : "#424242"
@@ -279,7 +279,7 @@ Item {
 
                             contentItem: Text {
                                 id: copyIcon
-                                font.family: Styling.defaultFont
+                                font.family: Config.theme.font
                                 font.pixelSize: 14
                                 horizontalAlignment: Text.AlignHCenter
                                 color: (notificationObject.urgency == NotificationUrgency.Critical) ? "#d32f2f" : "#424242"

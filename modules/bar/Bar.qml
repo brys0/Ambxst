@@ -165,13 +165,13 @@ PanelWindow {
 
             ToggleButton {
                 id: powerButton
-                buttonIcon: "\uf011"
+                buttonIcon: Icons.powermenu
                 tooltipText: "Power Menu"
-                onToggle: function() {
+                onToggle: function () {
                     if (Visibilities.currentActiveModule === "powermenu") {
-                        Visibilities.setActiveModule("")
+                        Visibilities.setActiveModule("");
                     } else {
-                        Visibilities.setActiveModule("powermenu")
+                        Visibilities.setActiveModule("powermenu");
                     }
                 }
             }

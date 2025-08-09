@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import qs.config
 import qs.modules.theme
 import qs.modules.components
 
@@ -18,7 +19,7 @@ BgRect {
         text: clockContainer.currentTime
         color: Colors.adapter.overBackground
         font.pixelSize: 14
-        font.family: Styling.defaultFont
+        font.family: Config.theme.font
         font.bold: true
     }
 
