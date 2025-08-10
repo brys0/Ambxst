@@ -9,7 +9,7 @@ ActionGrid {
     signal itemSelected
 
     layout: "row"
-    buttonSize: 48
+    buttonSize: 52
     iconSize: 24
     spacing: 8
 
