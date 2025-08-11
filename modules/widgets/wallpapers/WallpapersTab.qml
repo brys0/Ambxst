@@ -125,6 +125,8 @@ Rectangle {
                             return GlobalStates.wallpaperManager.currentWallpaper === modelData;
                         }
 
+                        property bool isHovered: false
+
                         Loader {
                             anchors.fill: parent
                             sourceComponent: {
@@ -183,12 +185,36 @@ Rectangle {
                             }
                         }
 
+                        // Etiqueta con nombre del archivo al hacer hover
+                        Rectangle {
+                            visible: parent.isHovered && !parent.isCurrentWallpaper
+                            anchors.bottom: parent.bottom
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            height: 24
+                            color: Colors.adapter.surfaceContainerLowest
+                            clip: true
+                            z: 10  // Asegurar que esté encima
+
+                            Text {
+                                anchors.fill: parent
+                                anchors.margins: 4
+                                text: modelData ? modelData.split('/').pop() : ""
+                                color: Colors.adapter.onSurface
+                                font.family: Config.theme.font
+                                font.pixelSize: 10
+                                verticalAlignment: Text.AlignVCenter
+                                elide: Text.ElideRight
+                            }
+                        }
+
                         MouseArea {
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
 
                             onEntered: {
+                                parent.isHovered = true;
                                 if (!parent.isCurrentWallpaper) {
                                     parent.color = Colors.surfaceContainerHigh;
                                 }
@@ -199,6 +225,7 @@ Rectangle {
                                 }
                             }
                             onExited: {
+                                parent.isHovered = false;
                                 if (!parent.isCurrentWallpaper) {
                                     parent.color = Colors.surface;
                                 }
@@ -229,6 +256,55 @@ Rectangle {
                             NumberAnimation {
                                 duration: Config.animDuration / 3
                                 easing.type: Easing.OutCubic
+                            }
+                        }
+
+                        // Etiqueta con nombre del archivo al hacer hover
+                        Rectangle {
+                            visible: parent.isHovered && !parent.isCurrentWallpaper
+                            anchors.bottom: parent.bottom
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            height: 24
+                            color: Colors.adapter.surfaceContainerLowest
+                            clip: true
+
+                            ScrollView {
+                                anchors.fill: parent
+                                contentWidth: fileNameText.width
+                                ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+                                ScrollBar.vertical.policy: ScrollBar.AlwaysOff
+
+                                Text {
+                                    id: fileNameText
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: modelData ? modelData.split('/').pop() : ""
+                                    color: Colors.adapter.overBackground
+                                    font.family: Config.theme.font
+                                    font.pixelSize: 10
+
+                                    // Animación de scroll horizontal si el texto es muy largo
+                                    SequentialAnimation on x {
+                                        running: fileNameText.width > parent.parent.width - 8
+                                        loops: Animation.Infinite
+                                        PauseAnimation { duration: 1000 }
+                                        NumberAnimation {
+                                            to: parent.parent.width - fileNameText.width - 8
+                                            duration: Math.max(2000, fileNameText.width * 10)
+                                            easing.type: Easing.InOutQuad
+                                        }
+                                        PauseAnimation { duration: 1000 }
+                                        NumberAnimation {
+                                            to: 4
+                                            duration: Math.max(2000, fileNameText.width * 10)
+                                            easing.type: Easing.InOutQuad
+                                        }
+                                    }
+
+                                    Component.onCompleted: {
+                                        x = 4;
+                                    }
+                                }
                             }
                         }
                     }
