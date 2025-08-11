@@ -222,8 +222,8 @@ Rectangle {
                     // Elemento de realce para el wallpaper seleccionado.
                     highlight: Rectangle {
                         color: "transparent"
-                        border.color: Colors.adapter.primary
-                        border.width: 2
+                        border.color: Colors.adapter.surfaceContainerLowest
+                        border.width: 8
                         // opacity: 0.2
                         // radius: Config.roundness > 0 ? Config.roundness + 4 : 0
                         visible: selectedIndex >= 0
@@ -266,7 +266,8 @@ Rectangle {
                             Text {
                                 id: labelText
                                 anchors.verticalCenter: parent.verticalCenter
-                                x: 4
+                                anchors.horizontalCenter: needsScroll ? undefined : parent.horizontalCenter
+                                x: needsScroll ? 4 : undefined
                                 text: {
                                     if (parent.isCurrentWallpaper) {
                                         return "CURRENT";
@@ -282,6 +283,20 @@ Rectangle {
                                 horizontalAlignment: Text.AlignHCenter
 
                                 readonly property bool needsScroll: width > parent.width - 8
+                                
+                                // Resetear posición cuando cambia el texto o cuando deja de necesitar scroll
+                                onTextChanged: {
+                                    if (needsScroll) {
+                                        x = 4;
+                                    }
+                                }
+                                
+                                onNeedsScrollChanged: {
+                                    if (needsScroll) {
+                                        x = 4;
+                                        scrollAnimation.restart();
+                                    }
+                                }
 
                                 SequentialAnimation {
                                     id: scrollAnimation
