@@ -44,7 +44,8 @@ Item {
             property: "leftMargin"
             to: root.width + root.dismissOvershoot
             duration: 300
-            easing.type: Easing.OutCubic
+            easing.type: Easing.OutBack
+            easing.overshoot: 1.1
         }
         onFinished: () => {
             root.notifications.forEach(notif => {
