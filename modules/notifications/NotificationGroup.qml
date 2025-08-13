@@ -6,6 +6,7 @@ import Quickshell.Services.Notifications
 import qs.modules.theme
 import qs.modules.services
 import qs.config
+import "./NotificationAnimation.qml"
 import "./notification_utils.js" as NotificationUtils
 
 Item {
@@ -31,39 +32,16 @@ Item {
         if (root.qmlParent && root.qmlParent.resetDrag)
             root.qmlParent.resetDrag();
         background.anchors.leftMargin = background.anchors.leftMargin;
-        destroyAnimation.running = true;
+        notificationAnimation.startDestroy();
     }
 
-    // Animación de deslizado para todos los grupos
-    ParallelAnimation {
-        id: destroyAnimation
-        running: false
-
-        NumberAnimation {
-            target: background.anchors
-            property: "leftMargin"
-            to: root.width / 8 + root.dismissOvershoot
-            duration: Config.animDuration
-            easing.type: Easing.OutBack
-            easing.overshoot: 1.1
-        }
-        NumberAnimation {
-            target: background
-            property: "scale"
-            from: 1.0
-            to: 0.8
-            duration: Config.animDuration
-            easing.type: Easing.OutQuad
-        }
-        NumberAnimation {
-            target: background
-            property: "opacity"
-            from: 1.0
-            to: 0.0
-            duration: Config.animDuration
-            easing.type: Easing.OutQuad
-        }
-        onFinished: () => {
+    NotificationAnimation {
+        id: notificationAnimation
+        targetItem: background
+        dismissOvershoot: root.dismissOvershoot
+        parentWidth: root.width
+        
+        onDestroyFinished: {
             root.notifications.forEach(notif => {
                 Qt.callLater(() => {
                     Notifications.discardNotification(notif.id);
