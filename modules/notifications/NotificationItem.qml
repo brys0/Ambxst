@@ -15,7 +15,7 @@ Item {
     property bool expanded: false
     property bool onlyNotification: false
     property real fontSize: 12
-    property real padding: onlyNotification ? 0 : 8
+    property real padding: onlyNotification ? 0 : (expanded ? 8 : 0)
 
     property real dragConfirmThreshold: 70
     property real dismissOvershoot: notificationIcon.implicitWidth + 20
@@ -68,7 +68,7 @@ Item {
         targetItem: background
         dismissOvershoot: root.dismissOvershoot
         parentWidth: root.width
-        
+
         onDestroyFinished: {
             Notifications.discardNotification(notificationObject.id);
         }
