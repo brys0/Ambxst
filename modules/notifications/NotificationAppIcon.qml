@@ -8,25 +8,28 @@ import qs.modules.theme
 import qs.config
 import "./notification_utils.js" as NotificationUtils
 
-Rectangle {
+ClippingRectangle {
     id: root
     property var appIcon: ""
     property var summary: ""
     property var urgency: NotificationUrgency.Normal
     property var image: ""
     property real scale: 1
-    property real size: 45 * scale
+    property real size: 48 * scale
     property real materialIconScale: 0.57
-    property real appIconScale: 0.7
-    property real smallAppIconScale: 0.49
+    // property real materialIconScale: scale
+    // property real appIconScale: 0.7
+    property real appIconScale: scale
+    property real smallAppIconScale: 0.4
+    // property real smallAppIconScale: scale
     property real materialIconSize: size * materialIconScale
     property real appIconSize: size * appIconScale
     property real smallAppIconSize: size * smallAppIconScale
 
     implicitWidth: size
     implicitHeight: size
-    radius: 12 // Full radius for circular appearance
-    color: "#f3f3f3" // Light surface color
+    radius: Config.roundness > 8 ? Config.roundness - 8 : 0
+    color: "transparent" // Light surface color
 
     Loader {
         id: materialSymbolLoader
@@ -65,9 +68,9 @@ Rectangle {
             anchors.fill: parent
             clip: true
 
-            ClippingRectangle {
+            Rectangle {
                 anchors.fill: parent
-                radius: 16
+                radius: root.radius
                 color: "transparent"
 
                 Image {
