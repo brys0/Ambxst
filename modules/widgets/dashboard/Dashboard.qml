@@ -41,6 +41,31 @@ NotchAnimationBehavior {
             id: tabsContainer
             width: root.tabWidth
             height: parent.height
+            
+            // Manejo del scroll con rueda del mouse
+            WheelHandler {
+                id: wheelHandler
+                acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                
+                onWheel: event => {
+                    // Determinar dirección del scroll
+                    let scrollUp = event.angleDelta.y > 0
+                    let newIndex = root.state.currentTab
+                    
+                    if (scrollUp && newIndex > 0) {
+                        // Scroll hacia arriba = pestaña anterior
+                        newIndex = newIndex - 1
+                    } else if (!scrollUp && newIndex < root.tabCount - 1) {
+                        // Scroll hacia abajo = pestaña siguiente
+                        newIndex = newIndex + 1
+                    }
+                    
+                    // Navegar solo si cambió el índice
+                    if (newIndex !== root.state.currentTab) {
+                        stack.navigateToTab(newIndex)
+                    }
+                }
+            }
 
             // Background highlight que se desplaza verticalmente con efecto elástico
             Rectangle {
@@ -320,6 +345,32 @@ NotchAnimationBehavior {
                     propagateComposedEvents: true
                 }
             }
+        }
+    }
+
+    // Atajos de teclado para navegación
+    Shortcut {
+        id: nextTabShortcut
+        sequence: "Ctrl+Tab"
+        enabled: GlobalStates.dashboardOpen
+        
+        onActivated: {
+            let nextIndex = (root.state.currentTab + 1) % root.tabCount
+            stack.navigateToTab(nextIndex)
+        }
+    }
+    
+    Shortcut {
+        id: prevTabShortcut
+        sequence: "Ctrl+Shift+Tab"
+        enabled: GlobalStates.dashboardOpen
+        
+        onActivated: {
+            let prevIndex = root.state.currentTab - 1
+            if (prevIndex < 0) {
+                prevIndex = root.tabCount - 1
+            }
+            stack.navigateToTab(prevIndex)
         }
     }
 
