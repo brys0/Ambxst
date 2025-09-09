@@ -15,6 +15,7 @@ PaneRect {
     signal searchTextChanged(string text)
     signal accepted
     signal shiftAccepted
+    signal ctrlRPressed
     signal escapePressed
     signal downPressed
     signal upPressed
@@ -73,6 +74,9 @@ PaneRect {
                     } else {
                         root.accepted();
                     }
+                    event.accepted = true;
+                } else if (event.key === Qt.Key_R && (event.modifiers & Qt.ControlModifier)) {
+                    root.ctrlRPressed();
                     event.accepted = true;
                 } else if (event.key === Qt.Key_Escape) {
                     if (root.clearOnEscape) {

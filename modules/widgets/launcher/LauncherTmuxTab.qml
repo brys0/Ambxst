@@ -18,19 +18,26 @@ Rectangle {
     property int selectedIndex: -1
     property var tmuxSessions: []
     property alias filteredSessions: listModel.sessions
-    
+
     // Delete mode state
     property bool deleteMode: false
     property string sessionToDelete: ""
     property int originalSelectedIndex: -1
-    
+
+    // Rename mode state
+    property bool renameMode: false
+    property string sessionToRename: ""
+    property string newSessionName: ""
+    property int renameSelectedIndex: -1
+    property string pendingRenamedSession: "" // Track session to select after rename
+
     signal itemSelected
 
     // Model para hacer la lista observable
     QtObject {
         id: listModel
         property var sessions: []
-        
+
         function updateSessions(newSessions) {
             sessions = newSessions;
             console.log("DEBUG: listModel updated with", sessions.length, "sessions");
@@ -63,26 +70,30 @@ Rectangle {
             console.log("DEBUG: Canceling delete mode from external source (tab change)");
             cancelDeleteMode();
         }
+        if (renameMode) {
+            console.log("DEBUG: Canceling rename mode from external source (tab change)");
+            cancelRenameMode();
+        }
     }
 
     function updateFilteredSessions() {
         console.log("DEBUG: updateFilteredSessions called. searchText:", searchText, "tmuxSessions.length:", tmuxSessions.length);
-        
+
         var newFilteredSessions = [];
-        
+
         // Filtrar sesiones que coincidan con el texto de búsqueda (sin considerar deleteMode aquí)
         if (searchText.length === 0) {
             newFilteredSessions = tmuxSessions.slice(); // Copia del array
         } else {
-            newFilteredSessions = tmuxSessions.filter(function(session) {
+            newFilteredSessions = tmuxSessions.filter(function (session) {
                 return session.name.toLowerCase().includes(searchText.toLowerCase());
             });
-            
+
             // Verificar si existe una sesión con el nombre exacto
-            let exactMatch = tmuxSessions.find(function(session) {
+            let exactMatch = tmuxSessions.find(function (session) {
                 return session.name.toLowerCase() === searchText.toLowerCase();
             });
-            
+
             // Si no hay coincidencia exacta y hay texto de búsqueda, agregar opción para crear la sesión específica
             if (!exactMatch && searchText.length > 0) {
                 newFilteredSessions.push({
@@ -93,25 +104,25 @@ Rectangle {
                 });
             }
         }
-        
+
         console.log("DEBUG: newFilteredSessions after filter:", newFilteredSessions.length);
-        
-        // Solo agregar el botón "Create new session" cuando NO hay texto de búsqueda y NO estamos en modo eliminar
-        if (searchText.length === 0 && !deleteMode) {
+
+        // Solo agregar el botón "Create new session" cuando NO hay texto de búsqueda y NO estamos en modo eliminar o renombrar
+        if (searchText.length === 0 && !deleteMode && !renameMode) {
             newFilteredSessions.push({
                 name: "Create new session",
                 isCreateButton: true,
                 icon: "terminal"
             });
         }
-        
+
         console.log("DEBUG: newFilteredSessions after adding create button:", newFilteredSessions.length);
-        
+
         // Actualizar el modelo
         listModel.updateSessions(newFilteredSessions);
-        
-        // Auto-highlight first item when text is entered, pero NO en modo eliminar
-        if (!deleteMode) {
+
+        // Auto-highlight first item when text is entered, pero NO en modo eliminar o renombrar
+        if (!deleteMode && !renameMode) {
             if (searchText.length > 0 && newFilteredSessions.length > 0) {
                 selectedIndex = 0;
                 resultsList.currentIndex = 0;
@@ -120,8 +131,27 @@ Rectangle {
                 resultsList.currentIndex = -1;
             }
         }
-        
+
         console.log("DEBUG: Final selectedIndex:", selectedIndex, "resultsList will have count:", newFilteredSessions.length);
+
+        // Check if we need to select a pending renamed session
+        if (pendingRenamedSession !== "") {
+            console.log("DEBUG: Looking for pending renamed session:", pendingRenamedSession);
+            for (let i = 0; i < newFilteredSessions.length; i++) {
+                if (newFilteredSessions[i].name === pendingRenamedSession) {
+                    console.log("DEBUG: Found renamed session at index:", i);
+                    selectedIndex = i;
+                    resultsList.currentIndex = i;
+                    pendingRenamedSession = ""; // Clear the pending selection
+                    break;
+                }
+            }
+            // If we didn't find it, clear the pending selection anyway
+            if (pendingRenamedSession !== "") {
+                console.log("DEBUG: Renamed session not found, clearing pending selection");
+                pendingRenamedSession = "";
+            }
+        }
     }
 
     function enterDeleteMode(sessionName) {
@@ -131,7 +161,7 @@ Rectangle {
         sessionToDelete = sessionName;
         // Quitar focus del SearchInput para que el componente root pueda capturar Y/N
         root.forceActiveFocus();
-        // No necesito llamar updateFilteredSessions porque el delegate se actualiza automáticamente
+    // No necesito llamar updateFilteredSessions porque el delegate se actualiza automáticamente
     }
 
     function cancelDeleteMode() {
@@ -152,6 +182,52 @@ Rectangle {
         killProcess.command = ["tmux", "kill-session", "-t", sessionToDelete];
         killProcess.running = true;
         cancelDeleteMode();
+    }
+
+    function enterRenameMode(sessionName) {
+        console.log("DEBUG: Entering rename mode for session:", sessionName);
+        renameSelectedIndex = selectedIndex; // Store the current index
+        renameMode = true;
+        sessionToRename = sessionName;
+        newSessionName = sessionName; // Start with the current name
+        // Quitar focus del SearchInput para que el componente root pueda capturar teclas
+        root.forceActiveFocus();
+        // Force focus to the TextInput after the loader switches components
+        Qt.callLater(() => {
+            console.log("DEBUG: Attempting to find and focus rename TextInput");
+        // The TextInput's Component.onCompleted will handle the actual focusing
+        });
+    }
+
+    function cancelRenameMode() {
+        console.log("DEBUG: Canceling rename mode");
+        renameMode = false;
+        sessionToRename = "";
+        newSessionName = "";
+        // Only clear pending selection if we're not waiting for a rename result
+        if (pendingRenamedSession === "") {
+            // Devolver focus al SearchInput
+            searchInput.focusInput();
+            updateFilteredSessions();
+            // Restore the original selectedIndex
+            selectedIndex = renameSelectedIndex;
+            resultsList.currentIndex = renameSelectedIndex;
+        } else {
+            // If we have a pending renamed session, just restore focus but don't update selection
+            searchInput.focusInput();
+        }
+        renameSelectedIndex = -1;
+    }
+
+    function confirmRenameSession() {
+        console.log("DEBUG: Confirming rename for session:", sessionToRename, "to:", newSessionName);
+        if (newSessionName.trim() !== "" && newSessionName !== sessionToRename) {
+            renameProcess.command = ["tmux", "rename-session", "-t", sessionToRename, newSessionName.trim()];
+            renameProcess.running = true;
+        } else {
+            // Si no hay cambios, solo cancelar
+            cancelRenameMode();
+        }
     }
 
     function refreshTmuxSessions() {
@@ -240,8 +316,8 @@ Rectangle {
     Process {
         id: attachProcess
         running: false
-        
-        onStarted: function() {
+
+        onStarted: function () {
             root.itemSelected();
         }
     }
@@ -250,13 +326,29 @@ Rectangle {
     Process {
         id: killProcess
         running: false
-        
-        onExited: function(code) {
+
+        onExited: function (code) {
             console.log("DEBUG: Kill session completed with code:", code);
             if (code === 0) {
                 // Sesión eliminada exitosamente, refrescar la lista
                 root.refreshTmuxSessions();
             }
+        }
+    }
+
+    // Proceso para renombrar sesiones de tmux
+    Process {
+        id: renameProcess
+        running: false
+
+        onExited: function (code) {
+            console.log("DEBUG: Rename session completed with code:", code);
+            if (code === 0) {
+                // Sesión renombrada exitosamente, marcar para seleccionar después del refresh
+                root.pendingRenamedSession = root.newSessionName;
+                root.refreshTmuxSessions();
+            }
+            root.cancelRenameMode();
         }
     }
 
@@ -284,7 +376,7 @@ Rectangle {
                     root.cancelDeleteMode();
                 } else {
                     console.log("DEBUG: Enter pressed! searchText:", root.searchText, "selectedIndex:", root.selectedIndex, "resultsList.count:", resultsList.count);
-                    
+
                     if (root.selectedIndex >= 0 && root.selectedIndex < resultsList.count) {
                         let selectedSession = root.filteredSessions[root.selectedIndex];
                         console.log("DEBUG: Selected session:", selectedSession);
@@ -308,7 +400,7 @@ Rectangle {
 
             onShiftAccepted: {
                 console.log("DEBUG: Shift+Enter pressed! selectedIndex:", root.selectedIndex, "deleteMode:", root.deleteMode);
-                
+
                 if (!root.deleteMode && root.selectedIndex >= 0 && root.selectedIndex < resultsList.count) {
                     let selectedSession = root.filteredSessions[root.selectedIndex];
                     console.log("DEBUG: Selected session for deletion:", selectedSession);
@@ -319,17 +411,30 @@ Rectangle {
                 }
             }
 
+            onCtrlRPressed: {
+                console.log("DEBUG: Ctrl+R pressed! selectedIndex:", root.selectedIndex, "deleteMode:", root.deleteMode, "renameMode:", root.renameMode);
+
+                if (!root.deleteMode && !root.renameMode && root.selectedIndex >= 0 && root.selectedIndex < resultsList.count) {
+                    let selectedSession = root.filteredSessions[root.selectedIndex];
+                    console.log("DEBUG: Selected session for renaming:", selectedSession);
+                    if (selectedSession && !selectedSession.isCreateButton && !selectedSession.isCreateSpecificButton) {
+                        // Solo permitir renombrar sesiones reales, no botones de crear
+                        root.enterRenameMode(selectedSession.name);
+                    }
+                }
+            }
+
             onEscapePressed: {
-                if (!root.deleteMode) {
-                    // Solo cerrar el notch si NO estamos en modo eliminar
+                if (!root.deleteMode && !root.renameMode) {
+                    // Solo cerrar el notch si NO estamos en modo eliminar o renombrar
                     root.itemSelected();
                 }
-                // Si estamos en modo eliminar, no hacer nada aquí
+                // Si estamos en modo eliminar o renombrar, no hacer nada aquí
                 // El handler global del root se encargará
             }
 
             onDownPressed: {
-                if (!root.deleteMode && resultsList.count > 0) {
+                if (!root.deleteMode && !root.renameMode && resultsList.count > 0) {
                     if (root.selectedIndex === -1) {
                         root.selectedIndex = 0;
                         resultsList.currentIndex = 0;
@@ -341,7 +446,7 @@ Rectangle {
             }
 
             onUpPressed: {
-                if (!root.deleteMode) {
+                if (!root.deleteMode && !root.renameMode) {
                     if (root.selectedIndex > 0) {
                         root.selectedIndex--;
                         resultsList.currentIndex = root.selectedIndex;
@@ -353,7 +458,7 @@ Rectangle {
             }
 
             onPageDownPressed: {
-                if (resultsList.count > 0) {
+                if (!root.deleteMode && !root.renameMode && resultsList.count > 0) {
                     let visibleItems = Math.floor(resultsList.height / 48);
                     let newIndex = Math.min(root.selectedIndex + visibleItems, resultsList.count - 1);
                     if (root.selectedIndex === -1) {
@@ -365,7 +470,7 @@ Rectangle {
             }
 
             onPageUpPressed: {
-                if (resultsList.count > 0) {
+                if (!root.deleteMode && !root.renameMode && resultsList.count > 0) {
                     let visibleItems = Math.floor(resultsList.height / 48);
                     let newIndex = Math.max(root.selectedIndex - visibleItems, 0);
                     if (root.selectedIndex === -1) {
@@ -377,14 +482,14 @@ Rectangle {
             }
 
             onHomePressed: {
-                if (resultsList.count > 0) {
+                if (!root.deleteMode && !root.renameMode && resultsList.count > 0) {
                     root.selectedIndex = 0;
                     resultsList.currentIndex = 0;
                 }
             }
 
             onEndPressed: {
-                if (resultsList.count > 0) {
+                if (!root.deleteMode && !root.renameMode && resultsList.count > 0) {
                     root.selectedIndex = resultsList.count - 1;
                     resultsList.currentIndex = root.selectedIndex;
                 }
@@ -457,7 +562,7 @@ Rectangle {
                             }
                         }
                         radius: 6
-                        
+
                         Behavior on color {
                             ColorAnimation {
                                 duration: Config.animDuration / 2
@@ -479,7 +584,7 @@ Rectangle {
                             }
                             font.family: Icons.font
                             font.pixelSize: 16
-                            
+
                             Behavior on color {
                                 ColorAnimation {
                                     duration: Config.animDuration / 2
@@ -494,57 +599,110 @@ Rectangle {
                         Layout.fillWidth: true
                         spacing: 2
 
-                        Text {
+                        // Texto principal - Alternar entre Text y TextInput basado en modo renombrar
+                        Loader {
                             Layout.fillWidth: true
-                            text: {
-                                // Si estamos en modo eliminar y este es el item seleccionado
-                                if (root.deleteMode && modelData.name === root.sessionToDelete) {
-                                    return `Exit "${root.sessionToDelete}"? (y/N)`;
+                            sourceComponent: {
+                                if (root.renameMode && modelData.name === root.sessionToRename) {
+                                    return renameTextInput;
                                 } else {
-                                    return modelData.name;
-                                }
-                            }
-                            color: (root.deleteMode && modelData.name === root.sessionToDelete) ? Colors.adapter.errorContainer : Colors.adapter.overBackground
-                            font.family: Config.theme.font
-                            font.pixelSize: Config.theme.fontSize
-                            font.weight: modelData.isCreateButton ? Font.Medium : Font.Bold
-                            elide: Text.ElideRight
-                            
-                            Behavior on color {
-                                ColorAnimation {
-                                    duration: Config.animDuration / 2
-                                    easing.type: Easing.OutQuart
+                                    return normalText;
                                 }
                             }
                         }
 
-                        Text {
-                            Layout.fillWidth: true
-                            text: modelData.isCreateButton ? "Create a new tmux session" : "Tmux session"
-                            color: Colors.adapter.overBackground
-                            opacity: 0.7
-                            font.family: Config.theme.font
-                            font.pixelSize: Config.theme.fontSize - 2
-                            elide: Text.ElideRight
-                            visible: !modelData.isCreateButton || root.searchText.length === 0
+                        // Componente para texto normal
+                        Component {
+                            id: normalText
+                            Text {
+                                text: {
+                                    // Si estamos en modo eliminar y este es el item seleccionado
+                                    if (root.deleteMode && modelData.name === root.sessionToDelete) {
+                                        return `Exit "${root.sessionToDelete}"? (y/N)`;
+                                    } else {
+                                        return modelData.name;
+                                    }
+                                }
+                                color: (root.deleteMode && modelData.name === root.sessionToDelete) ? Colors.adapter.errorContainer : Colors.adapter.overBackground
+                                font.family: Config.theme.font
+                                font.pixelSize: Config.theme.fontSize
+                                font.weight: modelData.isCreateButton ? Font.Medium : Font.Bold
+                                elide: Text.ElideRight
+
+                                Behavior on color {
+                                    ColorAnimation {
+                                        duration: Config.animDuration / 2
+                                        easing.type: Easing.OutQuart
+                                    }
+                                }
+                            }
+                        }
+
+                        // Componente para campo de renombrar
+                        Component {
+                            id: renameTextInput
+                            TextField {
+                                text: root.newSessionName
+                                color: Colors.adapter.overBackground
+                                selectionColor: Colors.adapter.primary
+                                selectedTextColor: Colors.adapter.overPrimary
+                                font.family: Config.theme.font
+                                font.pixelSize: Config.theme.fontSize
+                                font.weight: Font.Bold
+                                background: Rectangle {
+                                    color: "transparent"
+                                    border.width: 0
+                                }
+                                selectByMouse: true
+
+                                onTextChanged: {
+                                    root.newSessionName = text;
+                                }
+
+                                Component.onCompleted: {
+                                    // Use Qt.callLater to ensure the component is fully loaded before focusing
+                                    Qt.callLater(() => {
+                                        forceActiveFocus();
+                                        selectAll();
+                                    });
+                                }
+
+                                Keys.onPressed: event => {
+                                    if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                                        root.confirmRenameSession();
+                                        event.accepted = true;
+                                    } else if (event.key === Qt.Key_Escape) {
+                                        root.cancelRenameMode();
+                                        event.accepted = true;
+                                    }
+                                }
+                            }
                         }
                     }
                 }
             }
 
             highlight: Rectangle {
-                color: root.deleteMode ? Colors.adapter.error : Colors.adapter.primary
+                color: {
+                    if (root.deleteMode) {
+                        return Colors.adapter.error;
+                    } else if (root.renameMode) {
+                        return Colors.adapter.primary;
+                    } else {
+                        return Colors.adapter.primary;
+                    }
+                }
                 opacity: root.deleteMode ? 1.0 : 0.2
                 radius: Config.roundness > 0 ? Config.roundness + 4 : 0
                 visible: root.selectedIndex >= 0
-                
+
                 Behavior on color {
                     ColorAnimation {
                         duration: Config.animDuration / 2
                         easing.type: Easing.OutQuart
                     }
                 }
-                
+
                 Behavior on opacity {
                     NumberAnimation {
                         duration: Config.animDuration / 2
@@ -566,7 +724,7 @@ Rectangle {
         });
     }
 
-    // Handler de teclas global para manejar Y/N/Enter/Escape en modo eliminar
+    // Handler de teclas global para manejar Y/N/Enter/Escape en modo eliminar y renombrar
     Keys.onPressed: event => {
         if (root.deleteMode) {
             if (event.key === Qt.Key_Y) {
@@ -586,6 +744,13 @@ Rectangle {
                 root.cancelDeleteMode();
                 event.accepted = true;
             }
+        } else if (root.renameMode) {
+            // En modo renombrar, solo manejar Escape para cancelar (Enter es manejado por el TextInput)
+            if (event.key === Qt.Key_Escape) {
+                console.log("DEBUG: Escape pressed in rename mode - canceling rename");
+                root.cancelRenameMode();
+                event.accepted = true;
+            }
         }
     }
 
@@ -593,6 +758,13 @@ Rectangle {
     onDeleteModeChanged: {
         if (!deleteMode) {
             console.log("DEBUG: Delete mode ended");
+        }
+    }
+
+    // Monitor cambios en renameMode
+    onRenameModeChanged: {
+        if (!renameMode) {
+            console.log("DEBUG: Rename mode ended");
         }
     }
 }
