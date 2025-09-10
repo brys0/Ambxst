@@ -606,74 +606,96 @@ Rectangle {
                 }
             }
 
-            // Lista de textos vertical
-            ListView {
-                id: textResultsList
+            // Lista de textos vertical o mensaje cuando no hay elementos
+            Item {
                 Layout.fillWidth: true
-                Layout.preferredHeight: root.searchText.length > 0 ? 5 * 48 : 3 * 48
-                visible: true
-                clip: true
+                Layout.preferredHeight: (root.imageItems.length > 0 && root.searchText.length === 0) ? 3 * 48 : 5 * 48
 
-                model: root.textItems
-                currentIndex: root.selectedIndex
+                // Lista de textos
+                ListView {
+                    id: textResultsList
+                    anchors.fill: parent
+                    visible: ClipboardService.items.length > 0
+                    clip: true
 
-                onCurrentIndexChanged: {
-                    if (currentIndex !== root.selectedIndex && !root.isImageSectionFocused) {
-                        root.selectedIndex = currentIndex;
+                    model: root.textItems
+                    currentIndex: root.selectedIndex
+
+                    onCurrentIndexChanged: {
+                        if (currentIndex !== root.selectedIndex && !root.isImageSectionFocused) {
+                            root.selectedIndex = currentIndex;
+                        }
                     }
-                }
 
-                delegate: Rectangle {
-                    required property var modelData
-                    required property int index
+                    delegate: Rectangle {
+                        required property var modelData
+                        required property int index
 
-                    width: textResultsList.width
-                    height: 48
-                    color: "transparent"
-                    radius: 16
+                        width: textResultsList.width
+                        height: 48
+                        color: "transparent"
+                        radius: 16
 
-                    MouseArea {
-                        id: mouseArea
-                        anchors.fill: parent
-                        hoverEnabled: true
+                        MouseArea {
+                            id: mouseArea
+                            anchors.fill: parent
+                            hoverEnabled: true
 
-                        onEntered: {
-                            if (root.isImageSectionFocused) {
-                                root.isImageSectionFocused = false;
-                                root.selectedImageIndex = -1;
+                            onEntered: {
+                                if (root.isImageSectionFocused) {
+                                    root.isImageSectionFocused = false;
+                                    root.selectedImageIndex = -1;
+                                }
+                                root.selectedIndex = index;
+                                textResultsList.currentIndex = index;
                             }
-                            root.selectedIndex = index;
-                            textResultsList.currentIndex = index;
+                            onClicked: {
+                                root.copyToClipboard(modelData.id);
+                            }
                         }
-                        onClicked: {
-                            root.copyToClipboard(modelData.id);
-                        }
-                    }
 
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.margins: 8
-                        spacing: 12
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.margins: 8
+                            spacing: 12
 
-                        Rectangle {
-                            Layout.preferredWidth: 32
-                            Layout.preferredHeight: 32
-                            color: root.selectedIndex === index && !root.isImageSectionFocused ? Colors.adapter.overPrimary : Colors.surface
-                            radius: Config.roundness > 0 ? Config.roundness - 4 : 0
+                            Rectangle {
+                                Layout.preferredWidth: 32
+                                Layout.preferredHeight: 32
+                                color: root.selectedIndex === index && !root.isImageSectionFocused ? Colors.adapter.overPrimary : Colors.surface
+                                radius: Config.roundness > 0 ? Config.roundness - 4 : 0
 
-                            Behavior on color {
-                                ColorAnimation {
-                                    duration: Config.animDuration / 2
-                                    easing.type: Easing.OutQuart
+                                Behavior on color {
+                                    ColorAnimation {
+                                        duration: Config.animDuration / 2
+                                        easing.type: Easing.OutQuart
+                                    }
+                                }
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: Icons.clip
+                                    color: root.selectedIndex === index && !root.isImageSectionFocused ? Colors.adapter.primary : Colors.adapter.overBackground
+                                    font.family: Icons.font
+                                    font.pixelSize: 16
+
+                                    Behavior on color {
+                                        ColorAnimation {
+                                            duration: Config.animDuration / 2
+                                            easing.type: Easing.OutQuart
+                                        }
+                                    }
                                 }
                             }
 
                             Text {
-                                anchors.centerIn: parent
-                                text: Icons.clip
-                                color: root.selectedIndex === index && !root.isImageSectionFocused ? Colors.adapter.primary : Colors.adapter.overBackground
-                                font.family: Icons.font
-                                font.pixelSize: 16
+                                Layout.fillWidth: true
+                                text: modelData.preview
+                                color: root.selectedIndex === index && !root.isImageSectionFocused ? Colors.adapter.overPrimary : Colors.adapter.overBackground
+                                font.family: Config.theme.font
+                                font.pixelSize: Config.theme.fontSize
+                                font.weight: Font.Bold
+                                elide: Text.ElideRight
 
                                 Behavior on color {
                                     ColorAnimation {
@@ -683,70 +705,48 @@ Rectangle {
                                 }
                             }
                         }
-
-                        Text {
-                            Layout.fillWidth: true
-                            text: modelData.preview
-                            color: root.selectedIndex === index && !root.isImageSectionFocused ? Colors.adapter.overPrimary : Colors.adapter.overBackground
-                            font.family: Config.theme.font
-                            font.pixelSize: Config.theme.fontSize
-                            font.weight: Font.Bold
-                            elide: Text.ElideRight
-
-                            Behavior on color {
-                                ColorAnimation {
-                                    duration: Config.animDuration / 2
-                                    easing.type: Easing.OutQuart
-                                }
-                            }
-                        }
                     }
+
+                    highlight: Rectangle {
+                        color: Colors.adapter.primary
+                        radius: Config.roundness > 0 ? Config.roundness + 4 : 0
+                        visible: root.selectedIndex >= 0 && !root.isImageSectionFocused
+                    }
+
+                    highlightMoveDuration: Config.animDuration / 2
+                    highlightMoveVelocity: -1
                 }
 
-                highlight: Rectangle {
-                    color: Colors.adapter.primary
-                    radius: Config.roundness > 0 ? Config.roundness + 4 : 0
-                    visible: root.selectedIndex >= 0 && !root.isImageSectionFocused
-                }
+                // Mensaje cuando no hay elementos
+                Column {
+                    anchors.centerIn: parent
+                    spacing: 16
+                    visible: ClipboardService.items.length === 0
 
-                highlightMoveDuration: Config.animDuration / 2
-                highlightMoveVelocity: -1
-            }
-        }
+                    Text {
+                        text: Icons.clipboard
+                        font.family: Icons.font
+                        font.pixelSize: 48
+                        color: Colors.surfaceBright
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
 
-        // Mensaje cuando no hay elementos
-        Item {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 5 * 48
-            visible: ClipboardService.items.length === 0
+                    Text {
+                        text: "No clipboard history"
+                        font.family: Config.theme.font
+                        font.pixelSize: Config.theme.fontSize + 2
+                        font.weight: Font.Bold
+                        color: Colors.adapter.overBackground
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
 
-            Column {
-                anchors.centerIn: parent
-                spacing: 16
-
-                Text {
-                    text: Icons.clipboard
-                    font.family: Icons.font
-                    font.pixelSize: 48
-                    color: Colors.surfaceBright
-                    anchors.horizontalCenter: parent.horizontalCenter
-                }
-
-                Text {
-                    text: "No clipboard history"
-                    font.family: Config.theme.font
-                    font.pixelSize: Config.theme.fontSize + 2
-                    font.weight: Font.Bold
-                    color: Colors.adapter.overBackground
-                    anchors.horizontalCenter: parent.horizontalCenter
-                }
-
-                Text {
-                    text: "Copy something to get started"
-                    font.family: Config.theme.font
-                    font.pixelSize: Config.theme.fontSize
-                    color: Colors.surfaceBright
-                    anchors.horizontalCenter: parent.horizontalCenter
+                    Text {
+                        text: "Copy something to get started"
+                        font.family: Config.theme.font
+                        font.pixelSize: Config.theme.fontSize
+                        color: Colors.surfaceBright
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
                 }
             }
         }
