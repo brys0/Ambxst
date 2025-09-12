@@ -171,7 +171,7 @@ PanelWindow {
 
     FileView {
         id: wallpaperConfig
-        path: Quickshell.env("PWD") + "/modules/widgets/wallpapers/wallpaper_config.json"
+        path: Quickshell.env("PWD") + "/wallpaper_config.json"
         watchChanges: true
 
         onFileChanged: reload()
