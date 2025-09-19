@@ -4,6 +4,7 @@ import Quickshell
 import Quickshell.Services.SystemTray
 import Quickshell.Widgets
 import qs.modules.theme
+import qs.modules.components
 
 MouseArea {
     id: root
@@ -23,22 +24,21 @@ MouseArea {
             item.activate();
             break;
         case Qt.RightButton:
-            if (item.hasMenu)
-                menu.open();
+            if (item.hasMenu) {
+                // Posicionar el menú basado en la posición del mouse
+                let globalPos = mapToGlobal(event.x, event.y);
+                contextMenu.x = globalPos.x;
+                contextMenu.y = globalPos.y;
+                contextMenu.open();
+            }
             break;
         }
         event.accepted = true;
     }
 
-    QsMenuAnchor {
-        id: menu
-
-        menu: root.item.menu
-        anchor.window: bar
-        anchor.rect.x: root.x + bar.width
-        anchor.rect.y: root.y
-        anchor.rect.height: root.height
-        anchor.edges: Edges.Bottom
+    ContextMenu {
+        id: contextMenu
+        menuHandle: root.item.menu
     }
 
     IconImage {

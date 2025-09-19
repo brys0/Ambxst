@@ -6,8 +6,6 @@ import qs.config
 Menu {
     id: root
 
-    signal closed()
-
     // Propiedades principales
     property var items: []
     property int menuWidth: 140
@@ -187,10 +185,5 @@ Menu {
         onObjectRemoved: (index, object) => {
             root.removeItem(object);
         }
-    }
-
-    // Emitir señal cuando el menú se cierra
-    onClosed: {
-        root.closed()
     }
 }
