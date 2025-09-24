@@ -15,6 +15,28 @@ Item {
     property var notifications: notificationGroup?.notifications ?? []
     property int notificationCount: notifications.length
     property bool multipleNotifications: notificationCount > 1
+    property var validNotifications: notifications.filter(n => n != null && n.summary != null)
+    
+    onNotificationGroupChanged: {
+        console.log("[GROUP-DEBUG] Grupo de notificaciones cambió:", {
+            appName: notificationGroup?.appName,
+            totalNotifications: notifications.length,
+            validNotifications: validNotifications.length,
+            notifications: notifications.map(n => ({
+                id: n?.id,
+                summary: n?.summary,
+                body: n?.body
+            }))
+        });
+    }
+    
+    onValidNotificationsChanged: {
+        console.log("[GROUP-DEBUG] Notificaciones válidas cambiaron:", {
+            appName: notificationGroup?.appName,
+            count: validNotifications.length,
+            validIds: validNotifications.map(n => n?.id)
+        });
+    }
     property bool expanded: false
     property bool popup: false
     property real padding: 16
@@ -154,9 +176,9 @@ Item {
             NotificationAppIcon {
                 Layout.alignment: Qt.AlignTop
                 Layout.fillWidth: false
-                image: root?.multipleNotifications ? "" : notificationGroup?.notifications[0]?.image ?? ""
+                image: root?.multipleNotifications ? "" : (root.validNotifications.length > 0 ? root.validNotifications[0]?.image ?? "" : "")
                 appIcon: notificationGroup?.appIcon
-                summary: notificationGroup?.notifications[root.notificationCount - 1]?.summary
+                summary: root.validNotifications.length > 0 ? root.validNotifications[root.validNotifications.length - 1]?.summary ?? "" : ""
             }
 
             ColumnLayout {
@@ -187,7 +209,7 @@ Item {
                             id: appName
                             elide: Text.ElideRight
                             Layout.fillWidth: true
-                            text: (topRow.showAppName ? notificationGroup?.appName : notificationGroup?.notifications[0]?.summary) || ""
+                            text: (topRow.showAppName ? notificationGroup?.appName : (root.validNotifications.length > 0 ? root.validNotifications[0]?.summary ?? "" : "")) || ""
                             font.family: Config.theme.font
                             font.pixelSize: topRow.showAppName ? topRow.fontSize : 14
                             font.weight: Font.Bold
@@ -229,7 +251,7 @@ Item {
                         }
                     }
 
-                    model: expanded ? root.notifications.slice().reverse() : root.notifications.slice().reverse().slice(0, 2)
+                    model: expanded ? root.validNotifications.slice().reverse() : root.validNotifications.slice().reverse().slice(0, 2)
 
                     delegate: NotificationItem {
                         required property int index
@@ -241,6 +263,16 @@ Item {
                         visible: root.expanded || (index < 2)
                         anchors.left: parent?.left
                         anchors.right: parent?.right
+
+                        Component.onCompleted: {
+                            console.log("[GROUP-DEBUG] NotificationItem creado:", {
+                                index: index,
+                                id: modelData?.id,
+                                summary: modelData?.summary,
+                                body: modelData?.body,
+                                isValid: modelData != null && (modelData.summary != null || modelData.body != null)
+                            });
+                        }
 
                         onDestroyRequested: {
                             if (root.notificationCount === 1) {

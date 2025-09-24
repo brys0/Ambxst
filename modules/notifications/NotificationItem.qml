@@ -15,6 +15,31 @@ Item {
     property bool expanded: false
     property real fontSize: 12
     property real padding: 8
+    property bool onlyNotification: false
+    
+    // Verificar que la notificación tiene contenido válido
+    property bool isValid: notificationObject != null && 
+                          (notificationObject.summary != null && notificationObject.summary.length > 0) ||
+                          (notificationObject.body != null && notificationObject.body.length > 0)
+    
+    onNotificationObjectChanged: {
+        console.log("[ITEM-DEBUG] NotificationObject cambió:", {
+            id: notificationObject?.id,
+            summary: notificationObject?.summary,
+            body: notificationObject?.body,
+            isValid: isValid,
+            isNull: notificationObject == null
+        });
+    }
+    
+    onIsValidChanged: {
+        console.log("[ITEM-DEBUG] Validez cambió:", {
+            id: notificationObject?.id,
+            isValid: isValid,
+            summary: notificationObject?.summary,
+            body: notificationObject?.body
+        });
+    }
 
     property real dragConfirmThreshold: 70
     property real dismissOvershoot: 20
@@ -93,6 +118,15 @@ Item {
         anchors.left: parent.left
         radius: 8
         anchors.leftMargin: root.xOffset
+        visible: root.isValid
+        
+        onVisibleChanged: {
+            console.log("[ITEM-DEBUG] Visibilidad del item cambió:", {
+                id: root.notificationObject?.id,
+                visible: visible,
+                isValid: root.isValid
+            });
+        }
 
         Behavior on anchors.leftMargin {
             enabled: !dragManager.dragging
