@@ -10,8 +10,9 @@ BgRect {
 
     property string currentTime: ""
     property string weatherText: ""
+    property bool weatherVisible: false
 
-    Layout.preferredWidth: weatherDisplay.implicitWidth + timeDisplay.implicitWidth + 42
+    Layout.preferredWidth: (weatherVisible ? weatherDisplay.implicitWidth : 0) + timeDisplay.implicitWidth + (weatherVisible ? 42 : 24)
     Layout.preferredHeight: 36
 
     RowLayout {
@@ -25,6 +26,7 @@ BgRect {
             font.pixelSize: Config.theme.fontSize
             font.family: Config.theme.font
             font.bold: true
+            visible: clockContainer.weatherVisible
         }
 
         Text {
@@ -33,6 +35,7 @@ BgRect {
             font.pixelSize: Config.theme.fontSize
             font.family: Config.theme.font
             font.bold: true
+            visible: clockContainer.weatherVisible
         }
 
         Text {
@@ -73,12 +76,14 @@ BgRect {
             waitForEnd: true
             onStreamFinished: {
                 clockContainer.weatherText = text.trim().replace(/ /g, '');
+                clockContainer.weatherVisible = true;
             }
         }
 
         onExited: function (code) {
             if (code !== 0) {
                 console.log("Weather fetch failed");
+                clockContainer.weatherVisible = false;
             }
         }
     }
