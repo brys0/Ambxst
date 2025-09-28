@@ -165,7 +165,7 @@ Item {
 
                 ColumnLayout {
                     Layout.fillWidth: true
-                    spacing: 8
+                    spacing: root.notificationCount === 1 ? 0 : 8
 
                     Behavior on spacing {
                         NumberAnimation {
@@ -181,7 +181,8 @@ Item {
                     Layout.fillWidth: true
                     property real fontSize: 11
                     property bool showAppName: root.multipleNotifications
-                    implicitHeight: root.notificationCount === 1 ? 0 : Math.max(topTextRow.implicitHeight, expandButton.implicitHeight)
+                    implicitHeight: root.multipleNotifications ? Math.max(topTextRow.implicitHeight, expandButton.implicitHeight) : 0
+                    visible: root.multipleNotifications
 
                     RowLayout {
                         id: topTextRow

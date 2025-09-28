@@ -20,7 +20,8 @@ ListView {
         anchors.right: parent?.right
         notificationObject: modelData
         expanded: true // Siempre expandidas para mostrar toda la información
-        
+        onlyNotification: true // Mostrar como notificación individual con header
+
         onDestroyRequested: {
             // No necesitamos lógica especial aquí
         }
