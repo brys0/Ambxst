@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Widgets
 import Quickshell.Services.Notifications
 import qs.modules.theme
 import qs.modules.services
@@ -16,20 +17,20 @@ Item {
     property int notificationCount: notifications.length
     property bool multipleNotifications: notificationCount > 1
     property var validNotifications: notifications.filter(n => n != null && n.summary != null)
-    
+
     onNotificationGroupChanged: {
         console.log("[GROUP-DEBUG] Grupo de notificaciones cambió:", {
             appName: notificationGroup?.appName,
             totalNotifications: notifications.length,
             validNotifications: validNotifications.length,
             notifications: notifications.map(n => ({
-                id: n?.id,
-                summary: n?.summary,
-                body: n?.body
-            }))
+                        id: n?.id,
+                        summary: n?.summary,
+                        body: n?.body
+                    }))
         });
     }
-    
+
     onValidNotificationsChanged: {
         console.log("[GROUP-DEBUG] Notificaciones válidas cambiaron:", {
             appName: notificationGroup?.appName,
@@ -126,25 +127,14 @@ Item {
         }
     }
 
-    Rectangle {
-        id: shadowRect
-        anchors.fill: background
-        anchors.margins: -2
-        color: "transparent"
-        border.color: "#00000020"
-        border.width: popup ? 1 : 0
-        radius: background.radius + 2
-        visible: popup
-    }
-
-    Rectangle {
+    ClippingRectangle {
         id: background
         anchors.left: parent.left
         width: parent.width
         color: Colors.background
-        radius: Config.roundness > 0 ? Config.roundness + 8 : 0
+        radius: Config.roundness > 0 ? Config.roundness : 0
         border.color: Colors.surfaceContainerHigh
-        border.width: 2
+        border.width: 0
         anchors.leftMargin: root.xOffset
 
         Behavior on anchors.leftMargin {
@@ -172,8 +162,6 @@ Item {
             anchors.right: parent.right
             anchors.margins: root.padding
             spacing: root.padding / 2
-
-
 
             ColumnLayout {
                 Layout.fillWidth: true
@@ -236,7 +224,7 @@ Item {
                     id: notificationsColumn
                     implicitHeight: contentHeight
                     Layout.fillWidth: true
-                    spacing: expanded ? 5 : 3
+                    spacing: 4
                     interactive: false
 
                     Behavior on spacing {

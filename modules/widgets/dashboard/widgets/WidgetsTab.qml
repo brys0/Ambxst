@@ -42,11 +42,11 @@ Rectangle {
 
             ScrollView {
                 anchors.fill: parent
-                anchors.margins: 8
+                anchors.margins: 4
 
                 ListView {
                     id: notificationList
-                    spacing: 8
+                    spacing: 4
                     model: Notifications.appNameList
 
                     delegate: NotificationGroup {
