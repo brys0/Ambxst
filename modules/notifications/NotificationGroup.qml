@@ -39,7 +39,7 @@ Item {
     onValidNotificationsChanged: {}
     property bool expanded: false
     property bool popup: false
-    property real padding: 16
+    property real padding: 8
     implicitHeight: background.implicitHeight
 
     property real dragConfirmThreshold: 70
@@ -162,9 +162,9 @@ Item {
             anchors.margins: root.padding
             spacing: root.padding / 2
 
-            ColumnLayout {
-                Layout.fillWidth: true
-                spacing: root.notificationCount === 1 ? 0 : 8
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: root.notificationCount === 1 ? 0 : (root.expanded ? 8 : 4)
 
                 Behavior on spacing {
                     NumberAnimation {
