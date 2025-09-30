@@ -191,7 +191,7 @@ PanelWindow {
 
     FileView {
         id: wallpaperConfig
-        path: Quickshell.env("PWD") + "/wallpaper_config.json"
+        path: Quickshell.cacheDir + "/wallpapers.json"
         watchChanges: true
 
         onFileChanged: reload()
@@ -311,7 +311,7 @@ PanelWindow {
     Process {
         id: thumbnailGeneratorScript
         running: false
-        command: ["python3", Quickshell.env("PWD") + "/scripts/generate_thumbnails.py", Quickshell.env("PWD") + "/wallpaper_config.json", Quickshell.cacheDir]
+        command: ["python3", Quickshell.env("PWD") + "/scripts/generate_thumbnails.py", Quickshell.cacheDir + "/wallpapers.json", Quickshell.cacheDir]
 
         stdout: StdioCollector {
             onStreamFinished: {

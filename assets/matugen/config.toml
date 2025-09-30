@@ -1,6 +1,6 @@
-[templates.ambyst]
-input_path = "~/Repos/Axenide/Ambyst/assets/matugen/colors.json"
-output_path = "~/Repos/Axenide/Ambyst/modules/theme/colors.json"
+[templates.ambxst]
+input_path = "~/Repos/Axenide/Ambxst/assets/matugen/colors.json"
+output_path = "~/Repos/Axenide/Ambxst/modules/theme/colors.json"
 
 [config.custom_colors.red]
 color = "#FF0000"

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Thumbnail Generator for Ambyst Wallpaper System
+Thumbnail Generator for Ambxst Wallpaper System
 Generates thumbnails for video files, images, and GIFs using FFmpeg and ImageMagick with multithreading.
 """
 
@@ -337,7 +337,7 @@ class ThumbnailGenerator:
     
     def run(self) -> int:
         """Main execution function."""
-        print("🖼️  Ambyst Thumbnail Generator")
+        print("🖼️  Ambxst Thumbnail Generator")
         print("=" * 40)
         
         # Load configuration
@@ -397,7 +397,6 @@ def main():
     """Entry point."""
     if len(sys.argv) != 3:
         print("Usage: python3 generate_thumbnails.py <config_path> <cache_base_path>")
-        print("Example: python3 generate_thumbnails.py wallpaper_config.json ~/.cache/quickshell")
         return 1
 
     config_path = sys.argv[1]

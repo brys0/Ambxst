@@ -6,17 +6,15 @@ import qs.modules.services
 Item {
     id: root
 
-
-
     GlobalShortcut {
         id: overviewShortcut
-        appid: "ambyst"
+        appid: "ambxst"
         name: "overview"
         description: "Toggle window overview"
 
         onPressed: {
             console.log("Overview shortcut pressed");
-            
+
             // Toggle overview - if already open, close it; otherwise open overview
             if (Visibilities.currentActiveModule === "overview") {
                 Visibilities.setActiveModule("");
@@ -28,13 +26,13 @@ Item {
 
     GlobalShortcut {
         id: powermenuShortcut
-        appid: "ambyst"
+        appid: "ambxst"
         name: "powermenu"
         description: "Toggle power menu"
 
         onPressed: {
             console.log("Power menu shortcut pressed");
-            
+
             // Toggle power menu - if already open, close it; otherwise open power menu
             if (Visibilities.currentActiveModule === "powermenu") {
                 Visibilities.setActiveModule("");
@@ -47,13 +45,13 @@ Item {
     // Launcher tab shortcuts
     GlobalShortcut {
         id: launcherAppsShortcut
-        appid: "ambyst"
+        appid: "ambxst"
         name: "launcher-apps"
         description: "Open launcher apps tab"
 
         onPressed: {
             console.log("Launcher apps shortcut pressed");
-            
+
             // Toggle si ya está en launcher con apps tab, sino abrir/navegar
             if (Visibilities.currentActiveModule === "launcher" && GlobalStates.launcherCurrentTab === 0) {
                 GlobalStates.clearLauncherState();
@@ -71,13 +69,13 @@ Item {
 
     GlobalShortcut {
         id: launcherTmuxShortcut
-        appid: "ambyst"
+        appid: "ambxst"
         name: "launcher-tmux"
         description: "Open launcher tmux tab"
 
         onPressed: {
             console.log("Launcher tmux shortcut pressed");
-            
+
             // Toggle si ya está en launcher con tmux tab, sino abrir/navegar
             if (Visibilities.currentActiveModule === "launcher" && GlobalStates.launcherCurrentTab === 1) {
                 GlobalStates.clearLauncherState();
@@ -95,13 +93,13 @@ Item {
 
     GlobalShortcut {
         id: launcherClipboardShortcut
-        appid: "ambyst"
+        appid: "ambxst"
         name: "launcher-clipboard"
         description: "Open launcher clipboard tab"
 
         onPressed: {
             console.log("Launcher clipboard shortcut pressed");
-            
+
             // Toggle si ya está en launcher con clipboard tab, sino abrir/navegar
             if (Visibilities.currentActiveModule === "launcher" && GlobalStates.launcherCurrentTab === 2) {
                 GlobalStates.clearLauncherState();
@@ -120,13 +118,13 @@ Item {
     // Dashboard tab shortcuts
     GlobalShortcut {
         id: dashboardWidgetsShortcut
-        appid: "ambyst"
+        appid: "ambxst"
         name: "dashboard-widgets"
         description: "Open dashboard widgets tab"
 
         onPressed: {
             console.log("Dashboard widgets shortcut pressed");
-            
+
             // Toggle si ya está en dashboard con widgets tab, sino abrir/navegar
             if (Visibilities.currentActiveModule === "dashboard" && GlobalStates.dashboardCurrentTab === 0) {
                 Visibilities.setActiveModule("");
@@ -143,13 +141,13 @@ Item {
 
     GlobalShortcut {
         id: dashboardPinsShortcut
-        appid: "ambyst"
+        appid: "ambxst"
         name: "dashboard-pins"
         description: "Open dashboard pins tab"
 
         onPressed: {
             console.log("Dashboard pins shortcut pressed");
-            
+
             // Toggle si ya está en dashboard con pins tab, sino abrir/navegar
             if (Visibilities.currentActiveModule === "dashboard" && GlobalStates.dashboardCurrentTab === 1) {
                 Visibilities.setActiveModule("");
@@ -166,13 +164,13 @@ Item {
 
     GlobalShortcut {
         id: dashboardKanbanShortcut
-        appid: "ambyst"
+        appid: "ambxst"
         name: "dashboard-kanban"
         description: "Open dashboard kanban tab"
 
         onPressed: {
             console.log("Dashboard kanban shortcut pressed");
-            
+
             // Toggle si ya está en dashboard con kanban tab, sino abrir/navegar
             if (Visibilities.currentActiveModule === "dashboard" && GlobalStates.dashboardCurrentTab === 2) {
                 Visibilities.setActiveModule("");
@@ -189,13 +187,13 @@ Item {
 
     GlobalShortcut {
         id: dashboardWallpapersShortcut
-        appid: "ambyst"
+        appid: "ambxst"
         name: "dashboard-wallpapers"
         description: "Open dashboard wallpapers tab"
 
         onPressed: {
             console.log("Dashboard wallpapers shortcut pressed");
-            
+
             // Toggle si ya está en dashboard con wallpapers tab, sino abrir/navegar
             if (Visibilities.currentActiveModule === "dashboard" && GlobalStates.dashboardCurrentTab === 3) {
                 Visibilities.setActiveModule("");
@@ -212,7 +210,7 @@ Item {
 
     GlobalShortcut {
         id: dashboardAssistantShortcut
-        appid: "ambyst"
+        appid: "ambxst"
         name: "dashboard-assistant"
         description: "Open dashboard assistant tab"
 
@@ -235,7 +233,7 @@ Item {
 
     GlobalShortcut {
         id: launcherEmojiShortcut
-        appid: "ambyst"
+        appid: "ambxst"
         name: "launcher-emoji"
         description: "Open launcher emoji tab"
 

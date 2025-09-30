@@ -549,7 +549,7 @@ Rectangle {
 
             // Fallback a imagen original si el thumbnail falla
             onStatusChanged: {
-                if (status === Image.Error && source.toString().includes("/by-shell/Ambyst/image_thumbnails/")) {
+                if (status === Image.Error && source.toString().includes("/by-shell/Ambxst/image_thumbnails/")) {
                     console.log("Thumbnail failed, using original:", parent.sourceFile);
                     source = "file://" + parent.sourceFile;
                 }
@@ -577,7 +577,7 @@ Rectangle {
 
                 // Fallback a GIF original si el thumbnail falla
                 onStatusChanged: {
-                    if (status === Image.Error && source.toString().includes("/by-shell/Ambyst/gif_thumbnails/")) {
+                    if (status === Image.Error && source.toString().includes("/by-shell/Ambxst/gif_thumbnails/")) {
                         console.log("GIF thumbnail failed, using original:", parent.sourceFile);
                         source = "file://" + parent.sourceFile;
                     }
