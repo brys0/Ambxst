@@ -30,11 +30,11 @@ Item {
             }
             groups[summary].push(notif);
         });
-        // Limitar cada grupo a máximo 5 notificaciones
+        // Limitar cada grupo a máximo 5 notificaciones visibles
         return Object.values(groups).map(notifications => ({
-                    summary: notifications[0].summary,
-                    notifications: notifications.slice(0, 5)
-                }));
+                     summary: notifications[0].summary,
+                     notifications: notifications.slice(0, 5)
+                 }));
     }
 
     onNotificationGroupChanged: {}
