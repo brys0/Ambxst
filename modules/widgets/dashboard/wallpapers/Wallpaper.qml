@@ -26,7 +26,7 @@ PanelWindow {
     property string fallbackDir: Qt.resolvedUrl("../../../../assets/wallpapers_example").toString().replace("file://", "")
     property list<string> wallpaperPaths: []
     property int currentIndex: 0
-    property string currentWallpaper: initialLoadCompleted && !usingFallback && wallpaperPaths.length > 0 ? wallpaperPaths[currentIndex] : ""
+    property string currentWallpaper: initialLoadCompleted && wallpaperPaths.length > 0 ? wallpaperPaths[currentIndex] : ""
     property bool initialLoadCompleted: false
     property bool usingFallback: false
 
