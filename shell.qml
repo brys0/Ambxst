@@ -1,5 +1,5 @@
 //@ pragma UseQApplication
-//@ pragma ShellId Ambyst
+//@ pragma ShellId Ambxst
 import QtQuick
 import Quickshell
 import qs.modules.bar
