@@ -10,6 +10,13 @@ Item {
     implicitWidth: Math.round(hasActiveNotifications ? (notificationHoverHandler.hovered ? 420 + 48 : 320 + 48) : 200 + userInfo.width + separator1.width + separator2.width + notifIndicator.width + (mainRow.spacing * 4) + 32)
     implicitHeight: mainRow.height + (hasActiveNotifications ? (notificationHoverHandler.hovered ? notificationView.implicitHeight + 32 : notificationView.implicitHeight + 16) : 0)
 
+    Behavior on implicitWidth {
+        NumberAnimation {
+            duration: Config.animDuration
+            easing.type: Easing.OutQuart
+        }
+    }
+
     readonly property bool hasActiveNotifications: Notifications.popupList.length > 0
 
     HoverHandler {
@@ -20,6 +27,13 @@ Item {
     Column {
         anchors.fill: parent
         spacing: hasActiveNotifications ? 4 : 0
+
+        Behavior on spacing {
+            NumberAnimation {
+                duration: Config.animDuration
+                easing.type: Easing.OutQuart
+            }
+        }
 
         Row {
             id: mainRow
@@ -73,13 +87,6 @@ Item {
             height: hasActiveNotifications ? (notificationHoverHandler.hovered ? notificationView.implicitHeight + 32 : notificationView.implicitHeight + 16) : 0
             clip: false
             visible: height > 0
-
-            Behavior on height {
-                NumberAnimation {
-                    duration: Config.animDuration
-                    easing.type: Easing.OutQuart
-                }
-            }
 
             NotchNotificationView {
                 id: notificationView

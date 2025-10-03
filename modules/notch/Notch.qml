@@ -33,22 +33,6 @@ Item {
     implicitWidth: screenNotchOpen ? Math.max(stackContainer.width + 40, 290) : stackContainer.width + 24
     implicitHeight: Config.notchTheme === "default" ? defaultHeight : (Config.notchTheme === "island" ? islandHeight : defaultHeight)
 
-    Behavior on implicitWidth {
-        NumberAnimation {
-            duration: Config.animDuration
-            easing.type: isExpanded ? Easing.OutBack : Easing.OutQuart
-            easing.overshoot: isExpanded ? 1.2 : 1.0
-        }
-    }
-
-    Behavior on implicitHeight {
-        NumberAnimation {
-            duration: Config.animDuration
-            easing.type: isExpanded ? Easing.OutBack : Easing.OutQuart
-            easing.overshoot: isExpanded ? 1.2 : 1.0
-        }
-    }
-
     RoundCorner {
         id: leftCorner
         visible: Config.notchTheme === "default"

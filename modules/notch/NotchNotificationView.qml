@@ -18,6 +18,13 @@ Item {
     implicitWidth: hovered ? 420 : 320
     implicitHeight: hovered ? mainColumn.implicitHeight - 16 : mainColumn.implicitHeight
 
+    Behavior on implicitWidth {
+        NumberAnimation {
+            duration: Config.animDuration
+            easing.type: Easing.OutQuart
+        }
+    }
+
     property var currentNotification: {
         return (Notifications.popupList.length > currentIndex && currentIndex >= 0) ? Notifications.popupList[currentIndex] : (Notifications.popupList.length > 0 ? Notifications.popupList[0] : null);
     }
@@ -151,6 +158,13 @@ Item {
                     implicitHeight: currentItem ? currentItem.implicitHeight : 0
                     height: implicitHeight
                     clip: true
+
+                    Behavior on implicitHeight {
+                        NumberAnimation {
+                            duration: Config.animDuration
+                            easing.type: Easing.OutQuart
+                        }
+                    }
 
                     // Crear componente inicial
                     Component.onCompleted: {
@@ -338,11 +352,25 @@ Item {
                             width: parent.width
                             spacing: hovered ? 8 : 0
 
+                            Behavior on spacing {
+                                NumberAnimation {
+                                    duration: Config.animDuration
+                                    easing.type: Easing.OutQuart
+                                }
+                            }
+
                             // Contenido principal de la notificación
                             Item {
                                 width: parent.width
                                 property int criticalMargins: hovered && notification && notification.urgency == NotificationUrgency.Critical ? 16 : 0
                                 implicitHeight: mainContentRow.implicitHeight + (criticalMargins * 2)
+
+                                Behavior on criticalMargins {
+                                    NumberAnimation {
+                                        duration: Config.animDuration
+                                        easing.type: Easing.OutQuart
+                                    }
+                                }
 
                                 DiagonalStripePattern {
                                     id: notchStripeContainer
@@ -380,6 +408,20 @@ Item {
                                             image: notification ? (notification.cachedImage || notification.image) : ""
                                             summary: notification ? notification.summary : ""
                                             urgency: notification ? notification.urgency : NotificationUrgency.Normal
+
+                                            Behavior on Layout.preferredWidth {
+                                                NumberAnimation {
+                                                    duration: Config.animDuration
+                                                    easing.type: Easing.OutQuart
+                                                }
+                                            }
+
+                                            Behavior on Layout.preferredHeight {
+                                                NumberAnimation {
+                                                    duration: Config.animDuration
+                                                    easing.type: Easing.OutQuart
+                                                }
+                                            }
                                         }
 
                                         // Textos de la notificación
@@ -510,6 +552,20 @@ Item {
                                         Layout.alignment: Qt.AlignTop
                                         z: 200
 
+                                        Behavior on Layout.preferredWidth {
+                                            NumberAnimation {
+                                                duration: Config.animDuration
+                                                easing.type: Easing.OutQuart
+                                            }
+                                        }
+
+                                        Behavior on Layout.preferredHeight {
+                                            NumberAnimation {
+                                                duration: Config.animDuration
+                                                easing.type: Easing.OutQuart
+                                            }
+                                        }
+
                                         Loader {
                                             anchors.fill: parent
                                             active: hovered
@@ -554,6 +610,13 @@ Item {
                                 height: implicitHeight
                                 clip: true
                                 z: 200
+
+                                Behavior on implicitHeight {
+                                    NumberAnimation {
+                                        duration: Config.animDuration
+                                        easing.type: Easing.OutQuart
+                                    }
+                                }
 
                                 RowLayout {
                                     anchors.fill: parent
@@ -604,10 +667,17 @@ Item {
             Item {
                 id: pageIndicators
                 Layout.preferredWidth: (Notifications.popupList.length > 1) ? 8 : 0
-                Layout.preferredHeight: 32 // Altura fija para 3 puntos + spacing
+                Layout.preferredHeight: 32
                 Layout.alignment: Qt.AlignVCenter
                 visible: Notifications.popupList.length > 1
                 clip: true
+
+                Behavior on Layout.preferredWidth {
+                    NumberAnimation {
+                        duration: Config.animDuration
+                        easing.type: Easing.OutQuart
+                    }
+                }
 
                 Column {
                     id: dotsColumn
