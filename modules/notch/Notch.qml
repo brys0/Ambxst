@@ -30,7 +30,7 @@ Item {
     property int defaultHeight: Config.bar.showBackground ? (screenNotchOpen || hasActiveNotifications ? Math.max(stackContainer.height, 44) : 44) : (screenNotchOpen || hasActiveNotifications ? Math.max(stackContainer.height, 40) : 40)
     property int islandHeight: Config.bar.showBackground ? (screenNotchOpen || hasActiveNotifications ? Math.max(stackContainer.height, 36) : 36) : (screenNotchOpen || hasActiveNotifications ? Math.max(stackContainer.height, 36) : 36)
 
-    implicitWidth: screenNotchOpen || hasActiveNotifications ? Math.max(stackContainer.width + 40, 290) : 290
+    implicitWidth: screenNotchOpen || hasActiveNotifications ? Math.max(stackContainer.width + 40, 290) : stackContainer.width + 24
     implicitHeight: Config.notchTheme === "default" ? defaultHeight : (Config.notchTheme === "island" ? islandHeight : defaultHeight)
 
     Behavior on implicitWidth {
