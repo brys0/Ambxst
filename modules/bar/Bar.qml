@@ -20,7 +20,8 @@ PanelWindow {
 
     // Determina la posición. Actualmente soporta "top" y "bottom".
     // Si se provee un valor no reconocido, se usa "top" por defecto para evitar estados inconsistentes.
-    property string position: (Config.bar.position === "bottom" || Config.bar.position === "top") ? Config.bar.position : "top"
+    property string position: Config.bar.position === ["top", "bottom", "left", "right"].includes(Config.bar.position) ? Config.bar.position : "top"
+    property string orientation: position === "left" || position === "right" ? "vertical" : "horizontal"
 
     anchors {
         top: position !== "bottom"
@@ -138,9 +139,10 @@ PanelWindow {
         // Lado izquierdo de la barra
         RowLayout {
             id: barStart
+            anchors.top: parent.top
+            anchors.bottom: panel.orientation === "horizontal" ? parent.bottom : undefined
             anchors.left: parent.left
-            anchors.top: panel.position === "top" ? parent.top : undefined
-            anchors.bottom: panel.position === "bottom" ? parent.bottom : undefined
+            anchors.right: panel.orientation == "vertical" ? parent.right : undefined
             anchors.margins: 4
             spacing: 4
 
@@ -162,9 +164,10 @@ PanelWindow {
         // Lado derecho de la barra
         RowLayout {
             id: barEnd
+            anchors.top: panel.orientation === "horizontal" ? parent.top : undefined
+            anchors.bottom: parent.bottom
+            anchors.left: panel.orientation == "vertical" ? parent.left : undefined
             anchors.right: parent.right
-            anchors.top: panel.position === "top" ? parent.top : undefined
-            anchors.bottom: panel.position === "bottom" ? parent.bottom : undefined
             anchors.margins: 4
             spacing: 4
 
