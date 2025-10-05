@@ -63,7 +63,7 @@ Item {
         z: 50
 
         // Navegación con rueda del ratón cuando hay múltiples notificaciones
-        onWheel: {
+        onWheel: (wheel) => {
             if (Notifications.popupList.length > 1) {
                 if (wheel.angleDelta.y > 0) {
                     // Scroll hacia arriba - ir a la notificación anterior
@@ -76,7 +76,7 @@ Item {
         }
 
         // Middle-click para descartar notificación
-        onPressed: {
+        onPressed: (mouse) => {
             if (mouse.button === Qt.MiddleButton && currentNotification) {
                 if (Notifications.popupList.length > 1) {
                     root.isNavigating = true;
