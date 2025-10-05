@@ -24,10 +24,6 @@ Item {
         onTriggered: compactPlayer.player?.positionChanged()
     }
 
-    HoverHandler {
-        id: playerHover
-    }
-
     ClippingRectangle {
         anchors.fill: parent
         radius: Math.max(0, Config.roundness - 4)
@@ -67,7 +63,7 @@ Item {
             anchors.leftMargin: 4
             anchors.verticalCenter: parent.verticalCenter
             active: (compactPlayer.player?.trackArtUrl ?? "") !== ""
-            width: (active && (playerHover.hovered || compactPlayer.notchHovered)) ? 24 : 0
+            width: (active && compactPlayer.notchHovered) ? 24 : 0
             height: 24
 
             Behavior on width {
@@ -95,9 +91,9 @@ Item {
         Row {
             id: controlButtons
             anchors.left: artworkLoader.right
-            anchors.leftMargin: (artworkLoader.active && (playerHover.hovered || compactPlayer.notchHovered)) ? 8 : 4
+            anchors.leftMargin: (artworkLoader.active && compactPlayer.notchHovered) ? 8 : 4
             anchors.verticalCenter: parent.verticalCenter
-            spacing: (playerHover.hovered || compactPlayer.notchHovered) ? 4 : 0
+            spacing: compactPlayer.notchHovered ? 4 : 0
             opacity: compactPlayer.player ? 1.0 : 0.0
             visible: opacity > 0
 
@@ -136,7 +132,7 @@ Item {
                 scale: 1.0
 
                 readonly property real naturalWidth: implicitWidth
-                width: (playerHover.hovered || compactPlayer.notchHovered) ? naturalWidth : 0
+                width: compactPlayer.notchHovered ? naturalWidth : 0
 
                 Behavior on width {
                     NumberAnimation {
@@ -246,7 +242,7 @@ Item {
                 scale: 1.0
 
                 readonly property real naturalWidth: implicitWidth
-                width: (playerHover.hovered || compactPlayer.notchHovered) ? naturalWidth : 0
+                width: compactPlayer.notchHovered ? naturalWidth : 0
 
                 Behavior on width {
                     NumberAnimation {

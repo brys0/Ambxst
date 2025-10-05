@@ -12,8 +12,8 @@ Item {
 
     readonly property real mainRowContentWidth: 200 + userInfo.width + separator1.width + separator2.width + notifIndicator.width + (mainRow.spacing * 4) + 32
 
-    implicitWidth: Math.round(hasActiveNotifications ? Math.max(notificationHoverHandler.hovered ? 420 + 32 : 320 + 32, mainRowContentWidth) : (root.notchHovered ? 420 + 32 : mainRowContentWidth))
-    implicitHeight: hasActiveNotifications ? (mainRow.height + (notificationHoverHandler.hovered ? notificationView.implicitHeight + (Config.notchTheme === "island" ? 56 : 32) : notificationView.implicitHeight + (Config.notchTheme === "island" ? 40 : 16))) : mainRow.height
+    implicitWidth: Math.round(hasActiveNotifications ? Math.max(expandedState ? 420 + 32 : 320 + 32, mainRowContentWidth) : (expandedState ? 420 + 32 : mainRowContentWidth))
+    implicitHeight: hasActiveNotifications ? (mainRow.height + (expandedState ? notificationView.implicitHeight + (Config.notchTheme === "island" ? 56 : 32) : notificationView.implicitHeight + (Config.notchTheme === "island" ? 40 : 16))) : mainRow.height
 
     Behavior on implicitHeight {
         NumberAnimation {
@@ -33,11 +33,13 @@ Item {
     readonly property bool hasActiveNotifications: Notifications.popupList.length > 0
     readonly property MprisPlayer activePlayer: MprisController.activePlayer
     property bool notchHovered: false
+    property bool isNavigating: false
 
     HoverHandler {
-        id: notificationHoverHandler
-        enabled: hasActiveNotifications
+        id: contentHoverHandler
     }
+
+    readonly property bool expandedState: contentHoverHandler.hovered || notchHovered || isNavigating
 
     Column {
         anchors.fill: parent
@@ -74,7 +76,7 @@ Item {
                 width: parent.width - userInfo.width - separator1.width - separator2.width - notifIndicator.width - (parent.spacing * 4)
                 height: 32
                 player: activePlayer
-                notchHovered: root.notchHovered
+                notchHovered: expandedState
             }
 
             Separator {
@@ -111,7 +113,8 @@ Item {
                 anchors.rightMargin: Config.notchTheme === "island" && hasActiveNotifications ? 8 : 20
                 anchors.bottomMargin: 8
                 opacity: hasActiveNotifications ? 1 : 0
-                notchHovered: notificationHoverHandler.hovered
+                notchHovered: expandedState
+                onIsNavigatingChanged: root.isNavigating = isNavigating
 
                 Behavior on anchors.leftMargin {
                     NumberAnimation {
