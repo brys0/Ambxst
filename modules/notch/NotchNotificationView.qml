@@ -440,14 +440,15 @@ Item {
                                                 visible: hovered
 
                                                 // Fila del summary, app name y timestamp
-                                                Row {
+                                                RowLayout {
                                                     width: parent.width
                                                     spacing: 4
 
                                                     // Contenedor izquierdo para summary y app name
                                                     Row {
                                                         id: leftTextsContainer
-                                                        width: parent.width - (timestampText.visible ? timestampText.implicitWidth + parent.spacing : 0)
+                                                        Layout.fillWidth: true
+                                                        Layout.minimumWidth: 0
                                                         spacing: 4
 
                                                         Text {
@@ -503,7 +504,6 @@ Item {
                                                         color: notification && notification.urgency == NotificationUrgency.Critical ? Colors.criticalText : Colors.outline
                                                         verticalAlignment: Text.AlignVCenter
                                                         visible: text !== ""
-                                                        anchors.verticalCenter: parent.verticalCenter
                                                     }
                                                 }
 
@@ -521,32 +521,52 @@ Item {
                                                 }
                                             }
 
-                                            RowLayout {
+                                            Row {
                                                 id: textRowCollapsed
                                                 width: parent.width
                                                 spacing: 4
                                                 visible: !hovered
 
                                                 Text {
-                                                    Layout.maximumWidth: parent.width * 0.4
+                                                    id: summaryCollapsed
+                                                    property real combinedImplicitWidth: implicitWidth + (bodyCollapsed.visible ? bodyCollapsed.implicitWidth + bulletCollapsed.implicitWidth + parent.spacing * 2 : 0)
+                                                    width: {
+                                                        if (combinedImplicitWidth <= parent.width) {
+                                                            return implicitWidth;
+                                                        }
+                                                        return parent.width - (bodyCollapsed.visible ? bodyCollapsed.width + bulletCollapsed.width + parent.spacing * 2 : 0);
+                                                    }
                                                     text: notification ? notification.summary : ""
                                                     font.family: Config.theme.font
                                                     font.pixelSize: Config.theme.fontSize
                                                     font.weight: Font.Bold
                                                     color: notification && notification.urgency == NotificationUrgency.Critical ? Colors.criticalText : Colors.primary
                                                     elide: Text.ElideRight
+                                                    maximumLineCount: 1
+                                                    wrapMode: Text.NoWrap
+                                                    verticalAlignment: Text.AlignVCenter
                                                 }
 
                                                 Text {
+                                                    id: bulletCollapsed
                                                     text: "•"
                                                     font.family: Config.theme.font
                                                     font.pixelSize: Config.theme.fontSize
                                                     font.weight: Font.Bold
                                                     color: notification && notification.urgency == NotificationUrgency.Critical ? Colors.criticalText : Colors.outline
+                                                    verticalAlignment: Text.AlignVCenter
                                                     visible: notification && notification.body && notification.body.length > 0
                                                 }
 
                                                 Text {
+                                                    id: bodyCollapsed
+                                                    property real availableWidth: parent.width - summaryCollapsed.implicitWidth - (visible ? bulletCollapsed.implicitWidth + parent.spacing * 2 : 0)
+                                                    width: {
+                                                        if (summaryCollapsed.combinedImplicitWidth <= parent.width) {
+                                                            return implicitWidth;
+                                                        }
+                                                        return Math.min(implicitWidth, Math.max(60, availableWidth, parent.width * 0.3));
+                                                    }
                                                     text: notification ? processNotificationBody(notification.body || "").replace(/\n/g, ' ') : ""
                                                     font.family: Config.theme.font
                                                     font.pixelSize: Config.theme.fontSize
@@ -554,7 +574,8 @@ Item {
                                                     color: notification && notification.urgency == NotificationUrgency.Critical ? Colors.criticalText : Colors.overBackground
                                                     wrapMode: Text.NoWrap
                                                     elide: Text.ElideRight
-                                                    Layout.fillWidth: true
+                                                    maximumLineCount: 1
+                                                    verticalAlignment: Text.AlignVCenter
                                                     visible: text.length > 0
                                                 }
                                             }
