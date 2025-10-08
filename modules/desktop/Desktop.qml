@@ -108,12 +108,18 @@ PanelWindow {
                 DragHandler {
                     id: dragHandler
                     target: dragPreview
+                    onActiveChanged: {
+                        if (!active && dragPreview.Drag.target) {
+                            DesktopService.moveItem(delegateRoot.index, dragPreview.Drag.target.visualIndex);
+                            dragPreview.Drag.drop();
+                        }
+                    }
                 }
             }
 
             Item {
                 id: dragPreview
-                parent: dragHandler.active ? desktop : delegateRoot
+                parent: iconContainer
                 width: delegateRoot.width
                 height: delegateRoot.height
                 visible: dragHandler.active
@@ -133,47 +139,23 @@ PanelWindow {
                 Drag.source: delegateRoot
                 Drag.hotSpot.x: width / 2
                 Drag.hotSpot.y: height / 2
-
-                Connections {
-                    target: dragHandler
-                    function onActiveChanged() {
-                        if (!dragHandler.active) {
-                            if (dragPreview.Drag.target) {
-                                DesktopService.moveItem(delegateRoot.index, dragPreview.Drag.target.visualIndex);
-                            }
-                            dragPreview.Drag.drop();
-                        }
-                    }
-                }
             }
 
             DropArea {
                 anchors.fill: parent
+                z: 1
 
                 property int visualIndex: delegateRoot.index
 
-                onEntered: drag => {
-                    if (drag.source.index !== visualIndex) {
-                        DesktopService.moveItem(drag.source.index, visualIndex);
-                    }
+                Rectangle {
+                    anchors.fill: parent
+                    color: "transparent"
+                    border.color: Colors.primary
+                    border.width: 2
+                    radius: Config.roundness / 2
+                    visible: parent.containsDrag
+                    opacity: 0.5
                 }
-            }
-
-            Rectangle {
-                anchors.fill: parent
-                color: "transparent"
-                border.color: Colors.primary
-                border.width: 2
-                radius: Config.roundness / 2
-                visible: dropArea.containsDrag
-                opacity: 0.5
-            }
-
-            DropArea {
-                id: dropArea
-                anchors.fill: parent
-
-                property int visualIndex: delegateRoot.index
             }
         }
     }

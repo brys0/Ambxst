@@ -92,6 +92,15 @@ Singleton {
         openFileProcess.running = true;
     }
 
+    function moveItem(fromIndex, toIndex) {
+        if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0 || 
+            fromIndex >= items.count || toIndex >= items.count) {
+            return;
+        }
+        
+        items.move(fromIndex, toIndex, 1);
+    }
+
     function getFileType(fileName) {
         var ext = fileName.toLowerCase().split('.').pop();
         
