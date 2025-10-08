@@ -91,7 +91,11 @@ Singleton {
 
     function scanDesktop() {
         if (desktopDir) {
-            scanProcess.running = true;
+            if (parsingInProgress) {
+                needsRescan = true;
+            } else {
+                scanProcess.running = true;
+            }
         }
     }
 
@@ -343,16 +347,27 @@ Singleton {
                     }
                 }
 
-                tempDesktopFiles = pendingDesktopFiles;
-                tempItems = newItems;
-                
-                if (pendingDesktopFiles.length > 0) {
-                    currentDesktopFileIndex = 0;
-                    parseNextDesktopFile();
-                } else {
-                    if (gridReady && positionsLoaded) {
-                        finalizeItems();
+                if (!parsingInProgress) {
+                    console.log("=== SCAN COMPLETE ===");
+                    console.log("Found", pendingDesktopFiles.length, ".desktop files:");
+                    for (var i = 0; i < pendingDesktopFiles.length; i++) {
+                        console.log("  [" + i + "]:", pendingDesktopFiles[i].name);
                     }
+                    
+                    tempDesktopFiles = pendingDesktopFiles;
+                    tempItems = newItems;
+                    
+                    if (pendingDesktopFiles.length > 0) {
+                        parsingInProgress = true;
+                        currentDesktopFileIndex = 0;
+                        parseNextDesktopFile();
+                    } else {
+                        if (gridReady && positionsLoaded) {
+                            finalizeItems();
+                        }
+                    }
+                } else {
+                    needsRescan = true;
                 }
             }
         }
@@ -369,6 +384,8 @@ Singleton {
     property var tempDesktopFiles: []
     property var tempItems: []
     property int currentDesktopFileIndex: -1
+    property bool parsingInProgress: false
+    property bool needsRescan: false
 
     function parseNextDesktopFile() {
         if (currentDesktopFileIndex < tempDesktopFiles.length) {
@@ -376,8 +393,13 @@ Singleton {
             parseDesktopFileProcess.command = ["cat", item.path];
             parseDesktopFileProcess.running = true;
         } else {
+            parsingInProgress = false;
             if (gridReady && positionsLoaded) {
                 finalizeItems();
+            }
+            if (needsRescan) {
+                needsRescan = false;
+                scanDesktop();
             }
         }
     }
@@ -458,17 +480,39 @@ Singleton {
         running: false
         command: []
 
+        onRunningChanged: {
+            console.log("Process running changed to:", running, "index:", currentDesktopFileIndex);
+            if (!running && currentDesktopFileIndex >= 0 && currentDesktopFileIndex < tempDesktopFiles.length) {
+                currentDesktopFileIndex++;
+                if (currentDesktopFileIndex < tempDesktopFiles.length) {
+                    Qt.callLater(parseNextDesktopFile);
+                } else {
+                    console.log("  All files parsed!");
+                    parsingInProgress = false;
+                    currentDesktopFileIndex = -1;
+                    if (gridReady && positionsLoaded) {
+                        finalizeItems();
+                    }
+                    if (needsRescan) {
+                        console.log("  Triggering rescan...");
+                        needsRescan = false;
+                        scanDesktop();
+                    }
+                }
+            }
+        }
+
         stdout: StdioCollector {
             onStreamFinished: {
-                var lines = text.split("\n");
+                console.log("parseDesktopFileProcess stdout: index", currentDesktopFileIndex, "tempDesktopFiles.length", tempDesktopFiles.length);
                 if (currentDesktopFileIndex >= tempDesktopFiles.length) {
-                    console.warn("Desktop file index out of bounds:", currentDesktopFileIndex);
-                    currentDesktopFileIndex++;
-                    parseNextDesktopFile();
+                    console.warn("Desktop file index out of bounds:", currentDesktopFileIndex, "length:", tempDesktopFiles.length);
                     return;
                 }
                 
                 var item = tempDesktopFiles[currentDesktopFileIndex];
+                console.log("  Modifying item at index", currentDesktopFileIndex, "name before:", item.name);
+                var lines = text.split("\n");
                 var name = "";
                 var icon = "application-x-executable";
                 
@@ -485,9 +529,7 @@ Singleton {
                     item.name = name;
                 }
                 item.icon = icon;
-                
-                currentDesktopFileIndex++;
-                parseNextDesktopFile();
+                console.log("  Modified to:", item.name, "icon:", icon);
             }
         }
 
@@ -495,6 +537,14 @@ Singleton {
             onStreamFinished: {
                 if (text.length > 0) {
                     console.warn("Error parsing .desktop file:", text);
+                }
+                if (currentDesktopFileIndex >= tempDesktopFiles.length) {
+                    parsingInProgress = false;
+                    if (needsRescan) {
+                        needsRescan = false;
+                        scanDesktop();
+                    }
+                    return;
                 }
                 currentDesktopFileIndex++;
                 parseNextDesktopFile();

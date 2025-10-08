@@ -255,19 +255,21 @@ Rectangle {
                                 textColor: Colors.overSecondary,
                                 onTriggered: function () {
                                     let desktopDir = Quickshell.env("XDG_DESKTOP_DIR") || Quickshell.env("HOME") + "/Desktop";
-                                    let fileName = modelData.id + ".desktop";
+                                    let timestamp = Date.now();
+                                    let fileName = modelData.id + "-" + timestamp + ".desktop";
                                     let filePath = desktopDir + "/" + fileName;
                                     
                                     let desktopContent = "[Desktop Entry]\n" +
+                                        "Version=1.0\n" +
                                         "Type=Application\n" +
                                         "Name=" + modelData.name + "\n" +
                                         "Exec=" + modelData.execString + "\n" +
                                         "Icon=" + modelData.icon + "\n" +
                                         (modelData.comment ? "Comment=" + modelData.comment + "\n" : "") +
                                         (modelData.categories.length > 0 ? "Categories=" + modelData.categories.join(";") + ";\n" : "") +
-                                        (modelData.runInTerminal ? "Terminal=true\n" : "");
+                                        (modelData.runInTerminal ? "Terminal=true\n" : "Terminal=false\n");
                                     
-                                    let writeCmd = "echo '" + desktopContent.replace(/'/g, "'\\''") + "' > \"" + filePath + "\" && chmod +x \"" + filePath + "\"";
+                                    let writeCmd = "printf '%s' '" + desktopContent.replace(/'/g, "'\\''") + "' > \"" + filePath + "\" && chmod 755 \"" + filePath + "\" && gio set \"" + filePath + "\" metadata::trusted true";
                                     copyProcess.command = ["sh", "-c", writeCmd];
                                     copyProcess.running = true;
                                 }
