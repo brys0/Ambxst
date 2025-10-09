@@ -27,13 +27,13 @@ Menu {
             let text = items[i].text || "";
             let textWidth = textMetrics.measureText(text);
             let iconSpace = hasIcons ? 24 : 0;
-            let totalItemWidth = textWidth + iconSpace + 16;
+            let totalItemWidth = textWidth + iconSpace + 40;
             
             if (totalItemWidth > maxWidth) {
                 maxWidth = totalItemWidth;
             }
         }
-        menuWidth = Math.max(maxWidth, 120);
+        menuWidth = Math.min(Math.max(maxWidth, 120), 300);
     }
     property int itemHeight: 36
     
@@ -193,91 +193,96 @@ Menu {
             }
             
             // Contenido del item
-            contentItem: Row {
+            contentItem: Item {
                 anchors.fill: parent
-                anchors.margins: 8
-                spacing: root.hasIcons ? 8 : 0
-                visible: !menuItem.isSeparatorItem
                 
-                // Icono (opcional) - Puede ser fuente o imagen
-                Loader {
-                    id: iconLoader
-                    width: root.hasIcons ? 16 : 0
-                    height: root.hasIcons ? 16 : 0
-                    visible: root.hasIcons
-                    anchors.verticalCenter: parent.verticalCenter
+                Row {
+                    anchors.fill: parent
+                    anchors.margins: 8
+                    spacing: root.hasIcons ? 8 : 0
+                    visible: !menuItem.isSeparatorItem
                     
-                    property bool isImageIcon: menuItem.itemData.isImageIcon || false
-                    property string iconSource: menuItem.itemData.icon || ""
-                    
-                    sourceComponent: {
-                        if (iconSource === "" || !root.hasIcons) return null;
-                        return isImageIcon ? imageIconComponent : fontIconComponent;
-                    }
-                    
-                    Component {
-                        id: fontIconComponent
-                        Text {
-                            text: iconLoader.iconSource
-                            color: {
-                                if (root.hoveredIndex === menuItem.itemIndex) {
-                                    return menuItem.itemData.textColor !== undefined ? menuItem.itemData.textColor : root.defaultTextColor;
+                    // Icono (opcional) - Puede ser fuente o imagen
+                    Loader {
+                        id: iconLoader
+                        width: root.hasIcons ? 16 : 0
+                        height: root.hasIcons ? 16 : 0
+                        visible: root.hasIcons
+                        anchors.verticalCenter: parent.verticalCenter
+                        
+                        property bool isImageIcon: menuItem.itemData.isImageIcon || false
+                        property string iconSource: menuItem.itemData.icon || ""
+                        
+                        sourceComponent: {
+                            if (iconSource === "" || !root.hasIcons) return null;
+                            return isImageIcon ? imageIconComponent : fontIconComponent;
+                        }
+                        
+                        Component {
+                            id: fontIconComponent
+                            Text {
+                                text: iconLoader.iconSource
+                                color: {
+                                    if (root.hoveredIndex === menuItem.itemIndex) {
+                                        return menuItem.itemData.textColor !== undefined ? menuItem.itemData.textColor : root.defaultTextColor;
+                                    }
+                                    return root.normalTextColor;
                                 }
-                                return root.normalTextColor;
+                                font.family: Icons.font
+                                font.pixelSize: 14
+                                font.weight: Font.Bold
+                                anchors.centerIn: parent
+                                textFormat: Text.RichText
+                                
+                                Behavior on color {
+                                    ColorAnimation {
+                                        duration: Config.animDuration / 2
+                                        easing.type: Easing.OutQuart
+                                    }
+                                }
                             }
-                            font.family: Icons.font
-                            font.pixelSize: 14
-                            font.weight: Font.Bold
-                            anchors.centerIn: parent
-                            textFormat: Text.RichText
-                            
-                            Behavior on color {
-                                ColorAnimation {
-                                    duration: Config.animDuration / 2
-                                    easing.type: Easing.OutQuart
+                        }
+                        
+                        Component {
+                            id: imageIconComponent
+                            Image {
+                                source: iconLoader.iconSource
+                                width: 16
+                                height: 16
+                                fillMode: Image.PreserveAspectFit
+                                smooth: true
+                                anchors.centerIn: parent
+                                
+                                onStatusChanged: {
+                                    if (status === Image.Error) {
+                                        console.log("Failed to load icon:", source);
+                                    }
                                 }
                             }
                         }
                     }
                     
-                    Component {
-                        id: imageIconComponent
-                        Image {
-                            source: iconLoader.iconSource
-                            width: 16
-                            height: 16
-                            fillMode: Image.PreserveAspectFit
-                            smooth: true
-                            anchors.centerIn: parent
-                            
-                            // Fallback en caso de error de carga
-                            onStatusChanged: {
-                                if (status === Image.Error) {
-                                    console.log("Failed to load icon:", source);
-                                }
+                    // Texto
+                    Text {
+                        text: menuItem.itemData.text || ""
+                        color: {
+                            if (root.hoveredIndex === menuItem.itemIndex) {
+                                return menuItem.itemData.textColor !== undefined ? menuItem.itemData.textColor : root.defaultTextColor;
                             }
+                            return root.normalTextColor;
                         }
-                    }
-                }
-                
-                // Texto
-                Text {
-                    text: menuItem.itemData.text || ""
-                    color: {
-                        if (root.hoveredIndex === menuItem.itemIndex) {
-                            return menuItem.itemData.textColor !== undefined ? menuItem.itemData.textColor : root.defaultTextColor;
-                        }
-                        return root.normalTextColor;
-                    }
-                    font.family: Config.theme.font
-                    font.pixelSize: Config.theme.fontSize
-                    font.weight: Font.Bold
-                    anchors.verticalCenter: parent.verticalCenter
-                    
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: Config.animDuration / 2
-                            easing.type: Easing.OutQuart
+                        font.family: Config.theme.font
+                        font.pixelSize: Config.theme.fontSize
+                        font.weight: Font.Bold
+                        anchors.verticalCenter: parent.verticalCenter
+                        elide: Text.ElideRight
+                        width: root.menuWidth - 32 - iconLoader.width - (root.hasIcons ? parent.spacing : 0)
+                        
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: Config.animDuration / 2
+                                easing.type: Easing.OutQuart
+                            }
                         }
                     }
                 }

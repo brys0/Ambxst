@@ -490,16 +490,79 @@ PaneRect {
                         id: playerIconHover
                     }
 
+                    Timer {
+                        id: pressAndHoldTimer
+                        interval: 1000
+                        repeat: false
+                        onTriggered: {
+                            playersMenu.updateMenuItems();
+                            playersMenu.popup(playerIcon);
+                        }
+                    }
+
                     MouseArea {
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor
                         acceptedButtons: Qt.LeftButton | Qt.RightButton
+                        onPressed: mouse => {
+                            if (mouse.button === Qt.LeftButton) {
+                                pressAndHoldTimer.start();
+                            }
+                        }
+                        onReleased: {
+                            pressAndHoldTimer.stop();
+                        }
                         onClicked: mouse => {
                             if (mouse.button === Qt.LeftButton) {
                                 MprisController.cyclePlayer(1);
                             } else if (mouse.button === Qt.RightButton) {
-                                MprisController.cyclePlayer(-1);
+                                playersMenu.updateMenuItems();
+                                playersMenu.popup(playerIcon);
                             }
+                        }
+                    }
+
+                    OptionsMenu {
+                        id: playersMenu
+
+                        function getPlayerIcon(player) {
+                            if (!player)
+                                return Icons.player;
+                            const dbusName = (player.dbusName || "").toLowerCase();
+                            const desktopEntry = (player.desktopEntry || "").toLowerCase();
+                            const identity = (player.identity || "").toLowerCase();
+
+                            if (dbusName.includes("spotify") || desktopEntry.includes("spotify") || identity.includes("spotify"))
+                                return Icons.spotify;
+                            if (dbusName.includes("chromium") || dbusName.includes("chrome") || desktopEntry.includes("chromium") || desktopEntry.includes("chrome"))
+                                return Icons.chromium;
+                            if (dbusName.includes("firefox") || desktopEntry.includes("firefox"))
+                                return Icons.firefox;
+                            return Icons.player;
+                        }
+
+                        function updateMenuItems() {
+                            const players = MprisController.filteredPlayers;
+                            const menuItems = [];
+
+                            for (let i = 0; i < players.length; i++) {
+                                const player = players[i];
+                                const isActive = player === MprisController.activePlayer;
+                                const playerColors = PlayerColors.getColorsForPlayer(player);
+                                
+                                menuItems.push({
+                                    text: player.trackTitle || player.identity || "Unknown Player",
+                                    icon: getPlayerIcon(player),
+                                    highlightColor: playerColors.primary,
+                                    textColor: playerColors.overPrimary,
+                                    onTriggered: () => {
+                                        MprisController.setActivePlayer(player);
+                                        playersMenu.close();
+                                    }
+                                });
+                            }
+
+                            playersMenu.items = menuItems;
                         }
                     }
                 }
