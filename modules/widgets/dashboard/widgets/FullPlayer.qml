@@ -112,6 +112,12 @@ PaneRect {
             anchors.margins: 16
             spacing: 8
             visible: MprisController.activePlayer
+            layer.enabled: true
+            layer.effect: Shadow {
+                shadowBlur: 0.5
+                shadowOpacity: 1
+                shadowVerticalOffset: 2
+            }
 
             RowLayout {
                 Layout.fillWidth: true
@@ -141,7 +147,7 @@ PaneRect {
                         color: player.hasArtwork && player.playerColors ? player.playerColors.overBackground : Colors.whiteSource
                         font.pixelSize: Config.theme.fontSize
                         font.family: Config.theme.font
-                        opacity: 0.7
+                        // opacity: 0.7
                         elide: Text.ElideRight
                         visible: text !== ""
                     }
@@ -549,7 +555,7 @@ PaneRect {
                                 const player = players[i];
                                 const isActive = player === MprisController.activePlayer;
                                 const playerColors = PlayerColors.getColorsForPlayer(player);
-                                
+
                                 menuItems.push({
                                     text: player.trackTitle || player.identity || "Unknown Player",
                                     icon: getPlayerIcon(player),
