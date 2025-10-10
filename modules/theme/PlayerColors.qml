@@ -142,7 +142,7 @@ Item {
             return "chromium";
         if (dbusName.includes("telegram") || desktopEntry.includes("telegram") || identity.includes("telegram"))
             return "telegram";
-        if (dbusName.includes("firefox") || desktopEntry.includes("firefox"))
+        if (dbusName.includes("firefox") || desktopEntry.includes("firefox") || identity.includes("firefox"))
             return "firefox";
         return "generic";
     }
