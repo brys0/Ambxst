@@ -1,5 +1,4 @@
 import QtQuick
-import QtMultimedia
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Io
@@ -487,12 +486,30 @@ PanelWindow {
         property string source
         property string previousSource
 
+        Process {
+            id: killMpvpaperProcess
+            running: false
+            command: ["killall", "mpvpaper"]
+
+            onExited: function (exitCode) {
+                console.log("Killed mpvpaper processes, exit code:", exitCode);
+            }
+        }
+
         // Trigger animation when source changes
         onSourceChanged: {
             if (previousSource !== "" && source !== previousSource) {
                 transitionAnimation.restart();
             }
             previousSource = source;
+
+            // Kill mpvpaper if switching to a static image
+            if (source) {
+                var fileType = getFileType(source);
+                if (fileType === 'image') {
+                    killMpvpaperProcess.running = true;
+                }
+            }
         }
 
         SequentialAnimation {
@@ -542,10 +559,8 @@ PanelWindow {
                 var fileType = getFileType(parent.source);
                 if (fileType === 'image') {
                     return staticImageComponent;
-                } else if (fileType === 'gif') {
-                    return animatedImageComponent;
-                } else if (fileType === 'video') {
-                    return videoComponent;
+                } else if (fileType === 'gif' || fileType === 'video') {
+                    return mpvpaperComponent;
                 }
                 return staticImageComponent; // fallback
             }
@@ -564,71 +579,64 @@ PanelWindow {
         }
 
         Component {
-            id: animatedImageComponent
-            AnimatedImage {
-                source: parent.sourceFile ? "file://" + parent.sourceFile : ""
-                fillMode: Image.PreserveAspectCrop
-                asynchronous: true
-                smooth: true
-                playing: true
-            }
-        }
+            id: mpvpaperComponent
+            Item {
+                property string sourceFile: parent.sourceFile
+                property string scriptPath: Qt.resolvedUrl("mpvpaper.sh").toString().replace("file://", "")
 
-        Component {
-            id: videoComponent
-            VideoOutput {
-                fillMode: VideoOutput.PreserveAspectCrop
-                property string videoSource: parent.sourceFile || ""
-
-                MediaPlayer {
-                    id: mediaPlayer
-                    source: ""
-                    loops: MediaPlayer.Infinite
-                    audioOutput: AudioOutput {
-                        muted: true
-                    }
-                    autoPlay: false
-
-                    onMediaStatusChanged: {
-                        console.log("MediaPlayer status changed:", mediaStatus, "for:", source);
-                        if (mediaStatus === MediaPlayer.LoadedMedia) {
-                            console.log("Video loaded, starting playback");
-                            play();
-                        } else if (mediaStatus === MediaPlayer.InvalidMedia) {
-                            console.warn("Invalid media:", source);
+                Timer {
+                    id: mpvpaperRestartTimer
+                    interval: 100
+                    onTriggered: {
+                        if (sourceFile) {
+                            console.log("Restarting mpvpaper for:", sourceFile);
+                            mpvpaperProcess.running = true;
                         }
-                    }
-
-                    onErrorOccurred: function (error, errorString) {
-                        console.warn("MediaPlayer error:", error, errorString);
                     }
                 }
 
-                onVideoSourceChanged: {
-                    if (videoSource) {
-                        var newSource = "file://" + videoSource;
-                        console.log("Video source changed, loading:", newSource);
-                        mediaPlayer.stop();
-                        mediaPlayer.source = newSource;
+                onSourceFileChanged: {
+                    if (sourceFile) {
+                        console.log("Source file changed to:", sourceFile);
+                        mpvpaperProcess.running = false;
+                        mpvpaperRestartTimer.restart();
                     }
                 }
 
                 Component.onCompleted: {
-                    console.log("VideoOutput created for:", videoSource);
-                    mediaPlayer.videoOutput = this;
-
-                    if (videoSource) {
-                        var initialSource = "file://" + videoSource;
-                        console.log("Initial video load:", initialSource);
-                        mediaPlayer.source = initialSource;
+                    if (sourceFile) {
+                        console.log("Initial mpvpaper run for:", sourceFile);
+                        mpvpaperProcess.running = true;
                     }
                 }
 
                 Component.onDestruction: {
-                    console.log("VideoOutput destroyed, stopping playback");
-                    if (mediaPlayer) {
-                        mediaPlayer.stop();
-                        mediaPlayer.source = "";
+                    // mpvpaper script handles killing previous instances
+                }
+
+                Process {
+                    id: mpvpaperProcess
+                    running: false
+                    command: sourceFile ? ["bash", scriptPath, sourceFile] : []
+
+                    stdout: StdioCollector {
+                        onStreamFinished: {
+                            if (text.length > 0) {
+                                console.log("mpvpaper output:", text);
+                            }
+                        }
+                    }
+
+                    stderr: StdioCollector {
+                        onStreamFinished: {
+                            if (text.length > 0) {
+                                console.warn("mpvpaper error:", text);
+                            }
+                        }
+                    }
+
+                    onExited: function (exitCode) {
+                        console.log("mpvpaper process exited with code:", exitCode);
                     }
                 }
             }
