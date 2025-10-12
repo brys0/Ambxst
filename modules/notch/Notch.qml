@@ -269,16 +269,16 @@ Item {
         color: Colors.background
     }
 
-    // Unified outline canvas (single continuous stroke around silhouette)
-    Canvas {
-        id: outlineCanvas
-        anchors.top: parent.top
-        anchors.left: leftCorner.visible ? leftCorner.left : notchRect.left
-        width: (Config.notchTheme === "default" && leftCorner.visible && rightCorner.visible) ? leftCorner.width + notchRect.width + rightCorner.width : notchRect.width
-        height: notchRect.height
-        z: 5000
-        antialiasing: true
-        visible: Config.notchTheme === "default"
+     // Unified outline canvas (single continuous stroke around silhouette)
+     Canvas {
+         id: outlineCanvas
+         anchors.top: parent.top
+         anchors.left: leftCorner.visible ? leftCorner.left : notchRect.left
+         width: (Config.notchTheme === "default" && leftCorner.visible && rightCorner.visible) ? leftCorner.width + notchRect.width + rightCorner.width : notchRect.width
+         height: notchRect.height
+         z: 5000
+         antialiasing: true
+         visible: Config.notchTheme === "default" && Config.theme.borderSize > 0
         onPaint: {
             if (Config.notchTheme !== "default") return; // Only draw for default theme
             var ctx = getContext("2d");
