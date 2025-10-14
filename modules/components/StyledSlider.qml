@@ -35,6 +35,7 @@ Item {
     property bool scroll: true
     property bool tooltip: true
     property bool updateOnRelease: false
+    property string iconPos: "start"
 
     Behavior on wavyAmplitude {
         NumberAnimation {
@@ -60,27 +61,9 @@ Item {
     RowLayout {
         id: layout
         anchors.fill: parent
+        anchors.leftMargin: root.iconPos === "start" && root.icon !== "" ? iconText.width + spacing : 0
+        anchors.rightMargin: root.iconPos === "end" && root.icon !== "" ? iconText.width + spacing : 0
         spacing: 4
-
-        Text {
-            id: iconText
-            visible: root.icon !== ""
-            text: root.icon
-            font.family: Icons.font
-            font.pixelSize: 20
-            color: Colors.overBackground
-            Layout.fillHeight: true
-
-            MouseArea {
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                z: 4
-                onEntered: iconText.color = Colors.primary
-                onExited: iconText.color = Colors.overBackground
-                onClicked: root.iconClicked()
-            }
-        }
 
         Item {
             id: sliderItem
@@ -153,23 +136,23 @@ Item {
                 }
             }
 
-            Rectangle {
-                id: dragHandle
-                anchors.verticalCenter: parent.verticalCenter
-                x: Math.max(0, Math.min(parent.width - width, parent.width * root.progressRatio - width / 2))
-                width: root.isDragging ? 2 : 4
-                height: root.isDragging ? 20 : 16
-                radius: width / 2
-                color: Colors.overBackground
-                z: 2
+             Rectangle {
+                 id: dragHandle
+                 anchors.verticalCenter: parent.verticalCenter
+                 x: parent.width * root.progressRatio - 2
+                 width: root.isDragging ? 2 : 4
+                 height: root.isDragging ? 20 : 16
+                 radius: width / 2
+                 color: Colors.overBackground
+                 z: 2
 
-                Behavior on x {
-                    enabled: root.resizeAnim
-                    NumberAnimation {
-                        duration: Config.animDuration
-                        easing.type: Easing.OutQuart
-                    }
-                }
+                 Behavior on x {
+                     enabled: root.resizeAnim
+                     NumberAnimation {
+                         duration: Config.animDuration
+                         easing.type: Easing.OutQuart
+                     }
+                 }
 
                 Behavior on width {
                     enabled: root.resizeAnim
@@ -197,24 +180,61 @@ Item {
         }
     }
 
+    Text {
+        id: iconText
+        visible: root.icon !== ""
+        text: root.icon
+        font.family: Icons.font
+        font.pixelSize: 20
+        color: Colors.overBackground
+        anchors.verticalCenter: layout.verticalCenter
+        x: root.iconPos === "start" ? 0 : parent.width - width
+
+        MouseArea {
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            z: 4
+            onEntered: iconText.color = Colors.primary
+            onExited: iconText.color = Colors.overBackground
+            onClicked: root.iconClicked()
+        }
+    }
+
     MouseArea {
         id: mouseArea
         anchors.fill: parent
         cursorShape: Qt.PointingHandCursor
         z: 3
         onClicked: mouse => {
-            if (mouse.x >= sliderItem.x) {
-                const relativeX = mouse.x - sliderItem.x
-                root.value = Math.max(0, Math.min(1, relativeX / sliderItem.width))
+            if (root.iconPos === "start" && mouse.x < iconText.width + layout.spacing) {
+                mouse.accepted = false
+                return
+            }
+            if (root.iconPos === "end" && mouse.x > parent.width - iconText.width - layout.spacing) {
+                mouse.accepted = false
+                return
+            }
+            if (mouse.x >= layout.x && mouse.x <= layout.x + layout.width) {
+                const relativeX = mouse.x - layout.x
+                root.value = Math.max(0, Math.min(1, relativeX / layout.width))
             } else {
                 mouse.accepted = false
             }
         }
         onPressed: mouse => {
-            if (mouse.x >= sliderItem.x) {
+            if (root.iconPos === "start" && mouse.x < iconText.width + layout.spacing) {
+                mouse.accepted = false
+                return
+            }
+            if (root.iconPos === "end" && mouse.x > parent.width - iconText.width - layout.spacing) {
+                mouse.accepted = false
+                return
+            }
+            if (mouse.x >= layout.x && mouse.x <= layout.x + layout.width) {
                 root.isDragging = true
-                const relativeX = mouse.x - sliderItem.x
-                root.dragPosition = Math.max(0, Math.min(1, relativeX / sliderItem.width))
+                const relativeX = mouse.x - layout.x
+                root.dragPosition = Math.max(0, Math.min(1, relativeX / layout.width))
             } else {
                 mouse.accepted = false
             }
@@ -228,9 +248,17 @@ Item {
             }
         }
         onPositionChanged: mouse => {
-            if (root.isDragging && mouse.x >= sliderItem.x) {
-                const relativeX = mouse.x - sliderItem.x
-                root.dragPosition = Math.max(0, Math.min(1, relativeX / sliderItem.width))
+            if (root.iconPos === "start" && mouse.x < iconText.width + layout.spacing) {
+                mouse.accepted = false
+                return
+            }
+            if (root.iconPos === "end" && mouse.x > parent.width - iconText.width - layout.spacing) {
+                mouse.accepted = false
+                return
+            }
+            if (root.isDragging) {
+                const relativeX = mouse.x - layout.x
+                root.dragPosition = Math.max(0, Math.min(1, relativeX / layout.width))
                 if (!root.updateOnRelease) {
                     root.value = root.dragPosition
                 }
