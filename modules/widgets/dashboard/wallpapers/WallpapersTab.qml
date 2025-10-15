@@ -181,85 +181,87 @@ Rectangle {
                 color: Colors.surface
                 radius: Config.roundness > 0 ? Config.roundness + 4 : 0
 
-                RowLayout {
+                Flickable {
                     anchors.fill: parent
-                    spacing: 8
+                    anchors.margins: 4
+                    contentHeight: rowLayout.height
+                    clip: true
 
-                    // Dropdown para seleccionar el esquema de Matugen.
-                    ComboBox {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 40
-                        model: ["scheme-content", "scheme-expressive", "scheme-fidelity", "scheme-fruit-salad", "scheme-monochrome", "scheme-neutral", "scheme-rainbow", "scheme-tonal-spot"]
-                        currentIndex: model.indexOf(Config.theme.matugenScheme)
-                        displayText: currentText || "Selecciona esquema"
+                    RowLayout {
+                        id: rowLayout
+                        width: parent.width
+                        spacing: 4
 
-                        onCurrentTextChanged: {
-                            if (currentText && currentText !== Config.theme.matugenScheme) {
-                                Config.theme.matugenScheme = currentText;
-                                if (GlobalStates.wallpaperManager) {
-                                    GlobalStates.wallpaperManager.runMatugenForCurrentWallpaper();
+                        // Dropdown para seleccionar el esquema de Matugen.
+                        ComboBox {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 40
+                            model: ["scheme-content", "scheme-expressive", "scheme-fidelity", "scheme-fruit-salad", "scheme-monochrome", "scheme-neutral", "scheme-rainbow", "scheme-tonal-spot"]
+                            currentIndex: model.indexOf(Config.theme.matugenScheme)
+                            displayText: currentText || "Selecciona esquema"
+
+                            onCurrentTextChanged: {
+                                if (currentText && currentText !== Config.theme.matugenScheme) {
+                                    Config.theme.matugenScheme = currentText;
+                                    if (GlobalStates.wallpaperManager) {
+                                        GlobalStates.wallpaperManager.runMatugenForCurrentWallpaper();
+                                    }
                                 }
                             }
-                        }
 
-                        background: Rectangle {
-                            color: Colors.surface
-                            radius: Config.roundness > 0 ? Config.roundness + 4 : 0
-                            border.color: Colors.outline
-                            border.width: 1
-                        }
+                            background: Rectangle {
+                                color: Colors.background
+                                radius: Config.roundness
+                            }
 
-                        contentItem: Text {
-                            text: parent.displayText
-                            color: Colors.overSurface
-                            font.family: Config.theme.font
-                            font.pixelSize: Config.theme.fontSize
-                            verticalAlignment: Text.AlignVCenter
-                            leftPadding: 8
-                        }
-
-                        delegate: ItemDelegate {
-                            width: parent.width
-                            height: 40
                             contentItem: Text {
-                                text: modelData
+                                text: parent.displayText
                                 color: Colors.overSurface
                                 font.family: Config.theme.font
                                 font.pixelSize: Config.theme.fontSize
                                 verticalAlignment: Text.AlignVCenter
                                 leftPadding: 8
                             }
-                            background: Rectangle {
-                                color: highlighted ? Colors.primary : "transparent"
+
+                            delegate: ItemDelegate {
+                                width: parent.width
+                                height: 40
+                                contentItem: Text {
+                                    text: modelData
+                                    color: Colors.overSurface
+                                    font.family: Config.theme.font
+                                    font.pixelSize: Config.theme.fontSize
+                                    verticalAlignment: Text.AlignVCenter
+                                    leftPadding: 8
+                                }
+                                background: Rectangle {
+                                    color: highlighted ? Colors.primary : "transparent"
+                                }
                             }
                         }
-                    }
 
-                    // Botón para alternar entre modo claro y oscuro.
-                    Button {
-                        Layout.preferredWidth: 48
-                        Layout.preferredHeight: 40
-                        font.family: Config.theme.font
-                        font.pixelSize: 20
+                        // Botón para alternar entre modo claro y oscuro.
+                        Button {
+                            Layout.preferredWidth: 40
+                            Layout.preferredHeight: 40
 
-                        onClicked: {
-                            Config.theme.lightMode = !Config.theme.lightMode;  // Directly set the JsonObject property to ensure write
-                        }
+                            onClicked: {
+                                Config.theme.lightMode = !Config.theme.lightMode;  // Directly set the JsonObject property to ensure write
+                            }
 
-                        background: Rectangle {
-                            color: Colors.surface
-                            radius: Config.roundness > 0 ? Config.roundness + 4 : 0
-                            border.color: Colors.outline
-                            border.width: 1
-                        }
+                            background: Rectangle {
+                                color: Colors.background
+                                radius: Config.roundness
+                            }
 
-                        contentItem: Text {
-                            text: Config.theme.lightMode ? "🌙" : "☀️"  // Use Unicode for reliable icons
-                            color: Config.theme.lightMode ? Colors.primary : Colors.overSurface
-                            font.family: Config.theme.font
-                            font.pixelSize: 20
-                            horizontalAlignment: Text.AlignHCenter
-                            verticalAlignment: Text.AlignVCenter
+                            contentItem: Text {
+                                text: Config.theme.lightMode ? Icons.sun : Icons.moon
+                                color: Colors.primary
+                                font.family: Icons.font
+                                font.pixelSize: 20
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                            }
                         }
                     }
                 }
