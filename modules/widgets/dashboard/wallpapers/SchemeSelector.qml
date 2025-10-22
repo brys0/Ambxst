@@ -15,7 +15,7 @@ Item {
     Connections {
         target: GlobalStates.wallpaperManager
         function onCurrentMatugenSchemeChanged() {
-            // Force re-evaluation of the text binding when scheme changes
+        // Force re-evaluation of the text binding when scheme changes
         }
     }
 
@@ -73,25 +73,58 @@ Item {
                     }
                 }
 
-                Button {
-                    Layout.preferredWidth: 40
+                Switch {
+                    Layout.preferredWidth: 72
                     Layout.preferredHeight: 40
-                    onClicked: {
-                        Config.theme.lightMode = !Config.theme.lightMode;
+                    checked: Config.theme.lightMode
+                    onCheckedChanged: {
+                        Config.theme.lightMode = checked;
                     }
 
-                    background: Rectangle {
-                        color: Colors.background
+                    indicator: Rectangle {
+                        implicitWidth: 72
+                        implicitHeight: 40
                         radius: Config.roundness
-                    }
+                        color: Colors.background
 
-                    contentItem: Text {
-                        text: Config.theme.lightMode ? Icons.sun : Icons.moon
-                        color: Colors.primary
-                        font.family: Icons.font
-                        font.pixelSize: 20
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
+                        Text {
+                            z: 1
+                            anchors.left: parent.left
+                            anchors.leftMargin: 10
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: Icons.sun
+                            color: Config.theme.lightMode ? Colors.overPrimary : Colors.overBackground
+                            font.family: Icons.font
+                            font.pixelSize: 20
+                        }
+
+                        Text {
+                            z: 1
+                            anchors.right: parent.right
+                            anchors.rightMargin: 8
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: Icons.moon
+                            color: Config.theme.lightMode ? Colors.overBackground : Colors.overPrimary
+                            font.family: Icons.font
+                            font.pixelSize: 20
+                        }
+
+                        Rectangle {
+                            z: 0
+                            width: 36
+                            height: 36
+                            radius: Math.max(0, (Config.roundness - 2))
+                            color: Colors.primary
+                            x: Config.theme.lightMode ? 2 : 36
+                            anchors.verticalCenter: parent.verticalCenter
+
+                            Behavior on x {
+                                NumberAnimation {
+                                    duration: 200
+                                    easing.type: Easing.OutCubic
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -127,11 +160,11 @@ Item {
                                     height: 40
                                     text: schemeDisplayNames[index]
                                     onClicked: {
-                                         if (GlobalStates.wallpaperManager) {
-                                             GlobalStates.wallpaperManager.setMatugenScheme(modelData);
-                                             schemeListExpanded = false;
-                                         }
-                                     }
+                                        if (GlobalStates.wallpaperManager) {
+                                            GlobalStates.wallpaperManager.setMatugenScheme(modelData);
+                                            schemeListExpanded = false;
+                                        }
+                                    }
 
                                     background: Rectangle {
                                         color: "transparent"
