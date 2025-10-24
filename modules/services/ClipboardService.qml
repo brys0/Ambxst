@@ -10,12 +10,14 @@ QtObject {
     property var items: []
     property var imageDataById: ({})
     property int revision: 0
+    readonly property string watchersScriptPath: Qt.resolvedUrl("../../scripts/cliphist.sh").toString().replace("file://", "")
 
     // Cola de trabajos para decodificar imágenes
     property var _b64Queue: []
     property bool _b64Processing: false
 
     signal listCompleted
+
 
     // Procesos
     property Process dependencyCheckProcess: Process {
@@ -25,7 +27,19 @@ QtObject {
         onExited: function (code) {
             root.active = (code === 0);
             if (root.active) {
+                ensureWatchersRunning();
                 Qt.callLater(root.list);
+            }
+        }
+    }
+
+    property Process ensureWatchersProcess: Process {
+        running: false
+        command: ["bash", "-lc", watchersScriptPath]
+
+        onExited: function (code) {
+            if (code !== 0) {
+                console.warn("ClipboardService: failed to start clipboard watchers, exit code:", code);
             }
         }
     }
@@ -158,6 +172,14 @@ QtObject {
             } else {
                 console.log("ClipboardService: Failed to delete item:", deleteProcess.itemId);
             }
+        }
+    }
+
+    function ensureWatchersRunning() {
+        if (!watchersScriptPath)
+            return;
+        if (!ensureWatchersProcess.running) {
+            ensureWatchersProcess.running = true;
         }
     }
 
