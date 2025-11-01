@@ -165,6 +165,7 @@ PanelWindow {
                     layer.effect: Shadow {}
 
                     Flickable {
+                        id: leftFlickable
                         width: parent.width
                         height: parent.height
                         anchors.left: parent.left
@@ -172,6 +173,7 @@ PanelWindow {
                         contentHeight: 36
                         flickableDirection: Flickable.HorizontalFlick
                         clip: true
+                        pressDelay: 100
 
                         RowLayout {
                             id: leftContent
@@ -222,6 +224,7 @@ PanelWindow {
                     layer.effect: Shadow {}
 
                     Flickable {
+                        id: rightFlickable
                         width: parent.width
                         height: parent.height
                         anchors.right: parent.right
@@ -230,6 +233,7 @@ PanelWindow {
                         contentX: Math.max(0, rightContent.width - width)
                         flickableDirection: Flickable.HorizontalFlick
                         clip: true
+                        pressDelay: 100
 
                         RowLayout {
                             id: rightContent
@@ -244,6 +248,7 @@ PanelWindow {
                                 spacing: 4
 
                                 MicSlider {
+                                    id: micSlider
                                     bar: panel
                                     layerEnabled: Config.bar.showBackground
                                 }
@@ -255,6 +260,7 @@ PanelWindow {
                                 }
 
                                 BrightnessSlider {
+                                    id: brightnessSlider
                                     bar: panel
                                     layerEnabled: Config.bar.showBackground
                                 }
@@ -317,6 +323,7 @@ PanelWindow {
                     layer.effect: Shadow {}
 
                     Flickable {
+                        id: topFlickable
                         width: parent.width
                         height: parent.height
                         anchors.top: parent.top
@@ -324,6 +331,7 @@ PanelWindow {
                         contentHeight: topContent.height
                         flickableDirection: Flickable.VerticalFlick
                         clip: true
+                        pressDelay: 100
 
                         ColumnLayout {
                             id: topContent
@@ -375,6 +383,7 @@ PanelWindow {
                     layer.effect: Shadow {}
 
                     Flickable {
+                        id: bottomFlickable
                         width: parent.width
                         height: parent.height
                         anchors.bottom: parent.bottom
@@ -383,6 +392,7 @@ PanelWindow {
                         contentY: Math.max(0, bottomContent.height - height)
                         flickableDirection: Flickable.VerticalFlick
                         clip: true
+                        pressDelay: 100
 
                         ColumnLayout {
                             id: bottomContent
@@ -397,16 +407,19 @@ PanelWindow {
                                 spacing: 4
 
                                 MicSlider {
+                                    id: micSliderVert
                                     bar: panel
                                     layerEnabled: Config.bar.showBackground
                                 }
 
                                 VolumeSlider {
+                                    id: volumeVert
                                     bar: panel
                                     layerEnabled: Config.bar.showBackground
                                 }
 
                                 BrightnessSlider {
+                                    id: brightnessSliderVert
                                     bar: panel
                                     layerEnabled: Config.bar.showBackground
                                 }
