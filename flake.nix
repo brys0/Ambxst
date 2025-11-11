@@ -53,7 +53,7 @@
         ddcutil
         wl-clipboard
         cliphist
-      ] ++ (if isNixOS then [] else [ nixGL ]) ++ (with pkgs; [
+      ] ++ (if isNixOS then [ power-profiles-daemon ] else [ nixGL ]) ++ (with pkgs; [
         mesa
         libglvnd
         egl-wayland

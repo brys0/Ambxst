@@ -28,8 +28,31 @@ if [ ! -f /etc/NIXOS ]; then
   else
     echo "✅ ddcutil already installed"
   fi
+
+  if ! command -v powerprofilesctl >/dev/null 2>&1; then
+    echo "📦 Installing power-profiles-daemon..."
+    if command -v pacman >/dev/null 2>&1; then
+      sudo pacman -S --noconfirm power-profiles-daemon
+    elif command -v apt >/dev/null 2>&1; then
+      sudo apt update && sudo apt install -y power-profiles-daemon
+    elif command -v dnf >/dev/null 2>&1; then
+      sudo dnf install -y power-profiles-daemon
+    elif command -v zypper >/dev/null 2>&1; then
+      sudo zypper install -y power-profiles-daemon
+    elif command -v xbps-install >/dev/null 2>&1; then
+      sudo xbps-install -y power-profiles-daemon
+    elif command -v apk >/dev/null 2>&1; then
+      sudo apk add power-profiles-daemon
+    else
+      echo "❌ Your package manager is not supported. Please install power-profiles-daemon manually."
+      exit 1
+    fi
+    echo "✅ power-profiles-daemon installed"
+  else
+    echo "✅ power-profiles-daemon already installed"
+  fi
 else
-  echo "🟦 NixOS detected: Skipping ddcutil installation"
+  echo "🟦 NixOS detected: Skipping ddcutil and power-profiles-daemon installation"
 fi
 
 # Install Nix

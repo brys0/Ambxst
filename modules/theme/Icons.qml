@@ -96,6 +96,15 @@ QtObject {
     readonly property string mic: ""
     readonly property string micSlash: ""
 
+    // Battery
+    readonly property string lightning: ""
+    readonly property string plug: ""
+
+    // Power-profiles
+    readonly property string powerSave: ""
+    readonly property string balanced: ""
+    readonly property string performance: ""
+
     // Keyboard
     readonly property string keyboard: ""
     readonly property string backspace: ""
