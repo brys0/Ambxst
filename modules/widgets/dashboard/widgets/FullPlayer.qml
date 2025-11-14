@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Controls
 import QtQuick.Effects
 import Quickshell.Widgets
 import Quickshell.Services.Mpris
@@ -12,9 +13,16 @@ PaneRect {
     id: player
 
     property real playerRadius: Config.roundness > 0 ? Config.roundness + 4 : 0
+    property bool playersListExpanded: false
     
     radius: playerRadius
-    height: MprisController.activePlayer ? layout.implicitHeight + layout.anchors.margins * 2 : 40
+    
+    implicitHeight: {
+        const baseHeight = MprisController.activePlayer ? layout.implicitHeight + layout.anchors.margins * 2 : 40;
+        return playersListExpanded ? baseHeight + 4 + (40 * Math.min(3, MprisController.filteredPlayers.length)) : baseHeight;
+    }
+    
+    Layout.preferredHeight: implicitHeight
 
     property bool isPlaying: MprisController.activePlayer?.playbackState === MprisPlaybackState.Playing
     property real position: MprisController.activePlayer?.position ?? 0.0
@@ -57,8 +65,51 @@ PaneRect {
 
     ClippingRectangle {
         anchors.fill: parent
-        radius: player.playerRadius > 0 ? player.playerRadius - 4 : 0
-        color: Colors.surface
+        radius: player.playerRadius
+        color: "transparent"
+
+        // Background artwork for entire component
+        Image {
+            id: backgroundArt
+            anchors.fill: parent
+            source: MprisController.activePlayer?.trackArtUrl ?? ""
+            fillMode: Image.PreserveAspectCrop
+            asynchronous: true
+            visible: false
+        }
+
+        MultiEffect {
+            id: backgroundEffect
+            anchors.fill: parent
+            source: backgroundArt
+            brightness: -0.15
+            contrast: -0.5
+            saturation: -0.25
+            blurMax: 32
+            blur: 0.75
+            opacity: (MprisController.activePlayer?.trackArtUrl ?? "") !== "" ? 1.0 : 0.0
+
+            Behavior on opacity {
+                enabled: Config.animDuration > 0
+                NumberAnimation {
+                    duration: Config.animDuration
+                    easing.type: Easing.OutQuart
+                }
+            }
+        }
+
+        ClippingRectangle {
+            anchors.fill: parent
+            radius: player.playerRadius > 0 ? player.playerRadius - 4 : 0
+            color: player.hasArtwork ? "transparent" : Colors.surface
+
+            Behavior on color {
+                enabled: Config.animDuration > 0
+                ColorAnimation {
+                    duration: Config.animDuration
+                    easing.type: Easing.OutQuart
+                }
+            }
 
         Item {
             id: noPlayerContainer
@@ -95,38 +146,11 @@ PaneRect {
             }
         }
 
-        Image {
-            id: backgroundArt
-            anchors.fill: parent
-            source: MprisController.activePlayer?.trackArtUrl ?? ""
-            fillMode: Image.PreserveAspectCrop
-            asynchronous: true
-            visible: false
-        }
-
-        MultiEffect {
-            anchors.fill: parent
-            source: backgroundArt
-            brightness: -0.15
-            contrast: -0.5
-            saturation: -0.25
-            // blurEnabled: true
-            blurMax: 32
-            blur: 0.75
-            opacity: (MprisController.activePlayer?.trackArtUrl ?? "") !== "" ? 1.0 : 0.0
-
-            Behavior on opacity {
-                enabled: Config.animDuration > 0
-                NumberAnimation {
-                    duration: Config.animDuration
-                    easing.type: Easing.OutQuart
-                }
-            }
-        }
-
         ColumnLayout {
             id: layout
-            anchors.fill: parent
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
             anchors.margins: 16
             spacing: 8
             visible: MprisController.activePlayer
@@ -378,19 +402,7 @@ PaneRect {
                     text: {
                         if (!MprisController.activePlayer)
                             return Icons.player;
-                        const dbusName = (MprisController.activePlayer.dbusName || "").toLowerCase();
-                        const desktopEntry = (MprisController.activePlayer.desktopEntry || "").toLowerCase();
-                        const identity = (MprisController.activePlayer.identity || "").toLowerCase();
-
-                        if (dbusName.includes("spotify") || desktopEntry.includes("spotify") || identity.includes("spotify"))
-                            return Icons.spotify;
-                        if (dbusName.includes("chromium") || dbusName.includes("chrome") || desktopEntry.includes("chromium") || desktopEntry.includes("chrome"))
-                            return Icons.chromium;
-                        if (dbusName.includes("firefox") || desktopEntry.includes("firefox"))
-                            return Icons.firefox;
-                        if (dbusName.includes("telegram") || desktopEntry.includes("telegram") || identity.includes("telegram"))
-                            return Icons.telegram;
-                        return Icons.player;
+                        return player.getPlayerIcon(MprisController.activePlayer);
                     }
                     textFormat: Text.RichText
                     color: playerIconHover.hovered ? (player.hasArtwork ? PlayerColors.primary : Colors.primary) : (player.hasArtwork ? PlayerColors.overBackground : Colors.overBackground)
@@ -410,85 +422,284 @@ PaneRect {
                         id: playerIconHover
                     }
 
-                    Timer {
-                        id: pressAndHoldTimer
-                        interval: 1000
-                        repeat: false
-                        onTriggered: {
-                            playersMenu.updateMenuItems();
-                            playersMenu.popup(playerIcon);
-                        }
-                    }
-
                     MouseArea {
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor
                         acceptedButtons: Qt.LeftButton | Qt.RightButton
-                        onPressed: mouse => {
-                            if (mouse.button === Qt.LeftButton) {
-                                pressAndHoldTimer.start();
-                            }
-                        }
-                        onReleased: {
-                            pressAndHoldTimer.stop();
-                        }
                         onClicked: mouse => {
                             if (mouse.button === Qt.LeftButton) {
                                 MprisController.cyclePlayer(1);
                             } else if (mouse.button === Qt.RightButton) {
-                                playersMenu.updateMenuItems();
-                                playersMenu.popup(playerIcon);
+                                player.playersListExpanded = !player.playersListExpanded;
                             }
-                        }
-                    }
-
-                    OptionsMenu {
-                        id: playersMenu
-
-                        function getPlayerIcon(player) {
-                            if (!player)
-                                return Icons.player;
-                            const dbusName = (player.dbusName || "").toLowerCase();
-                            const desktopEntry = (player.desktopEntry || "").toLowerCase();
-                            const identity = (player.identity || "").toLowerCase();
-
-                            if (dbusName.includes("spotify") || desktopEntry.includes("spotify") || identity.includes("spotify"))
-                                return Icons.spotify;
-                            if (dbusName.includes("chromium") || dbusName.includes("chrome") || desktopEntry.includes("chromium") || desktopEntry.includes("chrome"))
-                                return Icons.chromium;
-                            if (dbusName.includes("firefox") || desktopEntry.includes("firefox"))
-                                return Icons.firefox;
-                            if (dbusName.includes("telegram") || desktopEntry.includes("telegram") || identity.includes("telegram"))
-                                return Icons.telegram;
-                            return Icons.player;
-                        }
-
-                        function updateMenuItems() {
-                            const players = MprisController.filteredPlayers;
-                            const menuItems = [];
-
-                            for (let i = 0; i < players.length; i++) {
-                                const player = players[i];
-                                const isActive = player === MprisController.activePlayer;
-                                const playerColors = PlayerColors;
-
-                                menuItems.push({
-                                    text: player.trackTitle || player.identity || "Unknown Player",
-                                    icon: getPlayerIcon(player),
-                                    highlightColor: playerColors.primary,
-                                    textColor: playerColors.overPrimary,
-                                    onTriggered: () => {
-                                        MprisController.setActivePlayer(player);
-                                        playersMenu.close();
-                                    }
-                                });
-                            }
-
-                            playersMenu.items = menuItems;
                         }
                     }
                 }
             }
+        }
+
+        // Players list - similar to SchemeSelector
+        RowLayout {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            anchors.leftMargin: 4
+            anchors.rightMargin: 4
+            anchors.bottomMargin: 4
+            spacing: 4
+            visible: MprisController.filteredPlayers.length > 0
+
+            ClippingRectangle {
+                id: playersListContainer
+                Layout.fillWidth: true
+                Layout.preferredHeight: player.playersListExpanded ? (40 * Math.min(3, MprisController.filteredPlayers.length)) : 0
+                color: Colors.background
+                radius: Config.roundness
+                opacity: player.playersListExpanded ? 1 : 0
+
+                Behavior on Layout.preferredHeight {
+                    enabled: Config.animDuration > 0
+                    NumberAnimation {
+                        duration: Config.animDuration
+                        easing.type: Easing.OutQuart
+                    }
+                }
+
+                Behavior on opacity {
+                    enabled: Config.animDuration > 0
+                    NumberAnimation {
+                        duration: Config.animDuration
+                        easing.type: Easing.OutQuart
+                    }
+                }
+
+                ListView {
+                    id: playersListView
+                    anchors.fill: parent
+                    clip: true
+                    model: MprisController.filteredPlayers
+                    interactive: true
+                    boundsBehavior: Flickable.StopAtBounds
+                    highlightFollowsCurrentItem: true
+                    highlightRangeMode: ListView.ApplyRange
+                    preferredHighlightBegin: 0
+                    preferredHighlightEnd: height
+                    currentIndex: -1
+
+                    function getPlayerIcon(player) {
+                        if (!player)
+                            return Icons.player;
+                        const dbusName = (player.dbusName || "").toLowerCase();
+                        const desktopEntry = (player.desktopEntry || "").toLowerCase();
+                        const identity = (player.identity || "").toLowerCase();
+
+                        if (dbusName.includes("spotify") || desktopEntry.includes("spotify") || identity.includes("spotify"))
+                            return Icons.spotify;
+                        if (dbusName.includes("chromium") || dbusName.includes("chrome") || desktopEntry.includes("chromium") || desktopEntry.includes("chrome"))
+                            return Icons.chromium;
+                        if (dbusName.includes("firefox") || desktopEntry.includes("firefox"))
+                            return Icons.firefox;
+                        if (dbusName.includes("telegram") || desktopEntry.includes("telegram") || identity.includes("telegram"))
+                            return Icons.telegram;
+                        return Icons.player;
+                    }
+
+                    highlight: Rectangle {
+                        color: PlayerColors.primary
+                        radius: Config.roundness
+                        visible: playersListView.currentIndex >= 0
+                        z: -1
+                    }
+
+                    highlightMoveDuration: Config.animDuration > 0 ? Config.animDuration / 2 : 0
+                    highlightMoveVelocity: -1
+                    highlightResizeDuration: Config.animDuration / 2
+                    highlightResizeVelocity: -1
+
+                    delegate: Item {
+                        required property var modelData
+                        required property int index
+
+                        width: playersListView.width
+                        height: 40
+
+                        Rectangle {
+                            anchors.fill: parent
+                            anchors.leftMargin: 4
+                            anchors.rightMargin: 4
+                            anchors.topMargin: 2
+                            anchors.bottomMargin: 2
+                            color: "transparent"
+                            radius: Config.roundness
+
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.margins: 6
+                                spacing: 8
+
+                                Text {
+                                    text: playersListView.getPlayerIcon(modelData)
+                                    textFormat: Text.RichText
+                                    color: playersListView.currentIndex === index ? PlayerColors.overPrimary : Colors.overSurface
+                                    font.pixelSize: 20
+                                    font.family: Icons.font
+
+                                    Behavior on color {
+                                        enabled: Config.animDuration > 0
+                                        ColorAnimation {
+                                            duration: Config.animDuration / 2
+                                            easing.type: Easing.OutQuart
+                                        }
+                                    }
+                                }
+
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: modelData.trackTitle || modelData.identity || "Unknown Player"
+                                    textFormat: Text.PlainText
+                                    color: playersListView.currentIndex === index ? PlayerColors.overPrimary : Colors.overSurface
+                                    font.pixelSize: Config.theme.fontSize
+                                    font.weight: playersListView.currentIndex === index ? Font.Bold : Font.Normal
+                                    font.family: Config.theme.font
+                                    elide: Text.ElideRight
+                                    wrapMode: Text.NoWrap
+                                    maximumLineCount: 1
+
+                                    Behavior on color {
+                                        enabled: Config.animDuration > 0
+                                        ColorAnimation {
+                                            duration: Config.animDuration / 2
+                                            easing.type: Easing.OutQuart
+                                        }
+                                    }
+                                }
+                            }
+
+                            HoverHandler {
+                                id: playerItemHover
+                                onHoveredChanged: {
+                                    if (hovered) {
+                                        playersListView.currentIndex = index;
+                                    }
+                                }
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                hoverEnabled: true
+                                onClicked: {
+                                    MprisController.setActivePlayer(modelData);
+                                    player.playersListExpanded = false;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    propagateComposedEvents: true
+                    acceptedButtons: Qt.NoButton
+                    
+                    onWheel: wheel => {
+                        if (player.playersListExpanded && playersListView.contentHeight > playersListView.height) {
+                            const delta = wheel.angleDelta.y;
+                            playersListView.contentY = Math.max(0, Math.min(
+                                playersListView.contentHeight - playersListView.height,
+                                playersListView.contentY - delta
+                            ));
+                            wheel.accepted = true;
+                        } else {
+                            wheel.accepted = false;
+                        }
+                    }
+                }
+            }
+
+            ScrollBar {
+                Layout.preferredWidth: 8
+                Layout.preferredHeight: player.playersListExpanded ? (40 * Math.min(3, MprisController.filteredPlayers.length)) - 32 : 0
+                Layout.alignment: Qt.AlignVCenter
+                orientation: Qt.Vertical
+                visible: playersListView.contentHeight > playersListView.height
+
+                position: playersListView.contentY / playersListView.contentHeight
+                size: playersListView.height / playersListView.contentHeight
+
+                background: Rectangle {
+                    color: Colors.background
+                    radius: Config.roundness
+                }
+
+                contentItem: Rectangle {
+                    color: PlayerColors.primary
+                    radius: Config.roundness
+                }
+
+                property bool scrollBarPressed: false
+
+                onPressedChanged: {
+                    scrollBarPressed = pressed;
+                }
+
+                onPositionChanged: {
+                    if (scrollBarPressed && playersListView.contentHeight > playersListView.height) {
+                        playersListView.contentY = position * playersListView.contentHeight;
+                    }
+                }
+            }
+        }
+        }
+    }
+
+    Behavior on implicitHeight {
+        enabled: Config.animDuration > 0
+        NumberAnimation {
+            duration: Config.animDuration
+            easing.type: Easing.OutQuart
+        }
+    }
+
+    Behavior on Layout.preferredHeight {
+        enabled: Config.animDuration > 0
+        NumberAnimation {
+            duration: Config.animDuration
+            easing.type: Easing.OutQuart
+        }
+    }
+
+    function getPlayerIcon(player) {
+        if (!player)
+            return Icons.player;
+        const dbusName = (player.dbusName || "").toLowerCase();
+        const desktopEntry = (player.desktopEntry || "").toLowerCase();
+        const identity = (player.identity || "").toLowerCase();
+
+        if (dbusName.includes("spotify") || desktopEntry.includes("spotify") || identity.includes("spotify"))
+            return Icons.spotify;
+        if (dbusName.includes("chromium") || dbusName.includes("chrome") || desktopEntry.includes("chromium") || desktopEntry.includes("chrome"))
+            return Icons.chromium;
+        if (dbusName.includes("firefox") || desktopEntry.includes("firefox"))
+            return Icons.firefox;
+        if (dbusName.includes("telegram") || desktopEntry.includes("telegram") || identity.includes("telegram"))
+            return Icons.telegram;
+        return Icons.player;
+    }
+    
+    Behavior on implicitHeight {
+        enabled: Config.animDuration > 0
+        NumberAnimation {
+            duration: Config.animDuration
+            easing.type: Easing.OutQuart
+        }
+    }
+
+    Behavior on Layout.preferredHeight {
+        enabled: Config.animDuration > 0
+        NumberAnimation {
+            duration: Config.animDuration
+            easing.type: Easing.OutQuart
         }
     }
 }
