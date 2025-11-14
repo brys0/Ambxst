@@ -32,7 +32,7 @@ find_ambxst_pid() {
 case "${1:-}" in
     update)
         echo "Updating Ambxst..."
-        exec "${SCRIPT_DIR}/install.sh"
+        exec curl -fsSL get.axeni.de/ambxst | bash
         ;;
     lock)
         # Trigger lockscreen via quickshell-ipc
