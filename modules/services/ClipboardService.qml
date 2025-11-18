@@ -9,6 +9,7 @@ QtObject {
     property bool active: true
     property var items: []
     property var imageDataById: ({})
+    property var linkPreviewCache: ({})
     property int revision: 0
     property bool _operationInProgress: false
     
@@ -18,6 +19,7 @@ QtObject {
     readonly property string insertScriptPath: Qt.resolvedUrl("../../scripts/clipboard_insert.sh").toString().replace("file://", "")
     readonly property string checkScriptPath: Qt.resolvedUrl("../../scripts/clipboard_check.sh").toString().replace("file://", "")
     readonly property string watchScriptPath: Qt.resolvedUrl("../../scripts/clipboard_watch.sh").toString().replace("file://", "")
+    readonly property string linkPreviewScriptPath: Qt.resolvedUrl("../../scripts/link_preview.py").toString().replace("file://", "")
 
     property bool _initialized: false
 
@@ -291,8 +293,47 @@ QtObject {
             }
         }
     }
+    
+    // Link preview metadata fetcher
+    property Process linkPreviewProcess: Process {
+        property string requestUrl: ""
+        running: false
+        
+        stdout: StdioCollector {
+            waitForEnd: true
+            
+            onStreamFinished: {
+                try {
+                    var metadata = JSON.parse(text);
+                    // Cache the result if successful
+                    if (!metadata.error) {
+                        root.linkPreviewCache[linkPreviewProcess.requestUrl] = metadata;
+                    }
+                    root.linkPreviewFetched(linkPreviewProcess.requestUrl, metadata);
+                } catch (e) {
+                    console.warn("ClipboardService: Failed to parse link preview:", e);
+                    root.linkPreviewFetched(linkPreviewProcess.requestUrl, {'error': 'Failed to parse response'});
+                }
+            }
+        }
+        
+        stderr: StdioCollector {
+            onStreamFinished: {
+                if (text.length > 0) {
+                    console.warn("ClipboardService: linkPreviewProcess stderr:", text);
+                }
+            }
+        }
+        
+        onExited: function(code) {
+            if (code !== 0) {
+                root.linkPreviewFetched(linkPreviewProcess.requestUrl, {'error': 'Failed to fetch preview'});
+            }
+        }
+    }
 
     signal fullContentRetrieved(string itemId, string content)
+    signal linkPreviewFetched(string url, var metadata)
     
     // Function to decode URL-encoded strings
     function decodeUriString(str) {
@@ -404,6 +445,22 @@ QtObject {
 
     function getImageData(id) {
         return imageDataById[id] || "";
+    }
+    
+    function fetchLinkPreview(url) {
+        if (!_initialized) return;
+        
+        // Check cache first
+        if (linkPreviewCache[url]) {
+            Qt.callLater(function() {
+                root.linkPreviewFetched(url, linkPreviewCache[url]);
+            });
+            return;
+        }
+        
+        linkPreviewProcess.requestUrl = url;
+        linkPreviewProcess.command = ["python3", linkPreviewScriptPath, url, "5"];
+        linkPreviewProcess.running = true;
     }
 
     Component.onCompleted: {

@@ -46,6 +46,8 @@ Item {
 
     property int previewImageSize: 200
     property string currentFullContent: ""
+    property var linkPreviewData: null
+    property bool loadingLinkPreview: false
     
     // Helper function to get file path from URI
     function getFilePathFromUri(content) {
@@ -288,8 +290,11 @@ Item {
                 } else if (!item.isImage) {
                     // Obtener contenido completo para texto
                     root.currentFullContent = "";
+                    root.linkPreviewData = null;
                     ClipboardService.getFullContent(item.id);
                 }
+            } else {
+                root.linkPreviewData = null;
             }
         }
     }
@@ -302,6 +307,23 @@ Item {
                 let item = root.allItems[root.selectedIndex];
                 if (item.id === itemId) {
                     root.currentFullContent = content;
+                    
+                    // Si es una URL, obtener preview
+                    if (ClipboardUtils.isUrl(content)) {
+                        root.loadingLinkPreview = true;
+                        ClipboardService.fetchLinkPreview(content.trim());
+                    }
+                }
+            }
+        }
+        
+        function onLinkPreviewFetched(url, metadata) {
+            root.loadingLinkPreview = false;
+            if (root.selectedIndex >= 0 && root.selectedIndex < root.allItems.length) {
+                let item = root.allItems[root.selectedIndex];
+                let currentContent = root.currentFullContent || item.preview;
+                if (ClipboardUtils.isUrl(currentContent) && currentContent.trim() === url) {
+                    root.linkPreviewData = metadata;
                 }
             }
         }
@@ -1049,7 +1071,7 @@ Item {
                                         } else if (isSelected) {
                                             return Colors.overPrimary;
                                         } else {
-                                            return Colors.surfaceBright;
+                                            return Colors.outline;
                                         }
                                     }
                                     font.family: Config.theme.font
@@ -1129,7 +1151,7 @@ Item {
                         text: "Copy something to get started"
                         font.family: Config.theme.font
                         font.pixelSize: Config.theme.fontSize
-                        color: Colors.surfaceBright
+                        color: Colors.outline
                         anchors.horizontalCenter: parent.horizontalCenter
                     }
                 }
@@ -1216,11 +1238,330 @@ Item {
                             width: parent.width
                             spacing: 12
                             
-                            // URL preview with favicon
+                            // Link embed preview (Discord-style)
+                            Rectangle {
+                                width: parent.width
+                                height: {
+                                    // For videos (YouTube), use a larger layout
+                                    if (root.linkPreviewData && root.linkPreviewData.type === 'video' && root.linkPreviewData.image) {
+                                        return videoEmbedContent.height + 16;
+                                    }
+                                    return linkEmbedContent.height + 16;
+                                }
+                                visible: root.linkPreviewData && !root.linkPreviewData.error && 
+                                        (root.linkPreviewData.title || root.linkPreviewData.description || root.linkPreviewData.image)
+                                color: Colors.surface
+                                radius: Config.roundness > 0 ? Config.roundness + 4 : 0
+                                
+                                // Left accent bar
+                                Rectangle {
+                                    x: 0
+                                    y: 0
+                                    width: 4
+                                    height: parent.height
+                                    color: Colors.primary
+                                    radius: Config.roundness > 0 ? Config.roundness : 0
+                                }
+                                
+                                // Video embed layout (YouTube, etc.)
+                                Column {
+                                    id: videoEmbedContent
+                                    anchors.left: parent.left
+                                    anchors.right: parent.right
+                                    anchors.top: parent.top
+                                    anchors.margins: 12
+                                    anchors.leftMargin: 16
+                                    spacing: 10
+                                    visible: root.linkPreviewData && root.linkPreviewData.type === 'video'
+                                    
+                                    // Site name with favicon
+                                    Row {
+                                        width: parent.width
+                                        spacing: 8
+                                        visible: root.linkPreviewData && root.linkPreviewData.site_name
+                                        
+                                        Image {
+                                            width: 16
+                                            height: 16
+                                            source: root.linkPreviewData && root.linkPreviewData.favicon ? 
+                                                   root.linkPreviewData.favicon : ""
+                                            fillMode: Image.PreserveAspectFit
+                                            asynchronous: true
+                                            cache: true
+                                            visible: status === Image.Ready
+                                        }
+                                        
+                                        Text {
+                                            text: root.linkPreviewData ? root.linkPreviewData.site_name : ""
+                                            font.family: Config.theme.font
+                                            font.pixelSize: Config.theme.fontSize - 1
+                                            font.weight: Font.Medium
+                                            color: Colors.outline
+                                            elide: Text.ElideRight
+                                            width: parent.width - 24
+                                        }
+                                    }
+                                    
+                                    // Video thumbnail with play overlay
+                                    Rectangle {
+                                        width: parent.width
+                                        height: width * 9 / 16  // 16:9 aspect ratio
+                                        color: Colors.surfaceBright
+                                        radius: Config.roundness > 0 ? Math.max(Config.roundness - 4, 0) : 0
+                                        visible: root.linkPreviewData && root.linkPreviewData.image
+                                        
+                                        Image {
+                                            id: videoThumbnail
+                                            anchors.fill: parent
+                                            source: root.linkPreviewData && root.linkPreviewData.image ? 
+                                                   root.linkPreviewData.image : ""
+                                            fillMode: Image.PreserveAspectCrop
+                                            asynchronous: true
+                                            cache: true
+                                            smooth: true
+                                            
+                                            // Dark overlay
+                                            Rectangle {
+                                                anchors.fill: parent
+                                                color: "#40000000"
+                                                radius: parent.parent.radius
+                                            }
+                                            
+                                            // Play button overlay
+                                            Rectangle {
+                                                anchors.centerIn: parent
+                                                width: 60
+                                                height: 60
+                                                radius: 30
+                                                color: Colors.primary
+                                                opacity: 0.9
+                                                
+                                                Text {
+                                                    anchors.centerIn: parent
+                                                    text: Icons.play
+                                                    font.family: Icons.font
+                                                    font.pixelSize: 28
+                                                    color: Colors.overPrimary
+                                                    textFormat: Text.RichText
+                                                }
+                                            }
+                                            
+                                            // Loading indicator
+                                            Rectangle {
+                                                anchors.fill: parent
+                                                color: Colors.surfaceBright
+                                                radius: parent.parent.radius
+                                                visible: parent.status === Image.Loading
+                                                
+                                                Text {
+                                                    anchors.centerIn: parent
+                                                    text: Icons.spinnerGap
+                                                    font.family: Icons.font
+                                                    font.pixelSize: 32
+                                                    color: Colors.primary
+                                                    textFormat: Text.RichText
+                                                    
+                                                    RotationAnimator on rotation {
+                                                        from: 0
+                                                        to: 360
+                                                        duration: 1000
+                                                        loops: Animation.Infinite
+                                                        running: parent.parent.visible
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                    
+                                    // Title
+                                    Text {
+                                        width: parent.width
+                                        text: root.linkPreviewData && root.linkPreviewData.title ? 
+                                             root.linkPreviewData.title : ""
+                                        font.family: Config.theme.font
+                                        font.pixelSize: Config.theme.fontSize + 1
+                                        font.weight: Font.Bold
+                                        color: Colors.overBackground
+                                        wrapMode: Text.Wrap
+                                        maximumLineCount: 2
+                                        elide: Text.ElideRight
+                                        visible: text.length > 0
+                                    }
+                                    
+                                    // Author/Description
+                                    Text {
+                                        width: parent.width
+                                        text: root.linkPreviewData && root.linkPreviewData.description ? 
+                                             root.linkPreviewData.description : ""
+                                        font.family: Config.theme.font
+                                        font.pixelSize: Config.theme.fontSize
+                                        color: Colors.outline
+                                        wrapMode: Text.Wrap
+                                        maximumLineCount: 2
+                                        elide: Text.ElideRight
+                                        visible: text.length > 0
+                                    }
+                                }
+                                
+                                // Regular link embed layout
+                                Row {
+                                    id: linkEmbedContent
+                                    anchors.left: parent.left
+                                    anchors.right: parent.right
+                                    anchors.top: parent.top
+                                    anchors.margins: 12
+                                    anchors.leftMargin: 16
+                                    spacing: 12
+                                    visible: !root.linkPreviewData || root.linkPreviewData.type !== 'video'
+                                    
+                                    // Text content column
+                                    Column {
+                                        width: root.linkPreviewData && root.linkPreviewData.image ? 
+                                               parent.width - 100 - parent.spacing : parent.width
+                                        spacing: 6
+                                        
+                                        // Site name with favicon
+                                        Row {
+                                            width: parent.width
+                                            spacing: 8
+                                            visible: root.linkPreviewData && root.linkPreviewData.site_name
+                                            
+                                            Image {
+                                                width: 16
+                                                height: 16
+                                                source: root.linkPreviewData && root.linkPreviewData.favicon ? 
+                                                       root.linkPreviewData.favicon : ""
+                                                fillMode: Image.PreserveAspectFit
+                                                asynchronous: true
+                                                cache: true
+                                                visible: status === Image.Ready
+                                            }
+                                            
+                                            Text {
+                                                text: root.linkPreviewData ? root.linkPreviewData.site_name : ""
+                                                font.family: Config.theme.font
+                                                font.pixelSize: Config.theme.fontSize - 1
+                                                font.weight: Font.Medium
+                                                color: Colors.outline
+                                                elide: Text.ElideRight
+                                                width: parent.width - 24
+                                            }
+                                        }
+                                        
+                                        // Title
+                                        Text {
+                                            width: parent.width
+                                            text: root.linkPreviewData && root.linkPreviewData.title ? 
+                                                 root.linkPreviewData.title : ""
+                                            font.family: Config.theme.font
+                                            font.pixelSize: Config.theme.fontSize + 1
+                                            font.weight: Font.Bold
+                                            color: Colors.overBackground
+                                            wrapMode: Text.Wrap
+                                            maximumLineCount: 2
+                                            elide: Text.ElideRight
+                                            visible: text.length > 0
+                                        }
+                                        
+                                        // Description
+                                        Text {
+                                            width: parent.width
+                                            text: root.linkPreviewData && root.linkPreviewData.description ? 
+                                                 root.linkPreviewData.description : ""
+                                            font.family: Config.theme.font
+                                            font.pixelSize: Config.theme.fontSize
+                                            color: Colors.outline
+                                            wrapMode: Text.Wrap
+                                            maximumLineCount: 3
+                                            elide: Text.ElideRight
+                                            visible: text.length > 0
+                                        }
+                                    }
+                                    
+                                    // Preview image (thumbnail)
+                                    Rectangle {
+                                        width: 100
+                                        height: 100
+                                        color: Colors.surfaceBright
+                                        radius: Config.roundness > 0 ? Math.max(Config.roundness - 4, 0) : 0
+                                        visible: root.linkPreviewData && root.linkPreviewData.image
+                                        
+                                        Image {
+                                            anchors.fill: parent
+                                            source: root.linkPreviewData && root.linkPreviewData.image ? 
+                                                   root.linkPreviewData.image : ""
+                                            fillMode: Image.PreserveAspectCrop
+                                            asynchronous: true
+                                            cache: true
+                                            smooth: true
+                                            
+                                            Rectangle {
+                                                anchors.fill: parent
+                                                color: Colors.surfaceBright
+                                                radius: parent.radius
+                                                visible: parent.status === Image.Loading
+                                                
+                                                Text {
+                                                    anchors.centerIn: parent
+                                                    text: Icons.spinnerGap
+                                                    font.family: Icons.font
+                                                    font.pixelSize: 24
+                                                    color: Colors.primary
+                                                    textFormat: Text.RichText
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            // Loading indicator for link preview
+                            Rectangle {
+                                width: parent.width
+                                height: 60
+                                visible: root.loadingLinkPreview && previewPanel.currentItem && 
+                                        ClipboardUtils.isUrl(root.currentFullContent || previewPanel.currentItem.preview)
+                                color: Colors.surface
+                                radius: Config.roundness > 0 ? Config.roundness + 4 : 0
+                                
+                                Row {
+                                    anchors.centerIn: parent
+                                    spacing: 12
+                                    
+                                    Text {
+                                        text: Icons.spinnerGap
+                                        font.family: Icons.font
+                                        font.pixelSize: 20
+                                        color: Colors.primary
+                                        textFormat: Text.RichText
+                                        
+                                        RotationAnimator on rotation {
+                                            from: 0
+                                            to: 360
+                                            duration: 1000
+                                            loops: Animation.Infinite
+                                            running: parent.parent.parent.visible
+                                        }
+                                    }
+                                    
+                                    Text {
+                                        text: "Loading preview..."
+                                        font.family: Config.theme.font
+                                        font.pixelSize: Config.theme.fontSize
+                                        color: Colors.outline
+                                    }
+                                }
+                            }
+
+                            // URL preview with favicon (fallback when no embed available)
                             Item {
                                 width: parent.width
                                 height: urlPreview.visible ? 60 : 0
-                                visible: previewPanel.currentItem && ClipboardUtils.isUrl(root.currentFullContent || previewPanel.currentItem.preview)
+                                visible: previewPanel.currentItem && 
+                                        ClipboardUtils.isUrl(root.currentFullContent || previewPanel.currentItem.preview) &&
+                                        !root.loadingLinkPreview &&
+                                        (!root.linkPreviewData || 
+                                         (!root.linkPreviewData.title && !root.linkPreviewData.description && !root.linkPreviewData.image))
                                 
                                 Rectangle {
                                     id: urlPreview
@@ -1284,7 +1625,7 @@ Item {
                                                 font.family: Config.theme.font
                                                 font.pixelSize: Config.theme.fontSize - 1
                                                 font.weight: Font.Medium
-                                                color: Colors.surfaceBright
+                                                color: Colors.outline
                                             }
                                             
                                             Text {
@@ -1455,7 +1796,7 @@ Item {
                                     }
                                     font.family: Config.theme.font
                                     font.pixelSize: Config.theme.fontSize - 1
-                                    color: Colors.surfaceBright
+                                    color: Colors.outline
                                     horizontalAlignment: Text.AlignHCenter
                                     width: parent.width
                                     wrapMode: Text.Wrap
@@ -1500,7 +1841,7 @@ Item {
                                     font.family: Config.theme.font
                                     font.pixelSize: Config.theme.fontSize
                                     font.weight: Font.Medium
-                                    color: Colors.surfaceBright
+                                    color: Colors.outline
                                 }
 
                                 Text {
@@ -1523,7 +1864,7 @@ Item {
                                     font.family: Config.theme.font
                                     font.pixelSize: Config.theme.fontSize
                                     font.weight: Font.Medium
-                                    color: Colors.surfaceBright
+                                    color: Colors.outline
                                 }
 
                                 Text {
@@ -1557,7 +1898,7 @@ Item {
                                     font.family: Config.theme.font
                                     font.pixelSize: Config.theme.fontSize
                                     font.weight: Font.Medium
-                                    color: Colors.surfaceBright
+                                    color: Colors.outline
                                 }
 
                                 Text {
@@ -1582,7 +1923,7 @@ Item {
                                     font.family: Config.theme.font
                                     font.pixelSize: Config.theme.fontSize
                                     font.weight: Font.Medium
-                                    color: Colors.surfaceBright
+                                    color: Colors.outline
                                 }
 
                                 Text {
