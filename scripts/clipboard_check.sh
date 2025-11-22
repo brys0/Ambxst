@@ -27,7 +27,23 @@ fi
 if IMAGE_MIME=$(wl-paste --list-types 2>/dev/null | grep '^image/' | head -1); then
     if [ -n "$IMAGE_MIME" ]; then
         HASH=$(wl-paste --type "$IMAGE_MIME" 2>/dev/null | md5sum | cut -d' ' -f1)
-        BINARY_PATH="$DATA_DIR/$HASH"
+        
+        # Determine file extension from MIME type
+        case "$IMAGE_MIME" in
+            image/png) EXT="png" ;;
+            image/jpeg) EXT="jpg" ;;
+            image/gif) EXT="gif" ;;
+            image/webp) EXT="webp" ;;
+            image/bmp) EXT="bmp" ;;
+            image/svg+xml) EXT="svg" ;;
+            *) EXT="img" ;;
+        esac
+        
+        # Create filename with timestamp and extension
+        TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+        FILENAME="clipboard_${TIMESTAMP}.${EXT}"
+        BINARY_PATH="$DATA_DIR/$FILENAME"
+        
         wl-paste --type "$IMAGE_MIME" 2>/dev/null > "$BINARY_PATH"
         
         # Get image size
