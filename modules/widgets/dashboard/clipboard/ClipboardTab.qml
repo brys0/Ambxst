@@ -508,24 +508,43 @@ Item {
                         }
                     }
 
-                    onShiftAccepted: {
-                        if (!root.deleteMode && !root.aliasMode) {
-                            if (root.selectedIndex >= 0 && root.selectedIndex < root.allItems.length) {
-                                // Toggle expanded state
-                                if (root.expandedItemIndex === root.selectedIndex) {
-                                    root.expandedItemIndex = -1;
-                                    root.selectedOptionIndex = 0;
-                                    root.keyboardNavigation = false;
-                                } else {
-                                    root.expandedItemIndex = root.selectedIndex;
-                                    root.selectedOptionIndex = 0;
-                                    root.keyboardNavigation = true;
-                                }
-                            }
+            onShiftAccepted: {
+                if (!root.deleteMode && !root.aliasMode) {
+                    if (root.selectedIndex >= 0 && root.selectedIndex < root.allItems.length) {
+                        // Toggle expanded state
+                        if (root.expandedItemIndex === root.selectedIndex) {
+                            root.expandedItemIndex = -1;
+                            root.selectedOptionIndex = 0;
+                            root.keyboardNavigation = false;
+                        } else {
+                            root.expandedItemIndex = root.selectedIndex;
+                            root.selectedOptionIndex = 0;
+                            root.keyboardNavigation = true;
                         }
                     }
+                }
+            }
 
-                    onEscapePressed: {
+            onCtrlRPressed: {
+                if (!root.deleteMode && !root.aliasMode && root.selectedIndex >= 0 && root.selectedIndex < root.allItems.length) {
+                    let selectedItem = root.allItems[root.selectedIndex];
+                    if (selectedItem && !selectedItem.isCreateButton) {
+                        root.enterAliasMode(selectedItem.id);
+                    }
+                }
+            }
+
+            onCtrlPPressed: {
+                if (!root.deleteMode && !root.aliasMode && root.selectedIndex >= 0 && root.selectedIndex < root.allItems.length) {
+                    let selectedItem = root.allItems[root.selectedIndex];
+                    if (selectedItem) {
+                        root.pendingItemIdToSelect = selectedItem.id;
+                        ClipboardService.togglePin(selectedItem.id);
+                    }
+                }
+            }
+
+            onEscapePressed: {
                         if (root.expandedItemIndex >= 0) {
                             root.expandedItemIndex = -1;
                             root.selectedOptionIndex = 0;

@@ -21,6 +21,7 @@ PaneRect {
     signal tabPressed
     signal shiftTabPressed
     signal ctrlRPressed
+    signal ctrlPPressed
     signal escapePressed
     signal downPressed
     signal upPressed
@@ -91,6 +92,9 @@ PaneRect {
                     event.accepted = true;
                 } else if (event.key === Qt.Key_R && (event.modifiers & Qt.ControlModifier)) {
                     root.ctrlRPressed();
+                    event.accepted = true;
+                } else if (event.key === Qt.Key_P && (event.modifiers & Qt.ControlModifier)) {
+                    root.ctrlPPressed();
                     event.accepted = true;
                 } else if (event.key === Qt.Key_Escape) {
                     if (root.clearOnEscape) {
