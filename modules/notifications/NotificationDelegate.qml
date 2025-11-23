@@ -192,7 +192,7 @@ Item {
                                                         }
                                                         text: latestNotification ? "• " + latestNotification.appName : ""
                                                         font.family: Config.theme.font
-                                                        font.pixelSize: Config.theme.fontSize
+                                                        font.pixelSize: Math.max(8, Config.theme.fontSize - 2)
                                                         font.weight: Font.Bold
                                                         color: latestNotification && latestNotification.urgency == NotificationUrgency.Critical ? Colors.criticalText : Colors.outline
                                                         elide: Text.ElideRight

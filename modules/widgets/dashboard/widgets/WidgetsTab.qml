@@ -342,20 +342,43 @@ Rectangle {
                                 }
                             }
 
-                            Text {
+                            Column {
                                 Layout.fillWidth: true
-                                text: modelData.name
-                                color: appLauncherItem.selectedIndex === index ? Colors.overPrimary : Colors.overBackground
-                                font.family: Config.theme.font
-                                font.pixelSize: Config.theme.fontSize
-                                font.weight: Font.Bold
-                                elide: Text.ElideRight
+                                spacing: 0
 
-                                Behavior on color {
-                                    enabled: Config.animDuration > 0
-                                    ColorAnimation {
-                                        duration: Config.animDuration / 2
-                                        easing.type: Easing.OutCubic
+                                Text {
+                                    width: parent.width
+                                    text: modelData.name
+                                    color: appLauncherItem.selectedIndex === index ? Colors.overPrimary : Colors.overBackground
+                                    font.family: Config.theme.font
+                                    font.pixelSize: Config.theme.fontSize
+                                    font.weight: Font.Bold
+                                    elide: Text.ElideRight
+
+                                    Behavior on color {
+                                        enabled: Config.animDuration > 0
+                                        ColorAnimation {
+                                            duration: Config.animDuration / 2
+                                            easing.type: Easing.OutCubic
+                                        }
+                                    }
+                                }
+
+                                Text {
+                                    width: parent.width
+                                    text: modelData.comment || ""
+                                    color: appLauncherItem.selectedIndex === index ? Colors.overPrimary : Colors.outline
+                                    font.family: Config.theme.font
+                                    font.pixelSize: Math.max(8, Config.theme.fontSize - 2)
+                                    elide: Text.ElideRight
+                                    visible: text !== ""
+
+                                    Behavior on color {
+                                        enabled: Config.animDuration > 0
+                                        ColorAnimation {
+                                            duration: Config.animDuration / 2
+                                            easing.type: Easing.OutCubic
+                                        }
                                     }
                                 }
                             }

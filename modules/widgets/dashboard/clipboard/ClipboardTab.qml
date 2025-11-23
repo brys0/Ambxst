@@ -1936,7 +1936,7 @@ Item {
                                         }
                                     }
                                     font.family: Config.theme.font
-                                    font.pixelSize: Config.theme.fontSize
+                                    font.pixelSize: Math.max(8, Config.theme.fontSize - 2)
                                     elide: Text.ElideRight
                                     maximumLineCount: 1
                                     wrapMode: Text.NoWrap
@@ -2196,7 +2196,7 @@ Item {
                                         Text {
                                             text: root.linkPreviewData ? root.linkPreviewData.site_name : ""
                                             font.family: Config.theme.font
-                                            font.pixelSize: Config.theme.fontSize - 1
+                                            font.pixelSize: Math.max(8, Config.theme.fontSize - 2)
                                             font.weight: Font.Medium
                                             color: Colors.outline
                                             elide: Text.ElideRight
@@ -2343,7 +2343,7 @@ Item {
                                             Text {
                                                 text: root.linkPreviewData ? root.linkPreviewData.site_name : ""
                                                 font.family: Config.theme.font
-                                                font.pixelSize: Config.theme.fontSize - 1
+                                                font.pixelSize: Math.max(8, Config.theme.fontSize - 2)
                                                 font.weight: Font.Medium
                                                 color: Colors.outline
                                                 elide: Text.ElideRight
@@ -2788,7 +2788,7 @@ Item {
                                     Text {
                                         text: "MIME Type"
                                         font.family: Config.theme.font
-                                        font.pixelSize: Config.theme.fontSize
+                                        font.pixelSize: Math.max(8, Config.theme.fontSize - 2)
                                         font.weight: Font.Medium
                                         color: Colors.outline
                                     }
@@ -2811,7 +2811,7 @@ Item {
                                     Text {
                                         text: "Size"
                                         font.family: Config.theme.font
-                                        font.pixelSize: Config.theme.fontSize
+                                        font.pixelSize: Math.max(8, Config.theme.fontSize - 2)
                                         font.weight: Font.Medium
                                         color: Colors.outline
                                     }
@@ -2844,7 +2844,7 @@ Item {
                                     Text {
                                         text: "Date"
                                         font.family: Config.theme.font
-                                        font.pixelSize: Config.theme.fontSize
+                                        font.pixelSize: Math.max(8, Config.theme.fontSize - 2)
                                         font.weight: Font.Medium
                                         color: Colors.outline
                                     }
@@ -2869,7 +2869,7 @@ Item {
                                     Text {
                                         text: "Checksum"
                                         font.family: Config.theme.font
-                                        font.pixelSize: Config.theme.fontSize
+                                        font.pixelSize: Math.max(8, Config.theme.fontSize - 2)
                                         font.weight: Font.Medium
                                         color: Colors.outline
                                     }
