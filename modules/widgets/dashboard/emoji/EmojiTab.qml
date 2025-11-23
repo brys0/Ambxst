@@ -16,7 +16,7 @@ Rectangle {
     focus: true
 
     // Prefix support
-    property string prefixText: ""
+    property string prefixIcon: ""
     signal backspaceOnEmpty
 
     property string searchText: ""
@@ -374,7 +374,7 @@ Rectangle {
                         Layout.fillWidth: true
                         text: root.searchText
                         placeholderText: "Search emojis..."
-                        prefixText: root.prefixText
+                        prefixIcon: root.prefixIcon
 
                         onSearchTextChanged: text => {
                             root.searchText = text;

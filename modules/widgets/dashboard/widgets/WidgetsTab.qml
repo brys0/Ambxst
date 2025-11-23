@@ -530,7 +530,7 @@ Rectangle {
                 active: true
                 sourceComponent: Component {
                     ClipboardTab {
-                        prefixText: Config.prefix.clipboard + " "
+                        prefixIcon: Icons.clipboard
                         onBackspaceOnEmpty: {
                             // Return to launcher with prefix text + space
                             prefixDisabled = true;
@@ -548,7 +548,7 @@ Rectangle {
                 active: true
                 sourceComponent: Component {
                     EmojiTab {
-                        prefixText: Config.prefix.emoji + " "
+                        prefixIcon: Icons.emoji
                         onBackspaceOnEmpty: {
                             prefixDisabled = true;
                             currentTab = 0;
@@ -565,7 +565,7 @@ Rectangle {
                 active: true
                 sourceComponent: Component {
                     TmuxTab {
-                        prefixText: Config.prefix.tmux + " "
+                        prefixIcon: Icons.terminal
                         onBackspaceOnEmpty: {
                             prefixDisabled = true;
                             currentTab = 0;
@@ -582,7 +582,7 @@ Rectangle {
                 active: true
                 sourceComponent: Component {
                     WallpapersTab {
-                        prefixText: Config.prefix.wallpapers + " "
+                        prefixIcon: Icons.wallpapers
                         onBackspaceOnEmpty: {
                             prefixDisabled = true;
                             currentTab = 0;

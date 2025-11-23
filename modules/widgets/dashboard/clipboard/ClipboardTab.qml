@@ -16,7 +16,7 @@ Item {
     focus: true
 
     // Prefix support
-    property string prefixText: ""
+    property string prefixIcon: ""
     signal backspaceOnEmpty
 
     Keys.onEscapePressed: {
@@ -534,7 +534,7 @@ Item {
                     height: parent.height
                     text: root.searchText
                     placeholderText: "Search in clipboard..."
-                    prefixText: root.prefixText
+                    prefixIcon: root.prefixIcon
 
                     onSearchTextChanged: text => {
                         root.searchText = text;

@@ -11,6 +11,7 @@ PaneRect {
     property alias placeholderText: textField.placeholderText
     property string iconText: ""
     property string prefixText: ""  // Prefix indicator (e.g., "clip ")
+    property string prefixIcon: ""  // Prefix icon (e.g., Icons.clipboard)
     property bool clearOnEscape: true
     property bool handleTabNavigation: false  // Si true, captura Tab y emite señales. Si false, usa navegación normal.
     property bool passwordMode: false  // Si true, muestra círculos en lugar del texto
@@ -62,18 +63,18 @@ PaneRect {
 
         // Prefix indicator
         Rectangle {
-            Layout.preferredWidth: prefixLabel.implicitWidth + 16
+            Layout.preferredWidth: 32
             Layout.preferredHeight: 32
             radius: Config.roundness > 0 ? Math.max(Config.roundness - 4, 0) : 0
             color: Colors.primary
-            visible: root.prefixText.length > 0
+            visible: root.prefixText.length > 0 || root.prefixIcon.length > 0
 
             Text {
                 id: prefixLabel
                 anchors.centerIn: parent
-                text: root.prefixText.trim()
-                font.family: Config.theme.font
-                font.pixelSize: Config.theme.fontSize - 1
+                text: root.prefixIcon.length > 0 ? root.prefixIcon : root.prefixText.trim()
+                font.family: root.prefixIcon.length > 0 ? Icons.font : Config.theme.font
+                font.pixelSize: root.prefixIcon.length > 0 ? 18 : Config.theme.fontSize - 1
                 font.weight: Font.Bold
                 color: Colors.overPrimary
             }

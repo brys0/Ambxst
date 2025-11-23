@@ -14,7 +14,7 @@ Item {
     id: root
     focus: true
 
-    property string prefixText: ""
+    property string prefixIcon: ""
     signal backspaceOnEmpty()
 
     property string searchText: ""
@@ -525,7 +525,7 @@ Item {
             text: root.searchText
             placeholderText: "Search or create tmux session..."
             iconText: ""
-            prefixText: root.prefixText
+            prefixIcon: root.prefixIcon
 
             onSearchTextChanged: text => {
                 root.searchText = text;
