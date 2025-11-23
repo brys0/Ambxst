@@ -1390,36 +1390,17 @@ Item {
                                     spacing: 6
                                     width: parent.width - 16
 
-                                    // Pane index
-                                    Text {
-                                        anchors.horizontalCenter: parent.horizontalCenter
-                                        text: "Pane " + modelData.index
-                                        font.family: Config.theme.font
-                                        font.pixelSize: Config.theme.fontSize
-                                        font.weight: Font.Bold
-                                        color: Colors.overSurface
-                                        visible: parent.parent.height > 35
-
-                                        Behavior on color {
-                                            enabled: Config.animDuration > 0
-                                            ColorAnimation {
-                                                duration: Config.animDuration / 2
-                                                easing.type: Easing.OutQuart
-                                            }
-                                        }
-                                    }
-
                                     // Command
                                     Text {
                                         width: parent.width
                                         text: modelData.command
                                         font.family: Config.theme.font
                                         font.pixelSize: Config.theme.fontSize
-                                        font.weight: modelData.active ? Font.Bold : Font.Normal
+                                        font.weight: Font.Bold
                                         color: Colors.overSurface
                                         horizontalAlignment: Text.AlignHCenter
                                         elide: Text.ElideMiddle
-                                        visible: parent.parent.height > 50
+                                        visible: parent.parent.height > 35
 
                                         Behavior on color {
                                             enabled: Config.animDuration > 0
