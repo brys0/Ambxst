@@ -718,18 +718,15 @@ Rectangle {
                     if (filePath) {
                         globalOpenProcess.command = ["xdg-open", filePath];
                         globalOpenProcess.running = true;
-                        Qt.callLater(() => Visibilities.setActiveModule(""));
                     }
                 } else if (item.isImage && item.binaryPath) {
                     console.log("DEBUG: Opening image with binaryPath:", item.binaryPath);
                     globalOpenProcess.command = ["xdg-open", item.binaryPath];
                     globalOpenProcess.running = true;
-                    Qt.callLater(() => Visibilities.setActiveModule(""));
                 } else if (isUrl(content)) {
                     console.log("DEBUG: Opening URL:", content.trim());
                     globalOpenProcess.command = ["xdg-open", content.trim()];
                     globalOpenProcess.running = true;
-                    Qt.callLater(() => Visibilities.setActiveModule(""));
                 } else {
                     console.warn("DEBUG: Item does not match any openable type");
                 }
