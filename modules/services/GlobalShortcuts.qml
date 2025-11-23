@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell.Hyprland._GlobalShortcuts
 import qs.modules.globals
 import qs.modules.services
+import qs.config
 
 Item {
     id: root
@@ -61,12 +62,18 @@ Item {
             return;
         }
 
-        // Open dashboard with the prefix
-        GlobalStates.dashboardCurrentTab = 0; // Always go to widgets tab
-        GlobalStates.launcherSearchText = prefix; // Set the prefix
+        // Always go to widgets tab first
+        GlobalStates.dashboardCurrentTab = 0;
         
         if (!isActive) {
+            // Open dashboard first, then set prefix after a brief delay
             Visibilities.setActiveModule("dashboard");
+            Qt.callLater(() => {
+                GlobalStates.launcherSearchText = prefix;
+            });
+        } else {
+            // Dashboard already open, just set the prefix
+            GlobalStates.launcherSearchText = prefix;
         }
     }
 
@@ -113,7 +120,7 @@ Item {
         name: "dashboard-clipboard"
         description: "Open dashboard clipboard (via prefix)"
 
-        onPressed: toggleDashboardWithPrefix("clip ")
+        onPressed: toggleDashboardWithPrefix(Config.prefix.clipboard + " ")
     }
 
     GlobalShortcut {
@@ -121,7 +128,7 @@ Item {
         name: "dashboard-emoji"
         description: "Open dashboard emoji picker (via prefix)"
 
-        onPressed: toggleDashboardWithPrefix("emoji ")
+        onPressed: toggleDashboardWithPrefix(Config.prefix.emoji + " ")
     }
 
     GlobalShortcut {
@@ -129,7 +136,7 @@ Item {
         name: "dashboard-tmux"
         description: "Open dashboard tmux sessions (via prefix)"
 
-        onPressed: toggleDashboardWithPrefix("tmux ")
+        onPressed: toggleDashboardWithPrefix(Config.prefix.tmux + " ")
     }
 
     GlobalShortcut {
@@ -145,7 +152,7 @@ Item {
         name: "dashboard-wallpapers"
         description: "Open dashboard wallpapers (via prefix)"
 
-        onPressed: toggleDashboardWithPrefix("wall ")
+        onPressed: toggleDashboardWithPrefix(Config.prefix.wallpapers + " ")
     }
 
     GlobalShortcut {

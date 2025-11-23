@@ -132,21 +132,24 @@ Rectangle {
 
                         let remainingText = searchText.substring(prefixLength);
 
-                        // Focus the new tab after a brief delay to ensure it's loaded
+                        // Wait for loader to be ready and then focus
                         Qt.callLater(() => {
                             let targetItem = null;
+                            let targetLoader = null;
 
-                            if (detectedTab === 1 && clipboardLoader.item) {
-                                targetItem = clipboardLoader.item;
-                            } else if (detectedTab === 2 && emojiLoader.item) {
-                                targetItem = emojiLoader.item;
-                            } else if (detectedTab === 3 && tmuxLoader.item) {
-                                targetItem = tmuxLoader.item;
-                            } else if (detectedTab === 4 && wallpapersLoader.item) {
-                                targetItem = wallpapersLoader.item;
+                            if (detectedTab === 1) {
+                                targetLoader = clipboardLoader;
+                            } else if (detectedTab === 2) {
+                                targetLoader = emojiLoader;
+                            } else if (detectedTab === 3) {
+                                targetLoader = tmuxLoader;
+                            } else if (detectedTab === 4) {
+                                targetLoader = wallpapersLoader;
                             }
 
-                            if (targetItem) {
+                            // If loader is ready, use it immediately
+                            if (targetLoader && targetLoader.item) {
+                                targetItem = targetLoader.item;
                                 // Set the search text in the new tab
                                 if (targetItem.searchText !== undefined) {
                                     targetItem.searchText = remainingText;
@@ -156,6 +159,7 @@ Rectangle {
                                     targetItem.focusSearchInput();
                                 }
                             }
+                            // Otherwise, the onLoaded handler will take care of focusing
                         });
                     }
                 }
@@ -540,6 +544,11 @@ Rectangle {
                         }
                     }
                 }
+                onLoaded: {
+                    if (currentTab === 1 && item && item.focusSearchInput) {
+                        Qt.callLater(() => item.focusSearchInput());
+                    }
+                }
             }
 
             // Tab 2: Emoji (with prefix from config)
@@ -555,6 +564,11 @@ Rectangle {
                             GlobalStates.launcherSearchText = Config.prefix.emoji + " ";
                             appLauncher.focusSearchInput();
                         }
+                    }
+                }
+                onLoaded: {
+                    if (currentTab === 2 && item && item.focusSearchInput) {
+                        Qt.callLater(() => item.focusSearchInput());
                     }
                 }
             }
@@ -574,6 +588,11 @@ Rectangle {
                         }
                     }
                 }
+                onLoaded: {
+                    if (currentTab === 3 && item && item.focusSearchInput) {
+                        Qt.callLater(() => item.focusSearchInput());
+                    }
+                }
             }
 
             // Tab 4: Wallpapers (with prefix from config)
@@ -589,6 +608,11 @@ Rectangle {
                             GlobalStates.launcherSearchText = Config.prefix.wallpapers + " ";
                             appLauncher.focusSearchInput();
                         }
+                    }
+                }
+                onLoaded: {
+                    if (currentTab === 4 && item && item.focusSearchInput) {
+                        Qt.callLater(() => item.focusSearchInput());
                     }
                 }
             }
