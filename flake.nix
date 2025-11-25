@@ -3,13 +3,19 @@
 
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-unstable";
+
+    quickshell = {
+      url = "git+https://git.outfoxxed.me/outfoxxed/quickshell";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     nixgl = {
       url = "github:nix-community/nixGL";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
-  outputs = { self, nixpkgs, nixgl, ... }: let
+  outputs = { self, nixpkgs, nixgl, quickshell, ... }: let
     linuxSystems = [
       "x86_64-linux"
       "aarch64-linux"
@@ -26,15 +32,25 @@
     };
 
     packages = forAllSystems (system: let
+      # Import nixpkgs
       pkgs = import nixpkgs {
         inherit system;
         config.allowUnfree = true;
       };
 
       lib = nixpkgs.lib;
+
+      # Detect if running on NixOS
       isNixOS = pkgs ? config && pkgs.config ? nixosConfig;
+
+      # NixGL
       nixGL = nixgl.packages.${system}.nixGLDefault;
 
+      # --- Quickshell desde git ---
+      quickshellPkg = quickshell.packages.${system}.default;
+      # ----------------------------
+
+      # Wrapper nixGL
       wrapWithNixGL = pkg:
         if isNixOS then pkg else pkgs.symlinkJoin {
           name = "${pkg.pname or pkg.name}-nixGL";
@@ -55,14 +71,14 @@
         pname = "ambxst-auth";
         version = "1.0.0";
         src = ./modules/lockscreen;
-        
+
         nativeBuildInputs = [ pkgs.gcc ];
         buildInputs = [ pkgs.pam ];
-        
+
         buildPhase = ''
           gcc -o ambxst-auth auth.c -lpam -Wall -Wextra -O2
         '';
-        
+
         installPhase = ''
           mkdir -p $out/bin
           cp ambxst-auth $out/bin/
@@ -71,7 +87,9 @@
       };
 
       baseEnv = with pkgs; [
-        (wrapWithNixGL quickshell)
+        # Usar Quickshell desde git (con NixGL si corresponde)
+        (wrapWithNixGL quickshellPkg)
+
         (wrapWithNixGL gpu-screen-recorder)
         (wrapWithNixGL mpvpaper)
 
@@ -79,15 +97,14 @@
         ddcutil
         wl-clipboard
         cliphist
-        
-        # Clipboard manager dependencies
         sqlite
-      ] ++ (if isNixOS then [ 
+
+      ] ++ (if isNixOS then [
         ambxst-auth
-        power-profiles-daemon 
-        networkmanager 
-      ] else [ 
-        nixGL 
+        power-profiles-daemon
+        networkmanager
+      ] else [
+        nixGL
       ]) ++ (with pkgs; [
         mesa
         libglvnd
@@ -128,9 +145,14 @@
           # On non-NixOS, use local build from ~/.local/bin
           export PATH="$HOME/.local/bin:$PATH"
         ''}
-        # Wrap QuickShell with nixGL if needed, then delegate to CLI script
+
+        # Pass nixGL for non-NixOS
         ${lib.optionalString (!isNixOS) "export AMBXST_NIXGL=\"${nixGL}/bin/nixGL\""}
-        export AMBXST_QS="${pkgs.quickshell}/bin/qs"
+
+        # Use Quickshell from git
+        export AMBXST_QS="${quickshellPkg}/bin/qs"
+
+        # Delegate execution to CLI
         exec ${self}/cli.sh "$@"
       '';
 
