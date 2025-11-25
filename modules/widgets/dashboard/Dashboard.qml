@@ -26,7 +26,7 @@ NotchAnimationBehavior {
     readonly property int tabCount: tabModel.length
     readonly property int tabSpacing: 8
 
-    readonly property int tabWidth: 42
+    readonly property int tabWidth: 48
     readonly property real nonAnimWidth: (state.currentTab === 0 ? 600 : 400) + tabWidth + 16 // unified launcher tab is wider
 
     implicitWidth: nonAnimWidth
@@ -96,7 +96,7 @@ NotchAnimationBehavior {
                 stack.navigateToTab(GlobalStates.dashboardCurrentTab);
             }
         }
-        
+
         // Focus cuando cambia el texto del launcher (por shortcuts con prefix)
         function onLauncherSearchTextChanged() {
             if (isVisible && GlobalStates.dashboardCurrentTab === 0) {

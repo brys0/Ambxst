@@ -6,15 +6,15 @@ import qs.config
 
 Rectangle {
     id: root
-    
+
     required property bool isActive
     required property string iconName
     required property string tooltipText
-    signal clicked()
-    
+    signal clicked
+
     color: root.isActive ? Colors.primary : Colors.surfaceBright
-    radius: Config.roundness
-    
+    radius: root.isActive ? Config.roundness : Config.roundness * 1.25
+
     Behavior on color {
         enabled: Config.animDuration > 0
         ColorAnimation {
@@ -22,16 +22,24 @@ Rectangle {
             easing.type: Easing.OutQuart
         }
     }
-    
+
+    Behavior on radius {
+        enabled: Config.animDuration > 0
+        NumberAnimation {
+            duration: Config.animDuration / 2
+            easing.type: Easing.OutQuart
+        }
+    }
+
     Text {
         anchors.centerIn: parent
         text: root.iconName
         color: root.isActive ? Colors.overPrimary : Colors.overBackground
         font.family: Icons.font
-        font.pixelSize: 20
+        font.pixelSize: 18
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
-        
+
         Behavior on color {
             enabled: Config.animDuration > 0
             ColorAnimation {
@@ -40,13 +48,13 @@ Rectangle {
             }
         }
     }
-    
+
     MouseArea {
         anchors.fill: parent
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
         onClicked: root.clicked()
-        
+
         StyledToolTip {
             visible: parent.containsMouse
             tooltipText: root.tooltipText
