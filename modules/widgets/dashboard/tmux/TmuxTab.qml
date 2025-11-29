@@ -46,6 +46,7 @@ Item {
     property int expandedItemIndex: -1
     property int selectedOptionIndex: 0
     property bool keyboardNavigation: false
+    property bool isFiltering: false
     
     // Session preview state
     property var sessionWindows: []
@@ -146,6 +147,10 @@ Item {
     function updateFilteredSessions() {
         var newFilteredSessions = [];
 
+        var createButtonText = "Create new session";
+        var isCreateSpecific = false;
+        var sessionNameToCreate = "";
+
         if (searchText.length === 0) {
             newFilteredSessions = tmuxSessions.slice(); // Copia del array
         } else {
@@ -158,19 +163,18 @@ Item {
             });
 
             if (!exactMatch && searchText.length > 0) {
-                newFilteredSessions.push({
-                    name: `Create session "${searchText}"`,
-                    isCreateSpecificButton: true,
-                    sessionNameToCreate: searchText,
-                    icon: "terminal"
-                });
+                createButtonText = `Create session "${searchText}"`;
+                isCreateSpecific = true;
+                sessionNameToCreate = searchText;
             }
         }
 
-        if (searchText.length === 0 && !deleteMode && !renameMode) {
-            newFilteredSessions.push({
-                name: "Create new session",
-                isCreateButton: true,
+        if (!deleteMode && !renameMode) {
+            newFilteredSessions.unshift({
+                name: createButtonText,
+                isCreateButton: !isCreateSpecific,
+                isCreateSpecificButton: isCreateSpecific,
+                sessionNameToCreate: sessionNameToCreate,
                 icon: "terminal"
             });
         }
@@ -178,7 +182,9 @@ Item {
         filteredSessions = newFilteredSessions;
         resultsList.enableScrollAnimation = false;
         resultsList.contentY = 0;
+        root.isFiltering = true;
         updateAnimatedSessionsModel(newFilteredSessions);
+        root.isFiltering = false;
 
         if (!deleteMode && !renameMode) {
             if (searchText.length > 0 && newFilteredSessions.length > 0) {
@@ -212,9 +218,7 @@ Item {
         // Create a map of session names to their new positions
         var newSessionsById = {};
         for (var i = 0; i < newSessions.length; i++) {
-            var sessionId = newSessions[i].isCreateButton ? "__create__" : 
-                           newSessions[i].isCreateSpecificButton ? "__create_" + newSessions[i].sessionNameToCreate :
-                           newSessions[i].name;
+            var sessionId = (newSessions[i].isCreateButton || newSessions[i].isCreateSpecificButton) ? "__create__" : newSessions[i].name;
             newSessionsById[sessionId] = i;
         }
 
@@ -229,9 +233,7 @@ Item {
         // Add new sessions and reorder existing ones
         for (var i = 0; i < newSessions.length; i++) {
             var newSession = newSessions[i];
-            var sessionId = newSession.isCreateButton ? "__create__" : 
-                           newSession.isCreateSpecificButton ? "__create_" + newSession.sessionNameToCreate :
-                           newSession.name;
+            var sessionId = (newSession.isCreateButton || newSession.isCreateSpecificButton) ? "__create__" : newSession.name;
             var currentIndex = -1;
 
             // Find if this session already exists in the model
@@ -251,6 +253,12 @@ Item {
             } else if (currentIndex !== i) {
                 // Session exists but in wrong position, move it
                 animatedSessionsModel.move(currentIndex, i, 1);
+            } else {
+                // Session exists in correct position, update its data
+                animatedSessionsModel.set(i, {
+                    sessionId: sessionId,
+                    sessionData: newSession
+                });
             }
         }
     }
@@ -796,14 +804,15 @@ Item {
                  }
              }
 
-             // Smooth animations for filtering
-             displaced: Transition {
-                 NumberAnimation {
-                     properties: "y"
-                     duration: Config.animDuration > 0 ? Config.animDuration : 0
-                     easing.type: Easing.OutCubic
-                 }
-             }
+              // Smooth animations for filtering
+              displaced: Transition {
+                  enabled: Config.animDuration > 0 && !root.isFiltering
+                  NumberAnimation {
+                      properties: "y"
+                      duration: Config.animDuration > 0 ? Config.animDuration : 0
+                      easing.type: Easing.OutCubic
+                  }
+              }
 
              add: Transition {
                  ParallelAnimation {
@@ -822,27 +831,14 @@ Item {
                  }
              }
 
-             remove: Transition {
-                 SequentialAnimation {
-                     PauseAnimation {
-                         duration: 50
-                     }
-                     ParallelAnimation {
-                         NumberAnimation {
-                             property: "opacity"
-                             to: 0
-                             duration: Config.animDuration > 0 ? Config.animDuration / 2 : 0
-                             easing.type: Easing.OutCubic
-                         }
-                         NumberAnimation {
-                             property: "height"
-                             to: 0
-                             duration: Config.animDuration > 0 ? Config.animDuration / 2 : 0
-                             easing.type: Easing.OutCubic
-                         }
-                     }
-                 }
-             }
+              remove: Transition {
+                  NumberAnimation {
+                      property: "opacity"
+                      to: 0
+                      duration: Config.animDuration > 0 ? Config.animDuration / 2 : 0
+                      easing.type: Easing.OutCubic
+                  }
+              }
 
             onCurrentIndexChanged: {
                 if (currentIndex !== root.selectedIndex) {
