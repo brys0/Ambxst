@@ -348,7 +348,7 @@ Item {
             resultsList.enableScrollAnimation = false;
             selectedIndex = 0;
             resultsList.currentIndex = 0;
-            resultsList.positionViewAtBeginning();
+            resultsList.contentY = 0;
             Qt.callLater(() => { resultsList.enableScrollAnimation = true; });
         } else if (searchText.length === 0) {
             // When clearing search, only reset if we haven't navigated or if list is empty
@@ -356,7 +356,7 @@ Item {
                 resultsList.enableScrollAnimation = false;
                 selectedIndex = -1;
                 resultsList.currentIndex = -1;
-                resultsList.positionViewAtBeginning();
+                resultsList.contentY = 0;
                 Qt.callLater(() => { resultsList.enableScrollAnimation = true; });
             } else {
                 // Keep current selection valid, or default to first item
@@ -881,64 +881,64 @@ Item {
                     model: animatedItemsModel
                     currentIndex: root.selectedIndex
                     
-                    property bool enableScrollAnimation: true
+                     property bool enableScrollAnimation: true
 
-                    // Smooth scroll animation
-                    Behavior on contentY {
-                        enabled: Config.animDuration > 0 && resultsList.enableScrollAnimation
-                        NumberAnimation {
-                            duration: Config.animDuration / 2
-                            easing.type: Easing.OutCubic
-                        }
-                    }
+                     // Smooth scroll animation
+                     Behavior on contentY {
+                         enabled: Config.animDuration > 0 && resultsList.enableScrollAnimation
+                         NumberAnimation {
+                             duration: Config.animDuration / 2
+                             easing.type: Easing.OutCubic
+                         }
+                     }
 
-                    // Smooth animations for filtering
-                    displaced: Transition {
-                        NumberAnimation {
-                            properties: "y"
-                            duration: Config.animDuration > 0 ? Config.animDuration : 0
-                            easing.type: Easing.OutCubic
-                        }
-                    }
+                     // Smooth animations for filtering
+                     displaced: Transition {
+                         NumberAnimation {
+                             properties: "y"
+                             duration: Config.animDuration > 0 ? Config.animDuration : 0
+                             easing.type: Easing.OutCubic
+                         }
+                     }
 
-                    add: Transition {
-                        ParallelAnimation {
-                            NumberAnimation {
-                                property: "opacity"
-                                from: 0
-                                to: 1
-                                duration: Config.animDuration > 0 ? Config.animDuration / 2 : 0
-                                easing.type: Easing.OutCubic
-                            }
-                            NumberAnimation {
-                                property: "y"
-                                duration: Config.animDuration > 0 ? Config.animDuration : 0
-                                easing.type: Easing.OutCubic
-                            }
-                        }
-                    }
+                     add: Transition {
+                         ParallelAnimation {
+                             NumberAnimation {
+                                 property: "opacity"
+                                 from: 0
+                                 to: 1
+                                 duration: Config.animDuration > 0 ? Config.animDuration / 2 : 0
+                                 easing.type: Easing.OutCubic
+                             }
+                             NumberAnimation {
+                                 property: "y"
+                                 duration: Config.animDuration > 0 ? Config.animDuration : 0
+                                 easing.type: Easing.OutCubic
+                             }
+                         }
+                     }
 
-                    remove: Transition {
-                        SequentialAnimation {
-                            PauseAnimation {
-                                duration: 50
-                            }
-                            ParallelAnimation {
-                                NumberAnimation {
-                                    property: "opacity"
-                                    to: 0
-                                    duration: Config.animDuration > 0 ? Config.animDuration / 2 : 0
-                                    easing.type: Easing.OutCubic
-                                }
-                                NumberAnimation {
-                                    property: "height"
-                                    to: 0
-                                    duration: Config.animDuration > 0 ? Config.animDuration / 2 : 0
-                                    easing.type: Easing.OutCubic
-                                }
-                            }
-                        }
-                    }
+                     remove: Transition {
+                         SequentialAnimation {
+                             PauseAnimation {
+                                 duration: 50
+                             }
+                             ParallelAnimation {
+                                 NumberAnimation {
+                                     property: "opacity"
+                                     to: 0
+                                     duration: Config.animDuration > 0 ? Config.animDuration / 2 : 0
+                                     easing.type: Easing.OutCubic
+                                 }
+                                 NumberAnimation {
+                                     property: "height"
+                                     to: 0
+                                     duration: Config.animDuration > 0 ? Config.animDuration / 2 : 0
+                                     easing.type: Easing.OutCubic
+                                 }
+                             }
+                         }
+                     }
 
                     onCurrentIndexChanged: {
                         if (currentIndex !== root.selectedIndex) {

@@ -81,7 +81,9 @@ Rectangle {
         
         // Load initial emojis when clearing search
         loadInitialEmojis();
-        emojiList.positionViewAtBeginning();
+        emojiList.enableScrollAnimation = false;
+        emojiList.contentY = 0;
+        Qt.callLater(() => { emojiList.enableScrollAnimation = true; });
     }
 
     function resetClearButton() {
@@ -108,7 +110,7 @@ Rectangle {
             selectedRecentIndex = -1;
             
             emojiList.enableScrollAnimation = false;
-            emojiList.positionViewAtBeginning();
+            emojiList.contentY = 0;
             Qt.callLater(() => { emojiList.enableScrollAnimation = true; });
             return;
         }
@@ -143,13 +145,13 @@ Rectangle {
             emojiList.enableScrollAnimation = false;
             selectedIndex = 0;
             emojiList.currentIndex = 0;
-            emojiList.positionViewAtBeginning();
+            emojiList.contentY = 0;
             Qt.callLater(() => { emojiList.enableScrollAnimation = true; });
         } else if (searchText.length === 0 && !hasNavigatedFromSearch) {
             emojiList.enableScrollAnimation = false;
             selectedIndex = -1;
             selectedRecentIndex = -1;
-            emojiList.positionViewAtBeginning();
+            emojiList.contentY = 0;
             Qt.callLater(() => { emojiList.enableScrollAnimation = true; });
         }
     }
@@ -696,64 +698,64 @@ Rectangle {
                     model: animatedEmojisModel
                     currentIndex: root.selectedIndex
                     
-                    property bool enableScrollAnimation: true
-                    
-                    // Smooth scroll animation
-                    Behavior on contentY {
-                        enabled: Config.animDuration > 0 && emojiList.enableScrollAnimation
-                        NumberAnimation {
-                            duration: Config.animDuration / 2
-                            easing.type: Easing.OutCubic
-                        }
-                    }
+                     property bool enableScrollAnimation: true
 
-                    // Smooth animations for filtering
-                    displaced: Transition {
-                        NumberAnimation {
-                            properties: "y"
-                            duration: Config.animDuration > 0 ? Config.animDuration : 0
-                            easing.type: Easing.OutCubic
-                        }
-                    }
+                     // Smooth scroll animation
+                     Behavior on contentY {
+                         enabled: Config.animDuration > 0 && emojiList.enableScrollAnimation
+                         NumberAnimation {
+                             duration: Config.animDuration / 2
+                             easing.type: Easing.OutCubic
+                         }
+                     }
 
-                    add: Transition {
-                        ParallelAnimation {
-                            NumberAnimation {
-                                property: "opacity"
-                                from: 0
-                                to: 1
-                                duration: Config.animDuration > 0 ? Config.animDuration / 2 : 0
-                                easing.type: Easing.OutCubic
-                            }
-                            NumberAnimation {
-                                property: "y"
-                                duration: Config.animDuration > 0 ? Config.animDuration : 0
-                                easing.type: Easing.OutCubic
-                            }
-                        }
-                    }
+                     // Smooth animations for filtering
+                     displaced: Transition {
+                         NumberAnimation {
+                             properties: "y"
+                             duration: Config.animDuration > 0 ? Config.animDuration : 0
+                             easing.type: Easing.OutCubic
+                         }
+                     }
 
-                    remove: Transition {
-                        SequentialAnimation {
-                            PauseAnimation {
-                                duration: 50
-                            }
-                            ParallelAnimation {
-                                NumberAnimation {
-                                    property: "opacity"
-                                    to: 0
-                                    duration: Config.animDuration > 0 ? Config.animDuration / 2 : 0
-                                    easing.type: Easing.OutCubic
-                                }
-                                NumberAnimation {
-                                    property: "height"
-                                    to: 0
-                                    duration: Config.animDuration > 0 ? Config.animDuration / 2 : 0
-                                    easing.type: Easing.OutCubic
-                                }
-                            }
-                        }
-                    }
+                     add: Transition {
+                         ParallelAnimation {
+                             NumberAnimation {
+                                 property: "opacity"
+                                 from: 0
+                                 to: 1
+                                 duration: Config.animDuration > 0 ? Config.animDuration / 2 : 0
+                                 easing.type: Easing.OutCubic
+                             }
+                             NumberAnimation {
+                                 property: "y"
+                                 duration: Config.animDuration > 0 ? Config.animDuration : 0
+                                 easing.type: Easing.OutCubic
+                             }
+                         }
+                     }
+
+                     remove: Transition {
+                         SequentialAnimation {
+                             PauseAnimation {
+                                 duration: 50
+                             }
+                             ParallelAnimation {
+                                 NumberAnimation {
+                                     property: "opacity"
+                                     to: 0
+                                     duration: Config.animDuration > 0 ? Config.animDuration / 2 : 0
+                                     easing.type: Easing.OutCubic
+                                 }
+                                 NumberAnimation {
+                                     property: "height"
+                                     to: 0
+                                     duration: Config.animDuration > 0 ? Config.animDuration / 2 : 0
+                                     easing.type: Easing.OutCubic
+                                 }
+                             }
+                         }
+                     }
 
                     onCurrentIndexChanged: {
                         if (currentIndex !== root.selectedIndex && !root.isRecentFocused) {

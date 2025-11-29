@@ -107,9 +107,14 @@ Rectangle {
             property var filteredApps: searchText.length > 0 ? AppSearch.fuzzyQuery(searchText) : AppSearch.getAllApps()
             property var appsById: ({})
 
-            onFilteredAppsChanged: {
-                updateAnimatedModel();
-            }
+             onFilteredAppsChanged: {
+                 resultsList.enableScrollAnimation = false;
+                 resultsList.contentY = 0;
+                 updateAnimatedModel();
+                 Qt.callLater(() => {
+                     resultsList.enableScrollAnimation = true;
+                 });
+             }
 
             function updateAnimatedModel() {
                 let newApps = filteredApps;
@@ -242,11 +247,11 @@ Rectangle {
                 }
             }
 
-            onSelectedIndexChanged: {
-                if (selectedIndex === -1 && resultsList.count > 0) {
-                    resultsList.positionViewAtIndex(0, ListView.Beginning);
-                }
-            }
+             onSelectedIndexChanged: {
+                 if (selectedIndex === -1 && resultsList.count > 0) {
+                     resultsList.contentY = 0;
+                 }
+             }
 
             function clearSearch() {
                 GlobalStates.clearLauncherState();
@@ -284,21 +289,27 @@ Rectangle {
                         
                         resultsList.enableScrollAnimation = false;
 
-                        if (text.length > 0) {
-                            GlobalStates.launcherSelectedIndex = 0;
-                            appLauncher.selectedIndex = 0;
-                            resultsList.currentIndex = 0;
-                            resultsList.positionViewAtBeginning();
-                        } else {
-                            GlobalStates.launcherSelectedIndex = -1;
-                            appLauncher.selectedIndex = -1;
-                            resultsList.currentIndex = -1;
-                            resultsList.positionViewAtBeginning();
-                        }
+                         if (text.length > 0) {
+                             resultsList.highlightAnimated = false;
+                             GlobalStates.launcherSelectedIndex = 0;
+                             appLauncher.selectedIndex = 0;
+                             resultsList.currentIndex = 0;
+                             resultsList.enableScrollAnimation = false;
 
-                        Qt.callLater(() => {
-                            resultsList.enableScrollAnimation = true;
-                        });
+                             resultsList.contentY = 0;
+                         } else {
+                             GlobalStates.launcherSelectedIndex = -1;
+                             appLauncher.selectedIndex = -1;
+                             resultsList.currentIndex = -1;
+                             resultsList.enableScrollAnimation = false;
+
+                             resultsList.contentY = 0;
+                         }
+
+                         Qt.callLater(() => {
+                             resultsList.enableScrollAnimation = true;
+                             resultsList.highlightAnimated = true;
+                         });
                     }
 
                     onAccepted: {
@@ -398,9 +409,10 @@ Rectangle {
                     model: animatedModel
                     currentIndex: appLauncher.selectedIndex
 
-                    property bool enableScrollAnimation: true
+                     property bool enableScrollAnimation: true
+                     property bool highlightAnimated: true
 
-                    // Smooth scroll animation
+                     // Smooth scroll animation
                     Behavior on contentY {
                         enabled: Config.animDuration > 0 && resultsList.enableScrollAnimation
                         NumberAnimation {
@@ -431,56 +443,56 @@ Rectangle {
                         }
                     }
 
-                    // Animación para items que se desplazan a nueva posición
-                    displaced: Transition {
-                        NumberAnimation {
-                            properties: "y"
-                            duration: Config.animDuration > 0 ? Config.animDuration : 0
-                            easing.type: Easing.OutCubic
-                        }
-                    }
+                     // Animación para items que se desplazan a nueva posición
+                     displaced: Transition {
+                         NumberAnimation {
+                             properties: "y"
+                             duration: Config.animDuration > 0 ? Config.animDuration : 0
+                             easing.type: Easing.OutCubic
+                         }
+                     }
 
-                    // Animación para items que aparecen
-                    add: Transition {
-                        ParallelAnimation {
-                            NumberAnimation {
-                                property: "opacity"
-                                from: 0
-                                to: 1
-                                duration: Config.animDuration > 0 ? Config.animDuration / 2 : 0
-                                easing.type: Easing.OutCubic
-                            }
-                            NumberAnimation {
-                                property: "y"
-                                duration: Config.animDuration > 0 ? Config.animDuration : 0
-                                easing.type: Easing.OutCubic
-                            }
-                        }
-                    }
+                     // Animación para items que aparecen
+                     add: Transition {
+                         ParallelAnimation {
+                             NumberAnimation {
+                                 property: "opacity"
+                                 from: 0
+                                 to: 1
+                                 duration: Config.animDuration > 0 ? Config.animDuration / 2 : 0
+                                 easing.type: Easing.OutCubic
+                             }
+                             NumberAnimation {
+                                 property: "y"
+                                 duration: Config.animDuration > 0 ? Config.animDuration : 0
+                                 easing.type: Easing.OutCubic
+                             }
+                         }
+                     }
 
-                    // Animación para items que desaparecen
-                    remove: Transition {
-                        SequentialAnimation {
-                            // Mantener la posición inicial brevemente
-                            PauseAnimation {
-                                duration: 50
-                            }
-                            ParallelAnimation {
-                                NumberAnimation {
-                                    property: "opacity"
-                                    to: 0
-                                    duration: Config.animDuration > 0 ? Config.animDuration / 2 : 0
-                                    easing.type: Easing.OutCubic
-                                }
-                                NumberAnimation {
-                                    property: "height"
-                                    to: 0
-                                    duration: Config.animDuration > 0 ? Config.animDuration / 2 : 0
-                                    easing.type: Easing.OutCubic
-                                }
-                            }
-                        }
-                    }
+                     // Animación para items que desaparecen
+                     remove: Transition {
+                         SequentialAnimation {
+                             // Mantener la posición inicial brevemente
+                             PauseAnimation {
+                                 duration: 50
+                             }
+                             ParallelAnimation {
+                                 NumberAnimation {
+                                     property: "opacity"
+                                     to: 0
+                                     duration: Config.animDuration > 0 ? Config.animDuration / 2 : 0
+                                     easing.type: Easing.OutCubic
+                                 }
+                                 NumberAnimation {
+                                     property: "height"
+                                     to: 0
+                                     duration: Config.animDuration > 0 ? Config.animDuration / 2 : 0
+                                     easing.type: Easing.OutCubic
+                                 }
+                             }
+                         }
+                     }
 
                     delegate: Rectangle {
                         required property string appId
@@ -674,7 +686,7 @@ Rectangle {
                         y: resultsList.currentIndex * 48
 
                         Behavior on y {
-                            enabled: Config.animDuration > 0
+                            enabled: Config.animDuration > 0 && resultsList.highlightAnimated
                             NumberAnimation {
                                 duration: Config.animDuration / 2
                                 easing.type: Easing.OutCubic
