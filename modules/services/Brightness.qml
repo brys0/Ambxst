@@ -22,6 +22,21 @@ Singleton {
             screen
         }))
 
+    property bool syncBrightness: StateService.get("syncBrightness", false)
+
+    onSyncBrightnessChanged: {
+        if (StateService.initialized) {
+            StateService.set("syncBrightness", syncBrightness);
+        }
+    }
+
+    Connections {
+        target: StateService
+        function onStateLoaded() {
+            root.syncBrightness = StateService.get("syncBrightness", false);
+        }
+    }
+
     function isInternalScreen(screen: ShellScreen): bool {
         if (!screen || !screen.name)
             return false;

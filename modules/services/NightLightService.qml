@@ -7,11 +7,8 @@ import Quickshell.Io
 Singleton {
     id: root
 
-    property bool active: false
-    property bool initialized: false
+    property bool active: StateService.get("nightLight", false)
     
-    property string stateFile: Quickshell.statePath("states.json")
-
     property Process hyprsunsetProcess: Process {
         command: ["hyprsunset", "-t", "4000"]
         running: false
@@ -25,11 +22,9 @@ Singleton {
         }
         onStarted: {
             root.active = true
-            root.saveState()
         }
         onExited: (code) => {
             root.active = false
-            root.saveState()
         }
     }
     
@@ -38,72 +33,6 @@ Singleton {
         running: false
         onExited: (code) => {
             root.active = false
-            root.saveState()
-        }
-    }
-    
-    property Process writeStateProcess: Process {
-        running: false
-        stdout: SplitParser {}
-    }
-    
-    property Process readCurrentStateProcess: Process {
-        running: false
-        stdout: SplitParser {
-            onRead: (data) => {
-                try {
-                    const content = data ? data.trim() : ""
-                    let states = {}
-                    if (content) {
-                        states = JSON.parse(content)
-                    }
-                    // Update only our state
-                    states.nightLight = root.active
-                    
-                    // Write back
-                    writeStateProcess.command = ["sh", "-c", 
-                        `printf '%s' '${JSON.stringify(states)}' > "${root.stateFile}"`]
-                    writeStateProcess.running = true
-                } catch (e) {
-                    console.warn("NightLightService: Failed to update state:", e)
-                }
-            }
-        }
-        onExited: (code) => {
-            // If file doesn't exist, create new with our state
-            if (code !== 0) {
-                const states = { nightLight: root.active }
-                writeStateProcess.command = ["sh", "-c", 
-                    `printf '%s' '${JSON.stringify(states)}' > "${root.stateFile}"`]
-                writeStateProcess.running = true
-            }
-        }
-    }
-    
-    property Process readStateProcess: Process {
-        running: false
-        stdout: SplitParser {
-            onRead: (data) => {
-                try {
-                    const content = data ? data.trim() : ""
-                    if (content) {
-                        const states = JSON.parse(content)
-                        if (states.nightLight !== undefined) {
-                            root.active = states.nightLight
-                            root.syncState()
-                        }
-                    }
-                } catch (e) {
-                    console.warn("NightLightService: Failed to parse states:", e)
-                }
-                root.initialized = true
-            }
-        }
-        onExited: (code) => {
-            // If file doesn't exist, just mark as initialized
-            if (code !== 0) {
-                root.initialized = true
-            }
         }
     }
     
@@ -133,19 +62,23 @@ Singleton {
             hyprsunsetProcess.running = true
         }
     }
-
-    function saveState() {
-        readCurrentStateProcess.command = ["cat", stateFile]
-        readCurrentStateProcess.running = true
-    }
-
-    function loadState() {
-        readStateProcess.command = ["cat", stateFile]
-        readStateProcess.running = true
-    }
     
     function syncState() {
         checkRunningProcess.running = true
+    }
+
+    onActiveChanged: {
+        if (StateService.initialized) {
+            StateService.set("nightLight", active);
+        }
+    }
+
+    Connections {
+        target: StateService
+        function onStateLoaded() {
+            root.active = StateService.get("nightLight", false);
+            root.syncState();
+        }
     }
 
     // Auto-initialize on creation
@@ -154,8 +87,9 @@ Singleton {
         running: true
         repeat: false
         onTriggered: {
-            if (!root.initialized) {
-                root.loadState()
+            if (StateService.initialized) {
+                root.active = StateService.get("nightLight", false);
+                root.syncState();
             }
         }
     }

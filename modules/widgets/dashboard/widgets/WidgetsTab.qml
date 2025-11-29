@@ -102,30 +102,30 @@ Rectangle {
             property bool optionsMenuOpen: false
             property int menuItemIndex: -1
             property bool menuJustClosed: false
-            
+
             // Animated model for smooth filtering
             property var filteredApps: searchText.length > 0 ? AppSearch.fuzzyQuery(searchText) : AppSearch.getAllApps()
             property var appsById: ({})
-            
+
             onFilteredAppsChanged: {
                 updateAnimatedModel();
             }
-            
+
             function updateAnimatedModel() {
                 let newApps = filteredApps;
-                
+
                 // Build apps by ID map for execution
                 appsById = {};
                 for (let i = 0; i < newApps.length; i++) {
                     appsById[newApps[i].id] = newApps[i];
                 }
-                
+
                 // Build set of new app IDs for fast lookup
                 let newIds = {};
                 for (let i = 0; i < newApps.length; i++) {
                     newIds[newApps[i].id] = i;
                 }
-                
+
                 // Step 1: Remove items that are no longer in the new list
                 for (let i = animatedModel.count - 1; i >= 0; i--) {
                     let item = animatedModel.get(i);
@@ -133,11 +133,11 @@ Rectangle {
                         animatedModel.remove(i);
                     }
                 }
-                
+
                 // Step 2: Add new items and reorder existing ones
                 for (let targetIndex = 0; targetIndex < newApps.length; targetIndex++) {
                     let app = newApps[targetIndex];
-                    
+
                     // Find if item already exists
                     let currentIndex = -1;
                     for (let j = 0; j < animatedModel.count; j++) {
@@ -146,7 +146,7 @@ Rectangle {
                             break;
                         }
                     }
-                    
+
                     if (currentIndex === -1) {
                         // Item doesn't exist - insert it
                         animatedModel.insert(targetIndex, {
@@ -164,18 +164,18 @@ Rectangle {
                     }
                 }
             }
-            
+
             function executeApp(appId) {
                 let app = appsById[appId];
                 if (app && app.execute) {
                     app.execute();
                 }
             }
-            
+
             ListModel {
                 id: animatedModel
             }
-            
+
             Component.onCompleted: {
                 updateAnimatedModel();
                 focusSearchInput();
@@ -388,7 +388,7 @@ Rectangle {
 
                     model: animatedModel
                     currentIndex: appLauncher.selectedIndex
-                    
+
                     // Smooth scroll animation
                     Behavior on contentY {
                         enabled: Config.animDuration > 0
@@ -403,13 +403,13 @@ Rectangle {
                             GlobalStates.launcherSelectedIndex = currentIndex;
                             appLauncher.selectedIndex = currentIndex;
                         }
-                        
+
                         // Manual smooth auto-scroll
                         if (currentIndex >= 0) {
                             var itemY = currentIndex * 48;
                             var viewportTop = resultsList.contentY;
                             var viewportBottom = viewportTop + resultsList.height;
-                            
+
                             if (itemY < viewportTop) {
                                 // Item is above viewport, scroll up
                                 resultsList.contentY = itemY;
@@ -658,10 +658,10 @@ Rectangle {
                     highlight: Item {
                         width: resultsList.width
                         height: 48
-                        
+
                         // Calculate Y position based on index, not item position
                         y: resultsList.currentIndex * 48
-                        
+
                         Behavior on y {
                             enabled: Config.animDuration > 0
                             NumberAnimation {
@@ -669,7 +669,7 @@ Rectangle {
                                 easing.type: Easing.OutCubic
                             }
                         }
-                        
+
                         StyledRect {
                             anchors.fill: parent
                             variant: "primary"
@@ -959,9 +959,7 @@ Rectangle {
                 id: brightnessContainer
                 Layout.fillHeight: true
                 Layout.minimumHeight: 100
-                spacing: 4
-
-                property bool syncBrightness: false
+                spacing: 8
 
                 // Icon container with sync animation
                 Item {
@@ -975,7 +973,7 @@ Rectangle {
                     StyledRect {
                         id: iconRect
                         variant: {
-                            if (brightnessContainer.syncBrightness)
+                            if (Brightness.syncBrightness)
                                 return "primary";
                             if (iconMouseArea.containsMouse)
                                 return "focus";
@@ -993,7 +991,7 @@ Rectangle {
                             text: iconContainer.showingSyncFeedback ? Icons.sync : Icons.sun
                             font.family: Icons.font
                             font.pixelSize: 18
-                            color: brightnessContainer.syncBrightness ? Colors.overPrimary : Colors.overBackground
+                            color: Brightness.syncBrightness ? Colors.overPrimary : Colors.overBackground
                             rotation: iconContainer.showingSyncFeedback ? syncIconRotation : brightnessIconRotation
                             scale: iconContainer.showingSyncFeedback ? 1 : brightnessIconScale
                             opacity: iconOpacity
@@ -1046,11 +1044,11 @@ Rectangle {
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
                             onClicked: {
-                                let wasActive = brightnessContainer.syncBrightness;
-                                brightnessContainer.syncBrightness = !brightnessContainer.syncBrightness;
+                                let wasActive = Brightness.syncBrightness;
+                                Brightness.syncBrightness = !Brightness.syncBrightness;
                                 
                                 // Only show sync feedback animation when activating
-                                if (brightnessContainer.syncBrightness) {
+                                if (Brightness.syncBrightness) {
                                     // Show sync icon instantly and start rotation
                                     iconContainer.showingSyncFeedback = true;
                                     brightnessIcon.iconOpacity = 1;
@@ -1100,7 +1098,7 @@ Rectangle {
                     StyledSlider {
                         id: brightnessSlider
                         anchors.fill: parent
-                        anchors.margins: 8
+                        anchors.margins: 0
                         vertical: true
                         smoothDrag: true
                         value: brightnessValue
@@ -1143,7 +1141,7 @@ Rectangle {
                             brightnessIcon.brightnessIconRotation = (value / 1.0) * 180;
                             brightnessIcon.brightnessIconScale = 0.8 + (value / 1.0) * 0.2;
                             
-                            if (brightnessContainer.syncBrightness) {
+                            if (Brightness.syncBrightness) {
                                 // Sync all monitors
                                 for (let i = 0; i < Brightness.monitors.length; i++) {
                                     let mon = Brightness.monitors[i];
@@ -1250,10 +1248,6 @@ Rectangle {
                         Audio.source.audio.muted = !Audio.source.audio.muted;
                     }
                 }
-            }
-
-            Item {
-                Layout.fillHeight: true
             }
         }
     }
