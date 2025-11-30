@@ -15,6 +15,6 @@ QtObject {
     }
 
     function calculateRightPanelWidth(containerWidth) {
-        return containerWidth - 300 - spacing - separatorWidth;
+        return containerWidth - 300 - 2 * spacing - separatorWidth;
     }
 }
