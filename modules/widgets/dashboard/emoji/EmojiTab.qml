@@ -313,7 +313,7 @@ Rectangle {
     }
 
     function onDownPressed() {
-        if (!hasNavigatedFromSearch) {
+        if (!hasNavigatedFromSearch && !isRecentFocused) {
             hasNavigatedFromSearch = true;
             if (filteredEmojis.length > 0) {
                 isRecentFocused = false;
@@ -331,7 +331,11 @@ Rectangle {
                 emojiList.currentIndex = selectedIndex;
             }
         } else if (isRecentFocused && recentEmojis.length > 0) {
-            if (selectedRecentIndex < recentEmojis.length - 1) {
+            if (selectedRecentIndex === -1) {
+                selectedRecentIndex = 0;
+                recentList.currentIndex = 0;
+                lastSelectedRecentIndex = 0;
+            } else if (selectedRecentIndex < recentEmojis.length - 1) {
                 selectedRecentIndex++;
                 recentList.currentIndex = selectedRecentIndex;
                 lastSelectedRecentIndex = selectedRecentIndex;
