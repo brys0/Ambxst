@@ -112,13 +112,13 @@ Rectangle {
              onFilteredAppsChanged: {
                  resultsList.enableScrollAnimation = false;
                  resultsList.contentY = 0;
-                 updateAnimatedModel();
+                 updateAppsModel();
                  Qt.callLater(() => {
                      resultsList.enableScrollAnimation = true;
                  });
              }
 
-            function updateAnimatedModel() {
+            function updateAppsModel() {
                 let newApps = filteredApps;
 
                 // Build apps by ID map for execution
@@ -127,48 +127,18 @@ Rectangle {
                     appsById[newApps[i].id] = newApps[i];
                 }
 
-                // Build set of new app IDs for fast lookup
-                let newIds = {};
+                appsModel.clear();
                 for (let i = 0; i < newApps.length; i++) {
-                    newIds[newApps[i].id] = i;
-                }
-
-                // Step 1: Remove items that are no longer in the new list
-                for (let i = animatedModel.count - 1; i >= 0; i--) {
-                    let item = animatedModel.get(i);
-                    if (newIds[item.appId] === undefined) {
-                        animatedModel.remove(i);
-                    }
-                }
-
-                // Step 2: Add new items and reorder existing ones
-                for (let targetIndex = 0; targetIndex < newApps.length; targetIndex++) {
-                    let app = newApps[targetIndex];
-
-                    // Find if item already exists
-                    let currentIndex = -1;
-                    for (let j = 0; j < animatedModel.count; j++) {
-                        if (animatedModel.get(j).appId === app.id) {
-                            currentIndex = j;
-                            break;
-                        }
-                    }
-
-                    if (currentIndex === -1) {
-                        // Item doesn't exist - insert it
-                        animatedModel.insert(targetIndex, {
-                            appId: app.id,
-                            appName: app.name,
-                            appIcon: app.icon,
-                            appComment: app.comment,
-                            appExecString: app.execString,
-                            appCategories: app.categories,
-                            appRunInTerminal: app.runInTerminal
-                        });
-                    } else if (currentIndex !== targetIndex) {
-                        // Item exists but is in wrong position - move it
-                        animatedModel.move(currentIndex, targetIndex, 1);
-                    }
+                    let app = newApps[i];
+                    appsModel.append({
+                        appId: app.id,
+                        appName: app.name,
+                        appIcon: app.icon,
+                        appComment: app.comment,
+                        appExecString: app.execString,
+                        appCategories: app.categories,
+                        appRunInTerminal: app.runInTerminal
+                    });
                 }
             }
 
@@ -180,11 +150,11 @@ Rectangle {
             }
 
             ListModel {
-                id: animatedModel
+                id: appsModel
             }
 
             Component.onCompleted: {
-                updateAnimatedModel();
+                updateAppsModel();
                 focusSearchInput();
             }
 
@@ -285,38 +255,34 @@ Rectangle {
                     placeholderText: "Search applications..."
                     iconText: ""
 
-                    onSearchTextChanged: text => {
-                        GlobalStates.launcherSearchText = text;
-                        appLauncher.searchText = text;
-                        
-                        resultsList.enableScrollAnimation = false;
-
+                     onSearchTextChanged: text => {
+                         GlobalStates.launcherSearchText = text;
+                         appLauncher.searchText = text;
+                         
+                         resultsList.enableScrollAnimation = false;
+                         
                          if (text.length > 0) {
-                             resultsList.highlightAnimated = false;
                              GlobalStates.launcherSelectedIndex = 0;
                              appLauncher.selectedIndex = 0;
                              resultsList.currentIndex = 0;
-                             resultsList.enableScrollAnimation = false;
-
+                             
                              resultsList.contentY = 0;
                          } else {
                              GlobalStates.launcherSelectedIndex = -1;
                              appLauncher.selectedIndex = -1;
                              resultsList.currentIndex = -1;
-                             resultsList.enableScrollAnimation = false;
-
+                             
                              resultsList.contentY = 0;
                          }
-
+                         
                          Qt.callLater(() => {
                              resultsList.enableScrollAnimation = true;
-                             resultsList.highlightAnimated = true;
                          });
-                    }
+                     }
 
                     onAccepted: {
-                        if (appLauncher.selectedIndex >= 0 && appLauncher.selectedIndex < animatedModel.count) {
-                            let selectedApp = animatedModel.get(appLauncher.selectedIndex);
+                        if (appLauncher.selectedIndex >= 0 && appLauncher.selectedIndex < appsModel.count) {
+                            let selectedApp = appsModel.get(appLauncher.selectedIndex);
                             if (selectedApp) {
                                 appLauncher.executeApp(selectedApp.appId);
                                 Visibilities.setActiveModule("");
@@ -411,15 +377,13 @@ Rectangle {
                     cacheBuffer: 96
                     reuseItems: false
 
-                    model: animatedModel
+                    model: appsModel
                     currentIndex: appLauncher.selectedIndex
 
-                     property bool enableScrollAnimation: true
-                     property bool highlightAnimated: true
-
-                     // Smooth scroll animation
+                    property bool enableScrollAnimation: true
+                    
                     Behavior on contentY {
-                        enabled: Config.animDuration > 0 && resultsList.enableScrollAnimation
+                        enabled: Config.animDuration > 0 && resultsList.enableScrollAnimation && !resultsList.moving
                         NumberAnimation {
                             duration: Config.animDuration / 2
                             easing.type: Easing.OutCubic
@@ -447,65 +411,6 @@ Rectangle {
                             }
                         }
                     }
-
-                      // Animación para items que se desplazan a nueva posición
-                      displaced: Transition {
-                          ParallelAnimation {
-                              NumberAnimation {
-                                  property: "y"
-                                  duration: Config.animDuration > 0 ? Config.animDuration : 0
-                                  easing.type: Easing.OutCubic
-                              }
-                              NumberAnimation {
-                                  property: "opacity"
-                                  to: 1
-                                  duration: Config.animDuration > 0 ? Config.animDuration / 2 : 0
-                                  easing.type: Easing.OutCubic
-                              }
-                          }
-                      }
-
-                     // Animación para items que aparecen
-                     add: Transition {
-                         ParallelAnimation {
-                             NumberAnimation {
-                                 property: "opacity"
-                                 from: 0
-                                 to: 1
-                                 duration: Config.animDuration > 0 ? Config.animDuration / 2 : 0
-                                 easing.type: Easing.OutCubic
-                             }
-                             NumberAnimation {
-                                 property: "y"
-                                 duration: Config.animDuration > 0 ? Config.animDuration : 0
-                                 easing.type: Easing.OutCubic
-                             }
-                         }
-                     }
-
-                     // Animación para items que desaparecen
-                     remove: Transition {
-                         SequentialAnimation {
-                             // Mantener la posición inicial brevemente
-                             PauseAnimation {
-                                 duration: 50
-                             }
-                             ParallelAnimation {
-                                 NumberAnimation {
-                                     property: "opacity"
-                                     to: 0
-                                     duration: Config.animDuration > 0 ? Config.animDuration / 2 : 0
-                                     easing.type: Easing.OutCubic
-                                 }
-                                 NumberAnimation {
-                                     property: "height"
-                                     to: 0
-                                     duration: Config.animDuration > 0 ? Config.animDuration / 2 : 0
-                                     easing.type: Easing.OutCubic
-                                 }
-                             }
-                         }
-                     }
 
                     delegate: Rectangle {
                         required property string appId
@@ -699,7 +604,7 @@ Rectangle {
                         y: resultsList.currentIndex * 48
 
                         Behavior on y {
-                            enabled: Config.animDuration > 0 && resultsList.highlightAnimated
+                            enabled: Config.animDuration > 0
                             NumberAnimation {
                                 duration: Config.animDuration / 2
                                 easing.type: Easing.OutCubic

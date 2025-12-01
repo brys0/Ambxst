@@ -40,9 +40,9 @@ Item {
     property var allItems: []
     property bool hasNavigatedFromSearch: false
 
-    // Animated list model for smooth transitions
+    // List model
     ListModel {
-        id: animatedItemsModel
+        id: itemsModel
     }
     property bool clearButtonFocused: false
     property bool clearButtonConfirmState: false
@@ -74,7 +74,7 @@ Item {
     {}
 
     function adjustScrollForExpandedItem(index) {
-        if (index < 0 || index >= animatedItemsModel.count)
+        if (index < 0 || index >= itemsModel.count)
             return;
 
         // Calculate Y position of the item
@@ -84,7 +84,7 @@ Item {
         }
 
         // Calculate expanded item height
-        var itemData = animatedItemsModel.get(index).itemData;
+        var itemData = itemsModel.get(index).itemData;
         var optionsCount = 4;
         if (itemData.isFile || itemData.isImage || ClipboardUtils.isUrl(itemData.preview)) {
             optionsCount++;
@@ -332,7 +332,18 @@ Item {
         allItems = newItems;
         resultsList.enableScrollAnimation = false;
         resultsList.contentY = 0;
-        updateAnimatedModel(newItems);
+        
+        itemsModel.clear();
+        for (var i = 0; i < newItems.length; i++) {
+            itemsModel.append({
+                itemId: newItems[i].id,
+                itemData: newItems[i]
+            });
+        }
+
+        Qt.callLater(() => {
+            resultsList.enableScrollAnimation = true;
+        });
 
         // If we have a pending item to select (after pin/alias operations), find it
         if (pendingItemIdToSelect !== "") {
@@ -341,9 +352,6 @@ Item {
                     selectedIndex = i;
                     resultsList.currentIndex = i;
                     pendingItemIdToSelect = "";
-                    Qt.callLater(() => {
-                        resultsList.enableScrollAnimation = true;
-                    });
                     return;
                 }
             }
@@ -355,17 +363,11 @@ Item {
         if (searchText.length > 0 && allItems.length > 0) {
             selectedIndex = 0;
             resultsList.currentIndex = 0;
-            Qt.callLater(() => {
-                resultsList.enableScrollAnimation = true;
-            });
         } else if (searchText.length === 0) {
             // When clearing search, only reset if we haven't navigated or if list is empty
             if (!hasNavigatedFromSearch || allItems.length === 0) {
                 selectedIndex = -1;
                 resultsList.currentIndex = -1;
-                Qt.callLater(() => {
-                    resultsList.enableScrollAnimation = true;
-                });
             } else {
                 // Keep current selection valid, or default to first item
                 if (selectedIndex >= allItems.length) {
@@ -375,55 +377,6 @@ Item {
                     selectedIndex = 0;
                     resultsList.currentIndex = 0;
                 }
-            }
-        }
-    }
-
-    // Update the animated model with smooth transitions
-    function updateAnimatedModel(newItems) {
-        // Create a map of item IDs to their new positions
-        var newItemsById = {};
-        for (var i = 0; i < newItems.length; i++) {
-            newItemsById[newItems[i].id] = i;
-        }
-
-        // Create a map of current items by ID
-        var currentItemsById = {};
-        for (var i = 0; i < animatedItemsModel.count; i++) {
-            var item = animatedItemsModel.get(i);
-            currentItemsById[item.itemId] = i;
-        }
-
-        // Remove items that are no longer in the filtered list
-        for (var i = animatedItemsModel.count - 1; i >= 0; i--) {
-            var item = animatedItemsModel.get(i);
-            if (!(item.itemId in newItemsById)) {
-                animatedItemsModel.remove(i);
-            }
-        }
-
-        // Add new items and reorder existing ones
-        for (var i = 0; i < newItems.length; i++) {
-            var newItem = newItems[i];
-            var currentIndex = -1;
-
-            // Find if this item already exists in the model
-            for (var j = 0; j < animatedItemsModel.count; j++) {
-                if (animatedItemsModel.get(j).itemId === newItem.id) {
-                    currentIndex = j;
-                    break;
-                }
-            }
-
-            if (currentIndex === -1) {
-                // Item doesn't exist, insert it
-                animatedItemsModel.insert(i, {
-                    itemId: newItem.id,
-                    itemData: newItem
-                });
-            } else if (currentIndex !== i) {
-                // Item exists but in wrong position, move it
-                animatedItemsModel.move(currentIndex, i, 1);
             }
         }
     }
@@ -889,73 +842,16 @@ Item {
                     reuseItems: false
                     boundsBehavior: Flickable.StopAtBounds
 
-                    model: animatedItemsModel
+                    model: itemsModel
                     currentIndex: root.selectedIndex
 
                     property bool enableScrollAnimation: true
-
-                    // Smooth scroll animation
+                    
                     Behavior on contentY {
-                        enabled: Config.animDuration > 0 && resultsList.enableScrollAnimation
+                        enabled: Config.animDuration > 0 && resultsList.enableScrollAnimation && !resultsList.moving
                         NumberAnimation {
                             duration: Config.animDuration / 2
                             easing.type: Easing.OutCubic
-                        }
-                    }
-
-                    // Smooth animations for filtering
-                    displaced: Transition {
-                        ParallelAnimation {
-                            NumberAnimation {
-                                property: "y"
-                                duration: Config.animDuration > 0 ? Config.animDuration : 0
-                                easing.type: Easing.OutCubic
-                            }
-                            NumberAnimation {
-                                property: "opacity"
-                                to: 1
-                                duration: Config.animDuration > 0 ? Config.animDuration / 2 : 0
-                                easing.type: Easing.OutCubic
-                            }
-                        }
-                    }
-
-                    add: Transition {
-                        ParallelAnimation {
-                            NumberAnimation {
-                                property: "opacity"
-                                from: 0
-                                to: 1
-                                duration: Config.animDuration > 0 ? Config.animDuration / 2 : 0
-                                easing.type: Easing.OutCubic
-                            }
-                            NumberAnimation {
-                                property: "y"
-                                duration: Config.animDuration > 0 ? Config.animDuration : 0
-                                easing.type: Easing.OutCubic
-                            }
-                        }
-                    }
-
-                    remove: Transition {
-                        SequentialAnimation {
-                            PauseAnimation {
-                                duration: 50
-                            }
-                            ParallelAnimation {
-                                NumberAnimation {
-                                    property: "opacity"
-                                    to: 0
-                                    duration: Config.animDuration > 0 ? Config.animDuration / 2 : 0
-                                    easing.type: Easing.OutCubic
-                                }
-                                NumberAnimation {
-                                    property: "height"
-                                    to: 0
-                                    duration: Config.animDuration > 0 ? Config.animDuration / 2 : 0
-                                    easing.type: Easing.OutCubic
-                                }
-                            }
                         }
                     }
 
@@ -967,8 +863,8 @@ Item {
                         // Manual smooth auto-scroll (simplified for variable height items)
                         if (currentIndex >= 0) {
                             var itemY = 0;
-                            for (var i = 0; i < currentIndex && i < animatedItemsModel.count; i++) {
-                                var itemData = animatedItemsModel.get(i).itemData;
+                            for (var i = 0; i < currentIndex && i < itemsModel.count; i++) {
+                                var itemData = itemsModel.get(i).itemData;
                                 var itemHeight = 48;
                                 if (i === root.expandedItemIndex && !root.deleteMode && !root.aliasMode) {
                                     var optionsCount = 4;
@@ -982,8 +878,8 @@ Item {
                             }
 
                             var currentItemHeight = 48;
-                            if (currentIndex === root.expandedItemIndex && !root.deleteMode && !root.aliasMode && currentIndex < animatedItemsModel.count) {
-                                var itemData = animatedItemsModel.get(currentIndex).itemData;
+                            if (currentIndex === root.expandedItemIndex && !root.deleteMode && !root.aliasMode && currentIndex < itemsModel.count) {
+                                var itemData = itemsModel.get(currentIndex).itemData;
                                 var optionsCount = 4;
                                 if (itemData.isFile || itemData.isImage || ClipboardUtils.isUrl(itemData.preview)) {
                                     optionsCount++;
@@ -2124,78 +2020,14 @@ Item {
                         height: {
                             let baseHeight = 48;
                             if (resultsList.currentIndex === root.expandedItemIndex && !root.deleteMode && !root.aliasMode) {
-                                if (resultsList.currentIndex >= 0 && resultsList.currentIndex < animatedItemsModel.count) {
-                                    var itemData = animatedItemsModel.get(resultsList.currentIndex).itemData;
-                                    var optionsCount = 4;
-                                    if (itemData.isFile || itemData.isImage || ClipboardUtils.isUrl(itemData.preview)) {
-                                        optionsCount++;
-                                    }
-                                    var listHeight = 36 * Math.min(3, optionsCount);
-                                    return baseHeight + 4 + listHeight + 8;
+                                var itemData = itemsModel.get(resultsList.currentIndex).itemData;
+                                var optionsCount = 4;
+                                if (itemData.isFile || itemData.isImage || ClipboardUtils.isUrl(itemData.preview)) {
+                                    optionsCount++;
                                 }
+                                var listHeight = 36 * Math.min(3, optionsCount);
+                                return baseHeight + 4 + listHeight + 8;
                             }
-                            return baseHeight;
-                        }
-
-                        onHeightChanged: {
-                            // Adjust scroll immediately when height changes due to expansion
-                            if (root.expandedItemIndex >= 0 && height > 48) {
-                                Qt.callLater(() => {
-                                    adjustScrollForExpandedItem(root.expandedItemIndex);
-                                });
-                            }
-                        }
-
-                        // Calculate Y position based on index, accounting for expanded items
-                        y: {
-                            var yPos = 0;
-                            for (var i = 0; i < resultsList.currentIndex && i < animatedItemsModel.count; i++) {
-                                var itemData = animatedItemsModel.get(i).itemData;
-                                var itemHeight = 48;
-                                if (i === root.expandedItemIndex && !root.deleteMode && !root.aliasMode) {
-                                    var optionsCount = 4;
-                                    if (itemData.isFile || itemData.isImage || ClipboardUtils.isUrl(itemData.preview)) {
-                                        optionsCount++;
-                                    }
-                                    var listHeight = 36 * Math.min(3, optionsCount);
-                                    itemHeight = 48 + 4 + listHeight + 8;
-                                }
-                                yPos += itemHeight;
-                            }
-                            return yPos;
-                        }
-
-                        Behavior on y {
-                            enabled: Config.animDuration > 0
-                            NumberAnimation {
-                                duration: Config.animDuration / 2
-                                easing.type: Easing.OutCubic
-                            }
-                        }
-
-                        Behavior on height {
-                            enabled: Config.animDuration > 0
-                            NumberAnimation {
-                                duration: Config.animDuration
-                                easing.type: Easing.OutQuart
-                            }
-                        }
-
-                        StyledRect {
-                            anchors.fill: parent
-                            variant: {
-                                if (root.deleteMode) {
-                                    return "error";
-                                } else if (root.aliasMode) {
-                                    return "secondary";
-                                } else if (root.expandedItemIndex >= 0 && root.selectedIndex === root.expandedItemIndex) {
-                                    return "pane";
-                                } else {
-                                    return "primary";
-                                }
-                            }
-                            radius: Config.roundness > 0 ? Config.roundness + 4 : 0
-                            visible: root.selectedIndex >= 0 && !root.anyItemDragging
                         }
                     }
 
@@ -2219,7 +2051,7 @@ Item {
                         }
 
                         // Calculate expanded item height
-                        var itemData = animatedItemsModel.get(root.expandedItemIndex).itemData;
+                        var itemData = itemsModel.get(root.expandedItemIndex).itemData;
                         var optionsCount = 4;
                         if (itemData.isFile || itemData.isImage || ClipboardUtils.isUrl(itemData.preview)) {
                             optionsCount++;

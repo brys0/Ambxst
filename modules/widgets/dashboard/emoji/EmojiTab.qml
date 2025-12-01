@@ -34,28 +34,12 @@ Rectangle {
     property var recentEmojis: []
     property var filteredEmojis: []
     
-    // Performance optimization
-    property int maxResults: 30
-    property bool searchDebounceActive: false
-    
-    // Animated list models for smooth transitions
     ListModel {
-        id: animatedEmojisModel
+        id: emojisModel
     }
     
     ListModel {
-        id: animatedRecentModel
-    }
-    
-    // Debounce timer for search
-    Timer {
-        id: searchDebounceTimer
-        interval: 150
-        repeat: false
-        onTriggered: {
-            searchDebounceActive = false;
-            performSearch();
-        }
+        id: recentModel
     }
 
     onSelectedIndexChanged: {
@@ -65,9 +49,7 @@ Rectangle {
     }
 
     onSearchTextChanged: {
-        // Debounce search for better performance
-        searchDebounceActive = true;
-        searchDebounceTimer.restart();
+        performSearch();
     }
 
     function clearSearch() {
@@ -81,7 +63,6 @@ Rectangle {
         clearButtonConfirmState = false;
         searchInput.focusInput();
         
-        // Load initial emojis when clearing search
         loadInitialEmojis();
         emojiList.enableScrollAnimation = false;
         emojiList.contentY = 0;
@@ -95,6 +76,7 @@ Rectangle {
     function clearRecentEmojis() {
         recentEmojis = [];
         saveRecentEmojis();
+        updateRecentModel();
         clearButtonConfirmState = false;
         clearButtonFocused = false;
         searchInput.focusInput();
@@ -105,15 +87,11 @@ Rectangle {
     }
 
     function performSearch() {
-        // When search is empty, show initial 20 emojis
         if (searchText.length === 0) {
             loadInitialEmojis();
             selectedIndex = -1;
             selectedRecentIndex = -1;
-            
-            emojiList.enableScrollAnimation = false;
             emojiList.contentY = 0;
-            Qt.callLater(() => { emojiList.enableScrollAnimation = true; });
             return;
         }
         
@@ -123,19 +101,15 @@ Rectangle {
     function updateFilteredEmojis() {
         var filtered = [];
         var searchLower = searchText.toLowerCase();
-        var resultCount = 0;
 
-        // Only search when there's text, limit results for performance
         if (searchText.length > 0) {
-            for (var i = 0; i < emojiData.length && resultCount < maxResults; i++) {
+            for (var i = 0; i < emojiData.length; i++) {
                 var emoji = emojiData[i];
                 var emojiText = emoji.emoji;
                 var searchTerms = emoji.search;
 
-                // Check if search text matches emoji or any search term
                 if (emojiText.includes(searchText) || searchTerms.toLowerCase().includes(searchLower)) {
                     filtered.push(emoji);
-                    resultCount++;
                 }
             }
         }
@@ -143,133 +117,50 @@ Rectangle {
         filteredEmojis = filtered;
         emojiList.enableScrollAnimation = false;
         emojiList.contentY = 0;
-        updateAnimatedEmojisModel(filtered);
+
+        emojisModel.clear();
+        for (var i = 0; i < filtered.length; i++) {
+            emojisModel.append({
+                emojiId: filtered[i].search,
+                emojiData: filtered[i]
+            });
+        }
+        
+        Qt.callLater(() => { emojiList.enableScrollAnimation = true; });
 
         if (searchText.length > 0 && filteredEmojis.length > 0 && !isRecentFocused) {
             selectedIndex = 0;
             emojiList.currentIndex = 0;
-            Qt.callLater(() => { emojiList.enableScrollAnimation = true; });
         } else if (searchText.length === 0 && !hasNavigatedFromSearch) {
             selectedIndex = -1;
             selectedRecentIndex = -1;
-            Qt.callLater(() => { emojiList.enableScrollAnimation = true; });
         }
     }
 
-    // Update the animated emoji model with smooth transitions
-    function updateAnimatedEmojisModel(newItems) {
-        // If search is empty or too many results, just clear and batch insert
-        if (newItems.length === 0) {
-            animatedEmojisModel.clear();
-            return;
-        }
-        
-        // For initial population or complete refresh, use batch operations
-        if (animatedEmojisModel.count === 0 || Math.abs(newItems.length - animatedEmojisModel.count) > 50) {
-            animatedEmojisModel.clear();
-            for (var i = 0; i < newItems.length; i++) {
-                animatedEmojisModel.append({
-                    emojiId: newItems[i].search,
-                    emojiData: newItems[i]
-                });
-            }
-            return;
-        }
-
-        // Build set of new item IDs for fast lookup
-        var newIds = {};
-        for (var i = 0; i < newItems.length; i++) {
-            newIds[newItems[i].search] = true;
-        }
-
-        // Remove items that are no longer in the filtered list
-        for (var i = animatedEmojisModel.count - 1; i >= 0; i--) {
-            var item = animatedEmojisModel.get(i);
-            if (!newIds[item.emojiId]) {
-                animatedEmojisModel.remove(i);
-            }
-        }
-
-        // Add new items and reorder existing ones
-        for (var i = 0; i < newItems.length; i++) {
-            var newItem = newItems[i];
-            var newItemId = newItem.search;
-            
-            // Find current index of the item dynamically
-            var currentIndex = -1;
-            for (var j = 0; j < animatedEmojisModel.count; j++) {
-                if (animatedEmojisModel.get(j).emojiId === newItemId) {
-                    currentIndex = j;
-                    break;
-                }
-            }
-
-            if (currentIndex === -1) {
-                // Item doesn't exist, insert it
-                animatedEmojisModel.insert(i, {
-                    emojiId: newItemId,
-                    emojiData: newItem
-                });
-            } else if (currentIndex !== i) {
-                // Item exists but in wrong position, move it
-                animatedEmojisModel.move(currentIndex, i, 1);
-            }
-        }
-    }
-
-    // Update the animated recent model with smooth transitions
-    function updateAnimatedRecentModel(newItems) {
-        var newItemsById = {};
-        for (var i = 0; i < newItems.length; i++) {
-            newItemsById[newItems[i].search] = i;
-        }
-
-        for (var i = animatedRecentModel.count - 1; i >= 0; i--) {
-            var item = animatedRecentModel.get(i);
-            if (!(item.emojiId in newItemsById)) {
-                animatedRecentModel.remove(i);
-            }
-        }
-
-        for (var i = 0; i < newItems.length; i++) {
-            var newItem = newItems[i];
-            var currentIndex = -1;
-
-            for (var j = 0; j < animatedRecentModel.count; j++) {
-                if (animatedRecentModel.get(j).emojiId === newItem.search) {
-                    currentIndex = j;
-                    break;
-                }
-            }
-
-            if (currentIndex === -1) {
-                animatedRecentModel.insert(i, {
-                    emojiId: newItem.search,
-                    emojiData: newItem
-                });
-            } else if (currentIndex !== i) {
-                animatedRecentModel.move(currentIndex, i, 1);
-            }
+    function updateRecentModel() {
+        recentModel.clear();
+        for (var i = 0; i < recentEmojis.length; i++) {
+            recentModel.append({
+                emojiId: recentEmojis[i].search,
+                emojiData: recentEmojis[i]
+            });
         }
     }
 
     function loadEmojiData() {
-        // Load emoji data from fuzzel-emoji.sh
         emojiProcess.command = ["bash", "-c", "sed '1,/^### DATA ###$/d' /home/adriano/Repos/Axenide/Ambxst/scripts/fuzzel-emoji.sh"];
         emojiProcess.running = true;
     }
     
     function loadInitialEmojis() {
-        // Load first 20 emojis for initial display
         var initial = [];
-        for (var i = 0; i < Math.min(20, emojiData.length); i++) {
+        for (var i = 0; i < Math.min(50, emojiData.length); i++) {
             initial.push(emojiData[i]);
         }
         
-        // Populate the model with initial emojis
-        animatedEmojisModel.clear();
+        emojisModel.clear();
         for (var i = 0; i < initial.length; i++) {
-            animatedEmojisModel.append({
+            emojisModel.append({
                 emojiId: initial[i].search,
                 emojiData: initial[i]
             });
@@ -279,35 +170,29 @@ Rectangle {
     }
 
     function loadRecentEmojis() {
-        // Load recent emojis from JSON
         recentProcess.command = ["bash", "-c", "cat " + Quickshell.dataDir + "/emojis.json 2>/dev/null || echo '[]'"];
         recentProcess.running = true;
     }
 
     function saveRecentEmojis() {
-        // Save recent emojis to JSON
         var jsonData = JSON.stringify(recentEmojis, null, 2);
         saveProcess.command = ["bash", "-c", "echo '" + jsonData.replace(/'/g, "'\\''") + "' > " + Quickshell.dataDir + "/emojis.json"];
         saveProcess.running = true;
     }
 
     function addToRecent(emoji) {
-        // Remove if already exists
         recentEmojis = recentEmojis.filter(function (item) {
             return item.emoji !== emoji.emoji;
         });
 
-        // Add to beginning with usage count
         emoji.usage = (emoji.usage || 0) + 1;
         emoji.lastUsed = Date.now();
         recentEmojis.unshift(emoji);
 
-        // Keep only last 50
         if (recentEmojis.length > 50) {
             recentEmojis = recentEmojis.slice(0, 50);
         }
 
-        // Sort by usage desc, then last used desc
         recentEmojis.sort(function (a, b) {
             if (a.usage !== b.usage) {
                 return b.usage - a.usage;
@@ -315,35 +200,26 @@ Rectangle {
             return b.lastUsed - a.lastUsed;
         });
 
-        updateAnimatedRecentModel(recentEmojis);
+        updateRecentModel();
         saveRecentEmojis();
     }
 
     function copyEmoji(emoji) {
-        // Guardar en recientes primero
         root.addToRecent(emoji);
-        
-        // Cerrar el dashboard
         Visibilities.setActiveModule("");
-        
-        // Usar el servicio de clipboard para copiar y escribir el emoji
-        // El servicio persiste incluso cuando se cierra el dashboard
         ClipboardService.copyAndTypeEmoji(emoji.emoji);
     }
 
     function onDownPressed() {
         if (!hasNavigatedFromSearch) {
-            // Primera vez presionando down desde search
             hasNavigatedFromSearch = true;
             if (filteredEmojis.length > 0) {
-                // Ir directo a emojis (ya no priorizamos recientes)
                 isRecentFocused = false;
                 selectedRecentIndex = -1;
                 recentList.currentIndex = -1;
             }
         }
 
-        // Navigation logic - unified for both first and subsequent presses
         if (!isRecentFocused && emojiList.count > 0) {
             if (selectedIndex === -1) {
                 selectedIndex = 0;
@@ -353,7 +229,6 @@ Rectangle {
                 emojiList.currentIndex = selectedIndex;
             }
         } else if (isRecentFocused && recentEmojis.length > 0) {
-            // Navegamos en la lista vertical de recientes
             if (selectedRecentIndex < recentEmojis.length - 1) {
                 selectedRecentIndex++;
                 recentList.currentIndex = selectedRecentIndex;
@@ -364,24 +239,20 @@ Rectangle {
 
     function onUpPressed() {
         if (isRecentFocused) {
-            // En lista de recientes
             if (selectedRecentIndex > 0) {
                 selectedRecentIndex--;
                 recentList.currentIndex = selectedRecentIndex;
                 lastSelectedRecentIndex = selectedRecentIndex;
             } else if (selectedRecentIndex === 0) {
-                // Volver al search
                 isRecentFocused = false;
                 selectedRecentIndex = -1;
                 recentList.currentIndex = -1;
                 hasNavigatedFromSearch = false;
             }
         } else if (selectedIndex > 0) {
-            // Navigate within normal list
             selectedIndex--;
             emojiList.currentIndex = selectedIndex;
         } else if (selectedIndex === 0) {
-            // Go back to search
             selectedIndex = -1;
             emojiList.currentIndex = -1;
             hasNavigatedFromSearch = false;
@@ -389,7 +260,6 @@ Rectangle {
     }
 
     function onLeftPressed() {
-        // Cambiar foco a la lista normal si estamos en recientes
         if (isRecentFocused && recentEmojis.length > 0) {
             isRecentFocused = false;
             selectedRecentIndex = -1;
@@ -404,7 +274,6 @@ Rectangle {
     }
 
     function onRightPressed() {
-        // Cambiar foco a la lista de recientes si estamos en normal y hay recientes
         if (!isRecentFocused && recentEmojis.length > 0 && searchText.length === 0) {
             isRecentFocused = true;
             selectedIndex = -1;
@@ -431,7 +300,6 @@ Rectangle {
         }
     }
 
-    // Load emoji data
     Process {
         id: emojiProcess
         running: false
@@ -457,18 +325,11 @@ Rectangle {
                     }
                 }
                 emojiData = data;
-                
-                // Load first 20 emojis by default for initial display
                 loadInitialEmojis();
             }
         }
-
-        onExited: function (code) {
-            if (code !== 0) {}
-        }
     }
 
-    // Load recent emojis
     Process {
         id: recentProcess
         running: false
@@ -479,20 +340,15 @@ Rectangle {
             onStreamFinished: {
                 try {
                     recentEmojis = JSON.parse(text.trim());
-                    updateAnimatedRecentModel(recentEmojis);
+                    updateRecentModel();
                 } catch (e) {
                     recentEmojis = [];
-                    updateAnimatedRecentModel([]);
+                    updateRecentModel();
                 }
             }
         }
-
-        onExited: function (code) {
-            if (code !== 0) {}
-        }
     }
 
-    // Save recent emojis
     Process {
         id: saveProcess
         running: false
@@ -502,17 +358,14 @@ Rectangle {
         id: mainLayout
         anchors.fill: parent
         
-        // Contenedor de listas de emojis (layout horizontal)
         RowLayout {
             anchors.fill: parent
             spacing: 8
 
-            // Columna izquierda: Search + Lista normal de emojis
             Item {
                 Layout.preferredWidth: root.leftPanelWidth
                 Layout.fillHeight: true
 
-                // Barra de búsqueda con botón de limpiar
                 Row {
                     id: searchRow
                     width: parent.width
@@ -575,7 +428,6 @@ Rectangle {
                         }
                     }
 
-                    // Botón de limpiar recientes
                     StyledRect {
                         id: clearButton
                         width: root.clearButtonConfirmState ? 140 : 48
@@ -687,105 +539,44 @@ Rectangle {
                     }
                 }
 
-                // Emoji list (7 filas)
                 ListView {
                     id: emojiList
                     width: parent.width
                     anchors.top: searchRow.bottom
-                    anchors.bottom: infoText.visible ? infoText.top : parent.bottom
+                    anchors.bottom: parent.bottom
                     anchors.topMargin: 8
-                    anchors.bottomMargin: infoText.visible ? 8 : 0
+                    anchors.bottomMargin: 0
                     clip: true
 
                     cacheBuffer: 96
                     reuseItems: false
 
-                    model: animatedEmojisModel
+                    model: emojisModel
                     currentIndex: root.selectedIndex
                     
-                     property bool enableScrollAnimation: true
-
-                     // Smooth scroll animation
-                     Behavior on contentY {
-                         enabled: Config.animDuration > 0 && emojiList.enableScrollAnimation
-                         NumberAnimation {
-                             duration: Config.animDuration / 2
-                             easing.type: Easing.OutCubic
-                         }
-                     }
-
-                      // Smooth animations for filtering
-                      displaced: Transition {
-                          ParallelAnimation {
-                              NumberAnimation {
-                                  property: "y"
-                                  duration: Config.animDuration > 0 ? Config.animDuration : 0
-                                  easing.type: Easing.OutCubic
-                              }
-                              NumberAnimation {
-                                  property: "opacity"
-                                  to: 1
-                                  duration: Config.animDuration > 0 ? Config.animDuration / 2 : 0
-                                  easing.type: Easing.OutCubic
-                              }
-                          }
-                      }
-
-                     add: Transition {
-                         ParallelAnimation {
-                             NumberAnimation {
-                                 property: "opacity"
-                                 from: 0
-                                 to: 1
-                                 duration: Config.animDuration > 0 ? Config.animDuration / 2 : 0
-                                 easing.type: Easing.OutCubic
-                             }
-                             NumberAnimation {
-                                 property: "y"
-                                 duration: Config.animDuration > 0 ? Config.animDuration : 0
-                                 easing.type: Easing.OutCubic
-                             }
-                         }
-                     }
-
-                     remove: Transition {
-                         SequentialAnimation {
-                             PauseAnimation {
-                                 duration: 50
-                             }
-                             ParallelAnimation {
-                                 NumberAnimation {
-                                     property: "opacity"
-                                     to: 0
-                                     duration: Config.animDuration > 0 ? Config.animDuration / 2 : 0
-                                     easing.type: Easing.OutCubic
-                                 }
-                                 NumberAnimation {
-                                     property: "height"
-                                     to: 0
-                                     duration: Config.animDuration > 0 ? Config.animDuration / 2 : 0
-                                     easing.type: Easing.OutCubic
-                                 }
-                             }
-                         }
-                     }
-
+                    property bool enableScrollAnimation: true
+                    
+                    Behavior on contentY {
+                        enabled: Config.animDuration > 0 && emojiList.enableScrollAnimation && !emojiList.moving
+                        NumberAnimation {
+                            duration: Config.animDuration / 2
+                            easing.type: Easing.OutCubic
+                        }
+                    }
+                    
                     onCurrentIndexChanged: {
                         if (currentIndex !== root.selectedIndex && !root.isRecentFocused) {
                             root.selectedIndex = currentIndex;
                         }
                         
-                        // Manual smooth auto-scroll
                         if (currentIndex >= 0 && !root.isRecentFocused) {
                             var itemY = currentIndex * 48;
                             var viewportTop = emojiList.contentY;
                             var viewportBottom = viewportTop + emojiList.height;
                             
                             if (itemY < viewportTop) {
-                                // Item is above viewport, scroll up
                                 emojiList.contentY = itemY;
                             } else if (itemY + 48 > viewportBottom) {
-                                // Item is below viewport, scroll down
                                 emojiList.contentY = itemY + 48 - emojiList.height;
                             }
                         }
@@ -839,7 +630,7 @@ Rectangle {
 
                             StyledRect {
                                 id: emojiIconBackground
-                                width: emojiIcon.implicitWidth + 6 // Ancho variable basado en el emoji
+                                width: emojiIcon.implicitWidth + 6
                                 height: 32
                                 radius: Config.roundness > 0 ? Math.max(Config.roundness - 4, 0) : 0
                                 variant: root.selectedIndex === index && !root.isRecentFocused ? "overprimary" : "common"
@@ -894,25 +685,8 @@ Rectangle {
 
                     highlightFollowsCurrentItem: false
                 }
-                
-                    // Info text when results are limited
-                    Text {
-                        id: infoText
-                        width: parent.width
-                        height: visible ? 20 : 0
-                        visible: searchText.length > 0 && filteredEmojis.length >= maxResults
-
-                    text: `Showing first ${maxResults} results - refine search for more`
-                    color: Colors.outline
-                    font.family: Config.theme.font
-                    font.pixelSize: Math.max(8, Config.theme.fontSize - 3)
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                    opacity: 0.7
-                }
             }
 
-            // Separator
             Rectangle {
                 Layout.preferredWidth: 2
                 Layout.fillHeight: true
@@ -920,251 +694,190 @@ Rectangle {
                 color: Colors.surface
             }
 
-            // Right Panel Container
             Item {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
 
-                // Recent emojis vertical list
                 Item {
                     anchors.fill: parent
                     visible: recentEmojis.length > 0 && searchText.length === 0
 
-                ListView {
-                    id: recentList
-                    anchors.fill: parent
-                    orientation: ListView.Vertical
-                    spacing: 0
-                    clip: true
-                    cacheBuffer: 96
-                    reuseItems: false
+                    ListView {
+                        id: recentList
+                        anchors.fill: parent
+                        orientation: ListView.Vertical
+                        spacing: 0
+                        clip: true
+                        cacheBuffer: 96
+                        reuseItems: false
 
-                    model: animatedRecentModel
-                    currentIndex: root.selectedRecentIndex
-                    
-                    // Smooth scroll animation
-                    Behavior on contentY {
-                        enabled: Config.animDuration > 0
-                        NumberAnimation {
-                            duration: Config.animDuration / 2
-                            easing.type: Easing.OutCubic
-                        }
-                    }
-
-                    // Smooth animations for filtering
-                    displaced: Transition {
-                        NumberAnimation {
-                            properties: "y"
-                            duration: Config.animDuration > 0 ? Config.animDuration : 0
-                            easing.type: Easing.OutCubic
-                        }
-                    }
-
-                    add: Transition {
-                        ParallelAnimation {
-                            NumberAnimation {
-                                property: "opacity"
-                                from: 0
-                                to: 1
-                                duration: Config.animDuration > 0 ? Config.animDuration / 2 : 0
-                                easing.type: Easing.OutCubic
-                            }
-                            NumberAnimation {
-                                property: "y"
-                                duration: Config.animDuration > 0 ? Config.animDuration : 0
-                                easing.type: Easing.OutCubic
-                            }
-                        }
-                    }
-
-                    remove: Transition {
-                        SequentialAnimation {
-                            PauseAnimation {
-                                duration: 50
-                            }
-                            ParallelAnimation {
-                                NumberAnimation {
-                                    property: "opacity"
-                                    to: 0
-                                    duration: Config.animDuration > 0 ? Config.animDuration / 2 : 0
-                                    easing.type: Easing.OutCubic
-                                }
-                                NumberAnimation {
-                                    property: "height"
-                                    to: 0
-                                    duration: Config.animDuration > 0 ? Config.animDuration / 2 : 0
-                                    easing.type: Easing.OutCubic
-                                }
-                            }
-                        }
-                    }
-
-                    onCurrentIndexChanged: {
-                        if (currentIndex !== root.selectedRecentIndex && root.isRecentFocused) {
-                            root.selectedRecentIndex = currentIndex;
-                            root.lastSelectedRecentIndex = currentIndex;
-                        }
+                        model: recentModel
+                        currentIndex: root.selectedRecentIndex
                         
-                        // Manual smooth auto-scroll
-                        if (currentIndex >= 0 && root.isRecentFocused) {
-                            var itemY = currentIndex * 48;
-                            var viewportTop = recentList.contentY;
-                            var viewportBottom = viewportTop + recentList.height;
-                            
-                            if (itemY < viewportTop) {
-                                // Item is above viewport, scroll up
-                                recentList.contentY = itemY;
-                            } else if (itemY + 48 > viewportBottom) {
-                                // Item is below viewport, scroll down
-                                recentList.contentY = itemY + 48 - recentList.height;
-                            }
-                        }
-                    }
-
-                    delegate: Rectangle {
-                        required property string emojiId
-                        required property var emojiData
-                        required property int index
-
-                        property var modelData: emojiData
-
-                        width: recentList.width
-                        height: 48
-                        color: "transparent"
-                        radius: Config.roundness > 0 ? Math.max(Config.roundness - 4, 0) : 0
+                        property bool enableScrollAnimation: true
                         
-                        property color textColor: {
-                            if (root.selectedRecentIndex === index && root.isRecentFocused) {
-                                return Config.resolveColor(Config.theme.srPrimary.itemColor);
-                            } else {
-                                return Colors.overSurface;
-                            }
-                        }
-
-                        Behavior on color {
-                            enabled: Config.animDuration > 0
-                            ColorAnimation {
+                        Behavior on contentY {
+                            enabled: Config.animDuration > 0 && recentList.enableScrollAnimation && !recentList.moving
+                            NumberAnimation {
                                 duration: Config.animDuration / 2
-                                easing.type: Easing.OutQuart
+                                easing.type: Easing.OutCubic
                             }
                         }
 
-                        MouseArea {
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            preventStealing: false
-                            propagateComposedEvents: true
-
-                            onEntered: {
-                                if (!root.isRecentFocused) {
-                                    root.isRecentFocused = true;
-                                    root.selectedIndex = -1;
-                                    emojiList.currentIndex = -1;
+                        onCurrentIndexChanged: {
+                            if (currentIndex !== root.selectedRecentIndex && root.isRecentFocused) {
+                                root.selectedRecentIndex = currentIndex;
+                                root.lastSelectedRecentIndex = currentIndex;
+                            }
+                            
+                            if (currentIndex >= 0 && root.isRecentFocused) {
+                                var itemY = currentIndex * 48;
+                                var viewportTop = recentList.contentY;
+                                var viewportBottom = viewportTop + recentList.height;
+                                
+                                if (itemY < viewportTop) {
+                                    recentList.contentY = itemY;
+                                } else if (itemY + 48 > viewportBottom) {
+                                    recentList.contentY = itemY + 48 - recentList.height;
                                 }
-                                root.selectedRecentIndex = index;
-                                root.lastSelectedRecentIndex = index;
-                                recentList.currentIndex = index;
-                            }
-
-                            onClicked: {
-                                root.copyEmoji(modelData);
                             }
                         }
 
-                        Row {
-                            anchors.fill: parent
-                            anchors.margins: 8
-                            spacing: 8
+                        delegate: Rectangle {
+                            required property string emojiId
+                            required property var emojiData
+                            required property int index
 
-                            StyledRect {
-                                id: recentEmojiIconBackground
-                                width: recentEmojiIcon.implicitWidth + 6
-                                height: 32
-                                radius: Config.roundness > 0 ? Math.max(Config.roundness - 4, 0) : 0
-                                variant: root.selectedRecentIndex === index && root.isRecentFocused ? "overprimary" : "common"
+                            property var modelData: emojiData
+
+                            width: recentList.width
+                            height: 48
+                            color: "transparent"
+                            radius: Config.roundness > 0 ? Math.max(Config.roundness - 4, 0) : 0
+                            
+                            property color textColor: {
+                                if (root.selectedRecentIndex === index && root.isRecentFocused) {
+                                    return Config.resolveColor(Config.theme.srPrimary.itemColor);
+                                } else {
+                                    return Colors.overSurface;
+                                }
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                preventStealing: false
+                                propagateComposedEvents: true
+
+                                onEntered: {
+                                    if (!root.isRecentFocused) {
+                                        root.isRecentFocused = true;
+                                        root.selectedIndex = -1;
+                                        emojiList.currentIndex = -1;
+                                    }
+                                    root.selectedRecentIndex = index;
+                                    root.lastSelectedRecentIndex = index;
+                                    recentList.currentIndex = index;
+                                }
+
+                                onClicked: {
+                                    root.copyEmoji(modelData);
+                                }
+                            }
+
+                            Row {
+                                anchors.fill: parent
+                                anchors.margins: 8
+                                spacing: 8
+
+                                StyledRect {
+                                    id: recentEmojiIconBackground
+                                    width: recentEmojiIcon.implicitWidth + 6
+                                    height: 32
+                                    radius: Config.roundness > 0 ? Math.max(Config.roundness - 4, 0) : 0
+                                    variant: root.selectedRecentIndex === index && root.isRecentFocused ? "overprimary" : "common"
+
+                                    Text {
+                                        id: recentEmojiIcon
+                                        anchors.centerIn: parent
+                                        color: recentEmojiIconBackground.itemColor
+                                        text: modelData.emoji
+                                        font.pixelSize: 24
+                                        horizontalAlignment: Text.AlignHCenter
+                                        verticalAlignment: Text.AlignVCenter
+                                    }
+                                }
 
                                 Text {
-                                    id: recentEmojiIcon
-                                    anchors.centerIn: parent
-                                    color: recentEmojiIconBackground.itemColor
-                                    text: modelData.emoji
-                                    font.pixelSize: 24
-                                    horizontalAlignment: Text.AlignHCenter
+                                    width: parent.width - recentEmojiIcon.implicitWidth - 6 - parent.spacing - 16
+                                    height: parent.height
+                                    text: modelData.search
+                                    color: textColor
+                                    font.family: Config.theme.font
+                                    font.weight: Font.Bold
+                                    font.pixelSize: Config.theme.fontSize
+                                    elide: Text.ElideRight
                                     verticalAlignment: Text.AlignVCenter
                                 }
                             }
+                        }
 
-                            Text {
-                                width: parent.width - recentEmojiIcon.implicitWidth - 6 - parent.spacing - 16
-                                height: parent.height
-                                text: modelData.search
-                                color: textColor
-                                font.family: Config.theme.font
-                                font.weight: Font.Bold
-                                font.pixelSize: Config.theme.fontSize
-                                elide: Text.ElideRight
-                                verticalAlignment: Text.AlignVCenter
+                        highlight: Item {
+                            width: recentList.width
+                            height: 48
+                            
+                            // Calculate Y position based on index, not item position
+                            y: recentList.currentIndex * 48
+                            
+                            Behavior on y {
+                                enabled: Config.animDuration > 0
+                                NumberAnimation {
+                                    duration: Config.animDuration / 2
+                                    easing.type: Easing.OutCubic
+                                }
+                            }
+                            
+                            StyledRect {
+                                anchors.fill: parent
+                                variant: "primary"
+                                radius: Config.roundness > 0 ? Config.roundness + 4 : 0
+                                visible: root.isRecentFocused
                             }
                         }
-                    }
 
-                    highlight: Item {
-                        width: recentList.width
-                        height: 48
-                        
-                        // Calculate Y position based on index, not item position
-                        y: recentList.currentIndex * 48
-                        
-                        Behavior on y {
-                            enabled: Config.animDuration > 0
-                            NumberAnimation {
-                                duration: Config.animDuration / 2
-                                easing.type: Easing.OutCubic
-                            }
-                        }
-                        
-                        StyledRect {
-                            anchors.fill: parent
-                            variant: "primary"
-                            radius: Config.roundness > 0 ? Config.roundness + 4 : 0
-                            visible: root.isRecentFocused
-                        }
+                        highlightFollowsCurrentItem: false
                     }
-
-                    highlightFollowsCurrentItem: false
                 }
-            }
 
-                // Placeholder cuando no hay recientes
                 Item {
                     anchors.fill: parent
                     visible: recentEmojis.length === 0 && searchText.length === 0
 
-                Column {
-                    anchors.centerIn: parent
-                    spacing: 12
+                    Column {
+                        anchors.centerIn: parent
+                        spacing: 12
 
-                    Text {
-                        text: Icons.countdown
-                        font.family: Icons.font
-                        font.pixelSize: 48
-                        color: Colors.surfaceBright
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        textFormat: Text.RichText
-                    }
+                        Text {
+                            text: Icons.countdown
+                            font.family: Icons.font
+                            font.pixelSize: 48
+                            color: Colors.surfaceBright
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            textFormat: Text.RichText
+                        }
 
-                    Text {
-                        text: "No recent emojis"
-                        font.family: Config.theme.font
-                        font.pixelSize: Config.theme.fontSize
-                        font.weight: Font.Bold
-                        color: Colors.outline
-                        anchors.horizontalCenter: parent.horizontalCenter
+                        Text {
+                            text: "No recent emojis"
+                            font.family: Config.theme.font
+                            font.pixelSize: Config.theme.fontSize
+                            font.weight: Font.Bold
+                            color: Colors.outline
+                            anchors.horizontalCenter: parent.horizontalCenter
+                        }
                     }
                 }
             }
         }
-    }
     }
 
     Keys.onPressed: event => {
@@ -1182,7 +895,6 @@ Rectangle {
         });
     }
 
-    // MouseArea para mantener el contexto de focus
     MouseArea {
         anchors.fill: parent
         z: -1

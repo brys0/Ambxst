@@ -25,9 +25,9 @@ Item {
     property var tmuxSessions: []
     property var filteredSessions: []
     
-    // Animated list model for smooth transitions
+    // List model
     ListModel {
-        id: animatedSessionsModel
+        id: sessionsModel
     }
 
     // Delete mode state
@@ -61,7 +61,7 @@ Item {
     }
     
     function adjustScrollForExpandedItem(index) {
-        if (index < 0 || index >= animatedSessionsModel.count) return;
+        if (index < 0 || index >= sessionsModel.count) return;
         
         // Calculate Y position of the item
         var itemY = 0;
@@ -184,19 +184,29 @@ Item {
         filteredSessions = newFilteredSessions;
         resultsList.enableScrollAnimation = false;
         resultsList.contentY = 0;
-        root.isFiltering = true;
-        updateAnimatedSessionsModel(newFilteredSessions);
-        root.isFiltering = false;
+        
+        sessionsModel.clear();
+        for (var i = 0; i < newFilteredSessions.length; i++) {
+            var session = newFilteredSessions[i];
+            var sessionId = (session.isCreateButton || session.isCreateSpecificButton) ? "__create__" : session.name;
+            
+            sessionsModel.append({
+                sessionId: sessionId,
+                sessionData: session
+            });
+        }
+
+        Qt.callLater(() => {
+            resultsList.enableScrollAnimation = true;
+        });
 
         if (!deleteMode && !renameMode) {
             if (searchText.length > 0 && newFilteredSessions.length > 0) {
                 selectedIndex = 0;
                 resultsList.currentIndex = 0;
-                Qt.callLater(() => { resultsList.enableScrollAnimation = true; });
             } else if (searchText.length === 0) {
                 selectedIndex = -1;
                 resultsList.currentIndex = -1;
-                Qt.callLater(() => { resultsList.enableScrollAnimation = true; });
             }
         }
 
@@ -211,56 +221,6 @@ Item {
             }
             if (pendingRenamedSession !== "") {
                 pendingRenamedSession = "";
-            }
-        }
-    }
-
-    // Update the animated sessions model with smooth transitions
-    function updateAnimatedSessionsModel(newSessions) {
-        // Create a map of session names to their new positions
-        var newSessionsById = {};
-        for (var i = 0; i < newSessions.length; i++) {
-            var sessionId = (newSessions[i].isCreateButton || newSessions[i].isCreateSpecificButton) ? "__create__" : newSessions[i].name;
-            newSessionsById[sessionId] = i;
-        }
-
-        // Remove sessions that are no longer in the filtered list
-        for (var i = animatedSessionsModel.count - 1; i >= 0; i--) {
-            var item = animatedSessionsModel.get(i);
-            if (!(item.sessionId in newSessionsById)) {
-                animatedSessionsModel.remove(i);
-            }
-        }
-
-        // Add new sessions and reorder existing ones
-        for (var i = 0; i < newSessions.length; i++) {
-            var newSession = newSessions[i];
-            var sessionId = (newSession.isCreateButton || newSession.isCreateSpecificButton) ? "__create__" : newSession.name;
-            var currentIndex = -1;
-
-            // Find if this session already exists in the model
-            for (var j = 0; j < animatedSessionsModel.count; j++) {
-                if (animatedSessionsModel.get(j).sessionId === sessionId) {
-                    currentIndex = j;
-                    break;
-                }
-            }
-
-            if (currentIndex === -1) {
-                // Session doesn't exist, insert it
-                animatedSessionsModel.insert(i, {
-                    sessionId: sessionId,
-                    sessionData: newSession
-                });
-            } else if (currentIndex !== i) {
-                // Session exists but in wrong position, move it
-                animatedSessionsModel.move(currentIndex, i, 1);
-            } else {
-                // Session exists in correct position, update its data
-                animatedSessionsModel.set(i, {
-                    sessionId: sessionId,
-                    sessionData: newSession
-                });
             }
         }
     }
@@ -795,56 +755,19 @@ Item {
             cacheBuffer: 96
             reuseItems: false
 
-            model: animatedSessionsModel
+            model: sessionsModel
             currentIndex: root.selectedIndex
             
-             property bool enableScrollAnimation: true
-
-             // Smooth scroll animation
-             Behavior on contentY {
-                 enabled: Config.animDuration > 0 && resultsList.enableScrollAnimation
-                 NumberAnimation {
-                     duration: Config.animDuration / 2
-                     easing.type: Easing.OutCubic
-                 }
-             }
-
-              // Smooth animations for filtering
-              displaced: Transition {
-                  enabled: Config.animDuration > 0 && !root.isFiltering
-                  NumberAnimation {
-                      properties: "y"
-                      duration: Config.animDuration > 0 ? Config.animDuration : 0
-                      easing.type: Easing.OutCubic
-                  }
-              }
-
-             add: Transition {
-                 ParallelAnimation {
-                     NumberAnimation {
-                         property: "opacity"
-                         from: 0
-                         to: 1
-                         duration: Config.animDuration > 0 ? Config.animDuration / 2 : 0
-                         easing.type: Easing.OutCubic
-                     }
-                     NumberAnimation {
-                         property: "y"
-                         duration: Config.animDuration > 0 ? Config.animDuration : 0
-                         easing.type: Easing.OutCubic
-                     }
-                 }
-             }
-
-              remove: Transition {
-                  NumberAnimation {
-                      property: "opacity"
-                      to: 0
-                      duration: Config.animDuration > 0 ? Config.animDuration / 2 : 0
-                      easing.type: Easing.OutCubic
-                  }
-              }
-
+            property bool enableScrollAnimation: true
+            
+            Behavior on contentY {
+                enabled: Config.animDuration > 0 && resultsList.enableScrollAnimation && !resultsList.moving
+                NumberAnimation {
+                    duration: Config.animDuration / 2
+                    easing.type: Easing.OutCubic
+                }
+            }
+            
             onCurrentIndexChanged: {
                 if (currentIndex !== root.selectedIndex) {
                     root.selectedIndex = currentIndex;
@@ -853,7 +776,7 @@ Item {
                 // Manual smooth auto-scroll (accounting for variable height items)
                 if (currentIndex >= 0) {
                     var itemY = 0;
-                    for (var i = 0; i < currentIndex && i < animatedSessionsModel.count; i++) {
+                    for (var i = 0; i < currentIndex && i < sessionsModel.count; i++) {
                         var itemHeight = 48;
                         if (i === root.expandedItemIndex && !root.deleteMode && !root.renameMode) {
                             var listHeight = 36 * 3; // Always 3 options
@@ -899,6 +822,14 @@ Item {
                 }
                 color: "transparent"
                 radius: 16
+                
+                Behavior on y {
+                    enabled: Config.animDuration > 0
+                    NumberAnimation {
+                        duration: Config.animDuration / 2
+                        easing.type: Easing.OutCubic
+                    }
+                }
                 
                 Behavior on height {
                     enabled: Config.animDuration > 0
@@ -1278,45 +1209,45 @@ Item {
                         }
 
                         StyledRect {
-                        id: renameHighlight
-                        variant: "oversecondary"
-                        radius: Config.roundness > 0 ? Math.max(Config.roundness - 4, 0) : 0
-                        visible: isInRenameMode
-                        z: 0
+                            id: renameHighlight
+                            variant: "oversecondary"
+                            radius: Config.roundness > 0 ? Math.max(Config.roundness - 4, 0) : 0
+                            visible: isInRenameMode
+                            z: 0
 
-                        property real activeButtonMargin: 2
-                        property real idx1X: root.renameButtonIndex
-                        property real idx2X: root.renameButtonIndex
+                            property real activeButtonMargin: 2
+                            property real idx1X: root.renameButtonIndex
+                            property real idx2X: root.renameButtonIndex
 
-                        x: {
-                            let minX = Math.min(idx1X, idx2X) * 36 + activeButtonMargin; // 32 + 4 spacing
-                            return minX;
-                        }
+                            x: {
+                                let minX = Math.min(idx1X, idx2X) * 36 + activeButtonMargin; // 32 + 4 spacing
+                                return minX;
+                            }
 
-                        y: activeButtonMargin
+                            y: activeButtonMargin
 
-                        width: {
-                            let stretchX = Math.abs(idx1X - idx2X) * 36 + 32 - activeButtonMargin * 2; // 32 + 4 spacing
-                            return stretchX;
-                        }
+                            width: {
+                                let stretchX = Math.abs(idx1X - idx2X) * 36 + 32 - activeButtonMargin * 2; // 32 + 4 spacing
+                                return stretchX;
+                            }
 
-                        height: 32 - activeButtonMargin * 2
+                            height: 32 - activeButtonMargin * 2
 
-                        Behavior on idx1X {
-                            enabled: Config.animDuration > 0
-                            NumberAnimation {
-                                duration: Config.animDuration / 3
-                                easing.type: Easing.OutSine
+                            Behavior on idx1X {
+                                enabled: Config.animDuration > 0
+                                NumberAnimation {
+                                    duration: Config.animDuration / 3
+                                    easing.type: Easing.OutSine
+                                }
+                            }
+                            Behavior on idx2X {
+                                enabled: Config.animDuration > 0
+                                NumberAnimation {
+                                    duration: Config.animDuration
+                                    easing.type: Easing.OutSine
+                                }
                             }
                         }
-                        Behavior on idx2X {
-                            enabled: Config.animDuration > 0
-                            NumberAnimation {
-                                duration: Config.animDuration
-                                easing.type: Easing.OutSine
-                            }
-                        }
-                    }
 
                     Row {
                         id: renameActionButtons
@@ -1571,48 +1502,48 @@ Item {
                             duration: Config.animDuration / 2
                             easing.type: Easing.OutQuart
                         }
-                        }
+                    }
 
                         StyledRect {
-                        id: deleteHighlight
-                        variant: "overerror"
-                        radius: Config.roundness > 0 ? Math.max(Config.roundness - 4, 0) : 0
-                        visible: isInDeleteMode
-                        z: 0
+                            id: deleteHighlight
+                            variant: "overerror"
+                            radius: Config.roundness > 0 ? Math.max(Config.roundness - 4, 0) : 0
+                            visible: isInDeleteMode
+                            z: 0
 
-                        property real activeButtonMargin: 2
-                        property real idx1X: root.deleteButtonIndex
-                        property real idx2X: root.deleteButtonIndex
+                            property real activeButtonMargin: 2
+                            property real idx1X: root.deleteButtonIndex
+                            property real idx2X: root.deleteButtonIndex
 
-                        x: {
-                            let minX = Math.min(idx1X, idx2X) * 36 + activeButtonMargin; // 32 + 4 spacing
-                            return minX;
-                        }
+                            x: {
+                                let minX = Math.min(idx1X, idx2X) * 36 + activeButtonMargin; // 32 + 4 spacing
+                                return minX;
+                            }
 
-                        y: activeButtonMargin
+                            y: activeButtonMargin
 
-                        width: {
-                            let stretchX = Math.abs(idx1X - idx2X) * 36 + 32 - activeButtonMargin * 2; // 32 + 4 spacing
-                            return stretchX;
-                        }
+                            width: {
+                                let stretchX = Math.abs(idx1X - idx2X) * 36 + 32 - activeButtonMargin * 2; // 32 + 4 spacing
+                                return stretchX;
+                            }
 
-                        height: 32 - activeButtonMargin * 2
+                            height: 32 - activeButtonMargin * 2
 
-                        Behavior on idx1X {
-                            enabled: Config.animDuration > 0
-                            NumberAnimation {
-                                duration: Config.animDuration / 3
-                                easing.type: Easing.OutSine
+                            Behavior on idx1X {
+                                enabled: Config.animDuration > 0
+                                NumberAnimation {
+                                    duration: Config.animDuration / 3
+                                    easing.type: Easing.OutSine
+                                }
+                            }
+                            Behavior on idx2X {
+                                enabled: Config.animDuration > 0
+                                NumberAnimation {
+                                    duration: Config.animDuration
+                                    easing.type: Easing.OutSine
+                                }
                             }
                         }
-                        Behavior on idx2X {
-                            enabled: Config.animDuration > 0
-                            NumberAnimation {
-                                duration: Config.animDuration
-                                easing.type: Easing.OutSine
-                            }
-                        }
-                    }
 
                     Row {
                         id: actionButtons
@@ -1712,20 +1643,11 @@ Item {
                     return baseHeight;
                 }
                 
-                onHeightChanged: {
-                    // Adjust scroll immediately when height changes due to expansion
-                    if (root.expandedItemIndex >= 0 && height > 48) {
-                        Qt.callLater(() => {
-                            adjustScrollForExpandedItem(root.expandedItemIndex);
-                        });
-                    }
-                }
-                
                 // Calculate Y position based on index, accounting for expanded items
                 y: {
                     var yPos = 0;
-                    for (var i = 0; i < resultsList.currentIndex && i < animatedSessionsModel.count; i++) {
-                        var itemData = animatedSessionsModel.get(i).sessionData;
+                    for (var i = 0; i < resultsList.currentIndex && i < sessionsModel.count; i++) {
+                        var itemData = sessionsModel.get(i).sessionData;
                         var itemHeight = 48;
                         if (i === root.expandedItemIndex && !root.deleteMode && !root.renameMode) {
                             var listHeight = 36 * 3;
@@ -1749,6 +1671,15 @@ Item {
                     NumberAnimation {
                         duration: Config.animDuration
                         easing.type: Easing.OutQuart
+                    }
+                }
+                
+                onHeightChanged: {
+                    // Adjust scroll immediately when height changes due to expansion
+                    if (root.expandedItemIndex >= 0 && height > 48) {
+                        Qt.callLater(() => {
+                            adjustScrollForExpandedItem(root.expandedItemIndex);
+                        });
                     }
                 }
                 
