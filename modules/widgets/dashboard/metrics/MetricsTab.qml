@@ -86,8 +86,8 @@ Rectangle {
                     id: avatarContainer
                     Layout.alignment: Qt.AlignHCenter
                     Layout.topMargin: 8
-                    width: 140
-                    height: 140
+                    width: 100
+                    height: 100
                     radius: Config.roundness > 0 ? (height / 2) * (Config.roundness / 16) : 0
                     color: "transparent"
 
@@ -328,7 +328,17 @@ Rectangle {
 
                                 ResourceItem {
                                     width: parent.width
-                                    icon: Icons.disk
+                                    icon: {
+                                        const diskType = SystemResources.diskTypes[modelData] || "unknown";
+                                        switch (diskType) {
+                                        case "ssd":
+                                            return Icons.ssd;
+                                        case "hdd":
+                                            return Icons.hdd;
+                                        default:
+                                            return Icons.disk;
+                                        }
+                                    }
                                     label: modelData
                                     value: SystemResources.diskUsage[modelData] ? SystemResources.diskUsage[modelData] / 100 : 0
                                     barColor: Colors.yellow

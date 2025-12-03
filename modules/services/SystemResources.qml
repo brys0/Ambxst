@@ -38,6 +38,9 @@ Singleton {
     // Disk metrics - map of mountpoint to usage percentage
     property var diskUsage: ({})
 
+    // Disk types - map of mountpoint to type ("ssd", "hdd", or "unknown")
+    property var diskTypes: ({})
+
     // Validated disk list
     property var validDisks: []
 
@@ -56,6 +59,7 @@ Singleton {
     Component.onCompleted: {
         detectGPU();
         cpuModelReader.running = true;
+        diskTypeDetector.running = true;
     }
 
     // Watch for config changes and revalidate disks
@@ -227,6 +231,65 @@ Singleton {
                     root.cpuModel = model;
                 }
             }
+        }
+    }
+
+    // Disk type detection (SSD vs HDD)
+    Process {
+        id: diskTypeDetector
+        running: false
+        command: ["sh", "-c", "df -P " + root.validDisks.join(" ") + " 2>/dev/null | tail -n +2 | while read line; do dev=$(echo \"$line\" | awk '{print $1}'); mount=$(echo \"$line\" | awk '{print $6}'); base=$(echo \"$dev\" | sed 's|/dev/||' | sed 's/[0-9]*$//'); if [ -b \"/dev/$base\" ]; then rota=$(lsblk -d -n -o ROTA \"/dev/$base\" 2>/dev/null); echo \"$mount:$rota\"; fi; done"]
+        
+        stdout: StdioCollector {
+            waitForEnd: true
+            onStreamFinished: {
+                const raw = text.trim();
+                if (!raw) {
+                    // Initialize with unknown types
+                    const newDiskTypes = {};
+                    for (const mountpoint of root.validDisks) {
+                        newDiskTypes[mountpoint] = "unknown";
+                    }
+                    root.diskTypes = newDiskTypes;
+                    return;
+                }
+                
+                const newDiskTypes = {};
+                const lines = raw.split('\n');
+                
+                for (const line of lines) {
+                    const parts = line.split(':');
+                    if (parts.length === 2) {
+                        const mountpoint = parts[0].trim();
+                        const rota = parts[1].trim();
+                        
+                        // rota: "0" = SSD, "1" = HDD, anything else = unknown
+                        if (rota === "0") {
+                            newDiskTypes[mountpoint] = "ssd";
+                        } else if (rota === "1") {
+                            newDiskTypes[mountpoint] = "hdd";
+                        } else {
+                            newDiskTypes[mountpoint] = "unknown";
+                        }
+                    }
+                }
+                
+                // Fill in any missing mountpoints as unknown
+                for (const mountpoint of root.validDisks) {
+                    if (!(mountpoint in newDiskTypes)) {
+                        newDiskTypes[mountpoint] = "unknown";
+                    }
+                }
+                
+                root.diskTypes = newDiskTypes;
+            }
+        }
+    }
+    
+    // Watch for disk list changes to re-detect types
+    onValidDisksChanged: {
+        if (validDisks.length > 0) {
+            diskTypeDetector.running = true;
         }
     }
 
