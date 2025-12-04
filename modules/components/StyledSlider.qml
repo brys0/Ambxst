@@ -400,6 +400,8 @@ Item {
                 } else {
                     root.value = Math.max(0, root.value - 0.1);
                 }
+            } else {
+                wheel.accepted = false;
             }
         }
     }
