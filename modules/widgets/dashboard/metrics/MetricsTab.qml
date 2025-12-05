@@ -773,13 +773,19 @@ Rectangle {
                         anchors.margins: 4
                         spacing: 8
 
-                        // Zoom label
-                        Text {
-                            Layout.leftMargin: 4
-                            text: "Zoom"
-                            font.family: Config.theme.font
-                            font.pixelSize: Config.theme.fontSize - 1
-                            color: Colors.overBackground
+                        // Zoom out icon
+                        Rectangle {
+                            Layout.preferredWidth: 32
+                            Layout.preferredHeight: 32
+                            color: "transparent"
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: Icons.glassMinus
+                                font.family: Icons.font
+                                font.pixelSize: 18
+                                color: Colors.overBackground
+                            }
                         }
 
                         // Zoom slider
@@ -803,17 +809,39 @@ Rectangle {
                             }
                         }
 
-                        // Spacer
-                        Item {
-                            Layout.preferredWidth: 8
+                        // Zoom in icon
+                        Rectangle {
+                            Layout.preferredWidth: 32
+                            Layout.preferredHeight: 32
+                            color: "transparent"
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: Icons.glassPlus
+                                font.family: Icons.font
+                                font.pixelSize: 18
+                                color: Colors.overBackground
+                            }
+                        }
+
+                        // Separator
+                        Separator {
+                            Layout.fillHeight: true
+                            Layout.preferredWidth: 2
+                            Layout.topMargin: 4
+                            Layout.bottomMargin: 4
+                            vert: true
+                            gradient: null
+                            color: Colors.surface
                         }
 
                         // Decrease interval button
                         StyledRect {
+                            id: decreaseIntervalBtn
                             Layout.preferredWidth: 32
                             Layout.preferredHeight: 32
                             radius: Styling.radius(-4)
-                            variant: "pane"
+                            variant: decreaseIntervalMa.containsMouse ? "focus" : "pane"
 
                             Text {
                                 anchors.centerIn: parent
@@ -824,8 +852,10 @@ Rectangle {
                             }
 
                             MouseArea {
+                                id: decreaseIntervalMa
                                 anchors.fill: parent
                                 cursorShape: Qt.PointingHandCursor
+                                hoverEnabled: true
                                 onClicked: {
                                     const newInterval = Math.max(100, SystemResources.updateInterval - 100);
                                     SystemResources.updateInterval = newInterval;
@@ -853,10 +883,11 @@ Rectangle {
 
                         // Increase interval button
                         StyledRect {
+                            id: increaseIntervalBtn
                             Layout.preferredWidth: 32
                             Layout.preferredHeight: 32
                             radius: Styling.radius(-4)
-                            variant: "pane"
+                            variant: increaseIntervalMa.containsMouse ? "focus" : "pane"
 
                             Text {
                                 anchors.centerIn: parent
@@ -867,8 +898,10 @@ Rectangle {
                             }
 
                             MouseArea {
+                                id: increaseIntervalMa
                                 anchors.fill: parent
                                 cursorShape: Qt.PointingHandCursor
+                                hoverEnabled: true
                                 onClicked: {
                                     const newInterval = SystemResources.updateInterval + 100;
                                     SystemResources.updateInterval = newInterval;
