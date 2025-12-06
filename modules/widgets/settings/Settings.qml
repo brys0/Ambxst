@@ -39,6 +39,7 @@ FloatingWindow {
     // Take a snapshot of all variant configs from Config
     function takeSnapshot() {
         savedSnapshot = {
+            roundness: Config.theme.roundness,
             srBg: cloneVariant(Config.theme.srBg),
             srInternalBg: cloneVariant(Config.theme.srInternalBg),
             srPane: cloneVariant(Config.theme.srPane),
@@ -143,6 +144,9 @@ FloatingWindow {
     function discardChanges() {
         if (!hasChanges)
             return;
+
+        // Restore roundness
+        Config.theme.roundness = savedSnapshot.roundness;
 
         // Restore each variant from snapshot
         restoreVariant(savedSnapshot.srBg, Config.theme.srBg);
@@ -451,6 +455,9 @@ FloatingWindow {
                         id: themeTab
                         onUpdateVariant: (variantId, property, value) => {
                             root.updateConfigVariant(variantId, property, value);
+                        }
+                        onRoundnessChanged: {
+                            root.hasChanges = true;
                         }
                     }
 

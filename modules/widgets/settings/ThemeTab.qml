@@ -13,6 +13,7 @@ Item {
     property string selectedVariant: "bg"  // Start with srBg selected
 
     signal updateVariant(string variantId, string property, var value)
+    signal roundnessChanged()
 
     readonly property var allVariants: [
         { id: "bg", label: "Background" },
@@ -210,6 +211,48 @@ Item {
                         }
                     }
                 }
+            }
+
+            // Roundness section
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 40
+                spacing: 12
+
+                Text {
+                    text: "Roundness"
+                    font.family: Config.theme.font
+                    font.pixelSize: Config.theme.fontSize
+                    font.bold: true
+                    color: Colors.overBackground
+                }
+
+                StyledSlider {
+                    id: roundnessSlider
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 20
+                    value: Config.theme.roundness / 20
+                    progressColor: Colors.primary
+                    tooltipText: `${Math.round(value * 20)}`
+                    scroll: true
+                    onValueChanged: {
+                        Config.theme.roundness = Math.round(value * 20);
+                        root.roundnessChanged();
+                    }
+                }
+
+                Text {
+                    text: Math.round(roundnessSlider.value * 20)
+                    font.family: Config.theme.font
+                    font.pixelSize: Config.theme.fontSize
+                    color: Colors.overBackground
+                    horizontalAlignment: Text.AlignRight
+                    Layout.preferredWidth: 24
+                }
+            }
+
+            Separator {
+                Layout.fillWidth: true
             }
 
             // Editor panel
