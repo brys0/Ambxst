@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtQuick.Dialogs
 import Quickshell.Widgets
 import qs.modules.theme
 import qs.modules.components
@@ -374,15 +375,51 @@ Rectangle {
                                         Keys.onEnterPressed: Keys.onReturnPressed(event)
                                     }
 
-                                    Text {
-                                        text: "Custom"
-                                        font.family: Styling.defaultFont
-                                        font.pixelSize: Styling.fontSize(-1)
-                                        color: Colors.overBackground
-                                        opacity: 0.5
+                                        Text {
+                                            text: "Custom"
+                                            font.family: Styling.defaultFont
+                                            font.pixelSize: Styling.fontSize(-1)
+                                            color: Colors.overBackground
+                                            opacity: 0.5
+                                        }
+
+                                        Button {
+                                            id: dotColorPickerButton
+                                            Layout.preferredWidth: 24
+                                            Layout.preferredHeight: 24
+
+                                            background: Rectangle {
+                                                color: dotColorPickerButton.hovered ? Colors.surfaceContainerHigh : "transparent"
+                                                radius: Styling.radius(-4)
+                                            }
+
+                                            contentItem: Text {
+                                                text: Icons.picker
+                                                font.family: Icons.font
+                                                font.pixelSize: 14
+                                                color: Colors.overBackground
+                                                horizontalAlignment: Text.AlignHCenter
+                                                verticalAlignment: Text.AlignVCenter
+                                            }
+
+                                            onClicked: dotColorDialog.open()
+
+                                            ToolTip.visible: hovered
+                                            ToolTip.text: "Color picker"
+                                            ToolTip.delay: 500
+                                        }
                                     }
                                 }
-                            }
+
+                                ColorDialog {
+                                    id: dotColorDialog
+                                    title: "Select Dot Color"
+                                    selectedColor: Config.resolveColor(root.variantConfig ? root.variantConfig.halftoneDotColor : "surface")
+
+                                    onAccepted: {
+                                        root.updateProp("halftoneDotColor", selectedColor.toString().toUpperCase());
+                                    }
+                                }
 
                             // Separator
                             Rectangle {
@@ -1015,6 +1052,42 @@ Rectangle {
                                             color: Colors.overBackground
                                             opacity: 0.5
                                         }
+
+                                        Button {
+                                            id: halftoneDotColorPickerButton
+                                            Layout.preferredWidth: 24
+                                            Layout.preferredHeight: 24
+
+                                            background: Rectangle {
+                                                color: halftoneDotColorPickerButton.hovered ? Colors.surfaceContainerHigh : "transparent"
+                                                radius: Styling.radius(-4)
+                                            }
+
+                                            contentItem: Text {
+                                                text: Icons.picker
+                                                font.family: Icons.font
+                                                font.pixelSize: 14
+                                                color: Colors.overBackground
+                                                horizontalAlignment: Text.AlignHCenter
+                                                verticalAlignment: Text.AlignVCenter
+                                            }
+
+                                            onClicked: halftoneDotColorDialog.open()
+
+                                            ToolTip.visible: hovered
+                                            ToolTip.text: "Color picker"
+                                            ToolTip.delay: 500
+                                        }
+                                    }
+                                }
+
+                                ColorDialog {
+                                    id: halftoneDotColorDialog
+                                    title: "Select Dot Color"
+                                    selectedColor: Config.resolveColor(root.variantConfig ? root.variantConfig.halftoneDotColor : "surface")
+
+                                    onAccepted: {
+                                        root.updateProp("halftoneDotColor", selectedColor.toString().toUpperCase());
                                     }
                                 }
 
@@ -1248,6 +1321,42 @@ Rectangle {
                                             color: Colors.overBackground
                                             opacity: 0.5
                                         }
+
+                                        Button {
+                                            id: bgColorPickerButton
+                                            Layout.preferredWidth: 24
+                                            Layout.preferredHeight: 24
+
+                                            background: Rectangle {
+                                                color: bgColorPickerButton.hovered ? Colors.surfaceContainerHigh : "transparent"
+                                                radius: Styling.radius(-4)
+                                            }
+
+                                            contentItem: Text {
+                                                text: Icons.picker
+                                                font.family: Icons.font
+                                                font.pixelSize: 14
+                                                color: Colors.overBackground
+                                                horizontalAlignment: Text.AlignHCenter
+                                                verticalAlignment: Text.AlignVCenter
+                                            }
+
+                                            onClicked: bgColorDialog.open()
+
+                                            ToolTip.visible: hovered
+                                            ToolTip.text: "Color picker"
+                                            ToolTip.delay: 500
+                                        }
+                                    }
+                                }
+
+                                ColorDialog {
+                                    id: bgColorDialog
+                                    title: "Select Background Color"
+                                    selectedColor: Config.resolveColor(root.variantConfig ? root.variantConfig.halftoneBackgroundColor : "surface")
+
+                                    onAccepted: {
+                                        root.updateProp("halftoneBackgroundColor", selectedColor.toString().toUpperCase());
                                     }
                                 }
 
