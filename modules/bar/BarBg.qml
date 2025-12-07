@@ -11,13 +11,9 @@ Item {
 
     visible: Config.bar.showBackground
 
-    readonly property int cornerSize: Config.theme.enableCorners && Config.roundness > 0 ? Styling.radius(4) : 0
-
-    // Calcular offsets para expandir el area y cubrir las corners
-    readonly property int leftOffset: (position === "left") ? cornerSize : ((position === "right") ? cornerSize : 0)
-    readonly property int rightOffset: (position === "left") ? cornerSize : ((position === "right") ? cornerSize : 0)
-    readonly property int topOffset: (position === "top") ? cornerSize : ((position === "bottom") ? cornerSize : 0)
-    readonly property int bottomOffset: (position === "top") ? cornerSize : ((position === "bottom") ? cornerSize : 0)
+    readonly property int cornerSize: Config.theme.enableCorners ? Styling.radius(4) : 0
+    readonly property bool isHorizontal: position === "top" || position === "bottom"
+    readonly property bool cornersVisible: Config.theme.enableCorners && cornerSize > 0
 
     // StyledRect expandido que cubre bar + corners
     StyledRect {
@@ -26,11 +22,11 @@ Item {
         radius: 0
         enableBorder: false
 
-        // Expandir para cubrir las corners
+        // Posicion y tamaño expandidos para cubrir corners
         x: position === "right" ? -cornerSize : 0
         y: position === "bottom" ? -cornerSize : 0
-        width: root.width + (position === "left" || position === "right" ? cornerSize : 0)
-        height: root.height + (position === "top" || position === "bottom" ? cornerSize : 0)
+        width: root.width + (isHorizontal ? 0 : cornerSize)
+        height: root.height + (isHorizontal ? cornerSize : 0)
 
         layer.enabled: true
         layer.effect: MultiEffect {
@@ -65,19 +61,47 @@ Item {
         // Corner izquierdo/superior
         Item {
             id: cornerLeftMask
-            visible: Config.theme.enableCorners && cornerSize > 0
             width: cornerSize
             height: cornerSize
-            x: {
-                if (root.position === "left") return root.width + cornerSize;
-                if (root.position === "right") return 0;
-                return 0;
-            }
-            y: {
-                if (root.position === "top") return root.height;
-                if (root.position === "bottom") return 0;
-                return 0;
-            }
+
+            states: [
+                State {
+                    name: "top"
+                    when: root.position === "top"
+                    PropertyChanges {
+                        target: cornerLeftMask
+                        x: 0
+                        y: root.height
+                    }
+                },
+                State {
+                    name: "bottom"
+                    when: root.position === "bottom"
+                    PropertyChanges {
+                        target: cornerLeftMask
+                        x: 0
+                        y: 0
+                    }
+                },
+                State {
+                    name: "left"
+                    when: root.position === "left"
+                    PropertyChanges {
+                        target: cornerLeftMask
+                        x: root.width
+                        y: 0
+                    }
+                },
+                State {
+                    name: "right"
+                    when: root.position === "right"
+                    PropertyChanges {
+                        target: cornerLeftMask
+                        x: 0
+                        y: 0
+                    }
+                }
+            ]
 
             RoundCorner {
                 anchors.fill: parent
@@ -95,19 +119,47 @@ Item {
         // Corner derecho/inferior
         Item {
             id: cornerRightMask
-            visible: Config.theme.enableCorners && cornerSize > 0
             width: cornerSize
             height: cornerSize
-            x: {
-                if (root.position === "left") return root.width + cornerSize;
-                if (root.position === "right") return 0;
-                return root.width - cornerSize;
-            }
-            y: {
-                if (root.position === "top") return root.height;
-                if (root.position === "bottom") return 0;
-                return root.height + cornerSize - cornerSize;
-            }
+
+            states: [
+                State {
+                    name: "top"
+                    when: root.position === "top"
+                    PropertyChanges {
+                        target: cornerRightMask
+                        x: root.width - cornerSize
+                        y: root.height
+                    }
+                },
+                State {
+                    name: "bottom"
+                    when: root.position === "bottom"
+                    PropertyChanges {
+                        target: cornerRightMask
+                        x: root.width - cornerSize
+                        y: 0
+                    }
+                },
+                State {
+                    name: "left"
+                    when: root.position === "left"
+                    PropertyChanges {
+                        target: cornerRightMask
+                        x: root.width
+                        y: root.height - cornerSize
+                    }
+                },
+                State {
+                    name: "right"
+                    when: root.position === "right"
+                    PropertyChanges {
+                        target: cornerRightMask
+                        x: 0
+                        y: root.height - cornerSize
+                    }
+                }
+            ]
 
             RoundCorner {
                 anchors.fill: parent
