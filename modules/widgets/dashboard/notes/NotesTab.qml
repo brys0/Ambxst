@@ -599,6 +599,8 @@ Item {
                 }
             }
             var extension = isMarkdown ? ".md" : noteExtension;
+            // Store the ID before cancelDeleteMode clears it
+            deleteNoteProcess.deletedNoteId = noteToDelete;
             deleteNoteProcess.command = ["rm", "-f", notesPath + "/" + noteToDelete + extension];
             deleteNoteProcess.running = true;
         }
@@ -905,20 +907,22 @@ Item {
     // Delete note and update index
     Process {
         id: deleteNoteProcess
+        property string deletedNoteId: ""
         
         onExited: (code) => {
-            if (code === 0) {
+            if (code === 0 && deletedNoteId !== "") {
                 // Remove from allNotes
-                allNotes = allNotes.filter(n => n.id !== noteToDelete);
+                allNotes = allNotes.filter(n => n.id !== deletedNoteId);
                 saveNotesOrder();
                 
-                if (currentNoteId === noteToDelete) {
+                if (currentNoteId === deletedNoteId) {
                     currentNoteId = "";
                     currentNoteContent = "";
                     currentNoteTitle = "";
                 }
                 
                 updateFilteredNotes();
+                deletedNoteId = "";
             }
         }
     }
@@ -1141,6 +1145,16 @@ Item {
                     }
                 }
 
+                onCtrlRPressed: {
+                    // Ctrl+R: Enter rename mode for selected note
+                    if (root.selectedIndex >= 0 && root.selectedIndex < filteredNotes.length) {
+                        let note = filteredNotes[root.selectedIndex];
+                        if (!note.isCreateButton && !root.deleteMode && !root.renameMode) {
+                            enterRenameMode(note.id);
+                        }
+                    }
+                }
+
                 onEscapePressed: {
                     if (root.deleteMode) {
                         root.cancelDeleteMode();
@@ -1211,24 +1225,6 @@ Item {
                     root.moveNoteDown();
                 }
 
-                onLeftPressed: {
-                    if (root.deleteMode) {
-                        root.deleteButtonIndex = 0;
-                    }
-                    if (root.renameMode) {
-                        root.renameButtonIndex = 0;
-                    }
-                }
-
-                onRightPressed: {
-                    if (root.deleteMode) {
-                        root.deleteButtonIndex = 1;
-                    }
-                    if (root.renameMode) {
-                        root.renameButtonIndex = 1;
-                    }
-                }
-
                 onTabPressed: {
                     // Focus editor when pressing Tab
                     if (currentNoteId) {
@@ -1241,134 +1237,11 @@ Item {
                 }
             }
 
-            // Rename input (shown in rename mode)
-            Rectangle {
-                id: renameContainer
-                width: parent.width
-                height: renameMode ? 48 : 0
-                anchors.top: searchInput.bottom
-                anchors.topMargin: renameMode ? 4 : 0
-                color: "transparent"
-                visible: renameMode
-                clip: true
-
-                Behavior on height {
-                    enabled: Config.animDuration > 0
-                    NumberAnimation {
-                        duration: Config.animDuration
-                        easing.type: Easing.OutQuart
-                    }
-                }
-
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.margins: 8
-                    spacing: 8
-
-                    TextField {
-                        id: renameInput
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 32
-                        text: newNoteName
-                        placeholderText: "New name..."
-                        font.family: Config.theme.font
-                        font.pixelSize: Config.theme.fontSize
-                        color: Colors.overSurface
-                        background: StyledRect {
-                            variant: "pane"
-                            radius: Styling.radius(-4)
-                        }
-
-                        onTextChanged: {
-                            newNoteName = text;
-                        }
-
-                        Keys.onReturnPressed: {
-                            if (renameButtonIndex === 1) {
-                                confirmRenameNote();
-                            } else {
-                                cancelRenameMode();
-                            }
-                        }
-
-                        Keys.onEscapePressed: {
-                            cancelRenameMode();
-                        }
-                    }
-
-                    Row {
-                        spacing: 4
-
-                        Rectangle {
-                            width: 32
-                            height: 32
-                            color: "transparent"
-                            radius: 6
-
-                            property bool isHighlighted: renameButtonIndex === 0
-
-                            MouseArea {
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                onClicked: cancelRenameMode()
-                                onEntered: renameButtonIndex = 0
-                            }
-
-                            StyledRect {
-                                anchors.fill: parent
-                                variant: parent.isHighlighted ? "secondary" : "transparent"
-                                radius: Styling.radius(-4)
-                            }
-
-                            Text {
-                                anchors.centerIn: parent
-                                text: Icons.cancel
-                                color: parent.isHighlighted ? Config.resolveColor(Config.theme.srSecondary.itemColor) : Colors.overSurface
-                                font.pixelSize: 14
-                                font.family: Icons.font
-                                textFormat: Text.RichText
-                            }
-                        }
-
-                        Rectangle {
-                            width: 32
-                            height: 32
-                            color: "transparent"
-                            radius: 6
-
-                            property bool isHighlighted: renameButtonIndex === 1
-
-                            MouseArea {
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                onClicked: confirmRenameNote()
-                                onEntered: renameButtonIndex = 1
-                            }
-
-                            StyledRect {
-                                anchors.fill: parent
-                                variant: parent.isHighlighted ? "secondary" : "transparent"
-                                radius: Styling.radius(-4)
-                            }
-
-                            Text {
-                                anchors.centerIn: parent
-                                text: Icons.accept
-                                color: parent.isHighlighted ? Config.resolveColor(Config.theme.srSecondary.itemColor) : Colors.overSurface
-                                font.pixelSize: 14
-                                font.family: Icons.font
-                                textFormat: Text.RichText
-                            }
-                        }
-                    }
-                }
-            }
-
             // Results list
             ListView {
                 id: resultsList
                 width: parent.width
-                anchors.top: renameContainer.bottom
+                anchors.top: searchInput.bottom
                 anchors.bottom: parent.bottom
                 anchors.topMargin: 8
                 clip: true
@@ -1747,48 +1620,142 @@ Item {
 
                     // Item content
                     RowLayout {
+                        id: mainContent
                         anchors.left: parent.left
                         anchors.right: parent.right
                         anchors.top: parent.top
-                        height: 48
-                        anchors.margins: 12
+                        anchors.margins: 8
+                        anchors.rightMargin: isInRenameMode ? 84 : 8
+                        height: 32
                         spacing: 8
 
-                        Text {
-                            text: modelData.isCreateButton ? Icons.plus : (modelData.isMarkdown ? Icons.markdown : Icons.file)
-                            font.family: Icons.font
-                            font.pixelSize: 16
-                            color: textColor
-                            textFormat: Text.RichText
+                        Behavior on anchors.rightMargin {
+                            enabled: Config.animDuration > 0
+                            NumberAnimation {
+                                duration: Config.animDuration
+                                easing.type: Easing.OutQuart
+                            }
+                        }
 
-                            Behavior on color {
-                                enabled: Config.animDuration > 0
-                                ColorAnimation {
-                                    duration: Config.animDuration / 2
-                                    easing.type: Easing.OutQuart
+                        StyledRect {
+                            id: iconBackground
+                            Layout.preferredWidth: 32
+                            Layout.preferredHeight: 32
+                            Layout.alignment: Qt.AlignVCenter
+                            variant: {
+                                if (isInDeleteMode) {
+                                    return "overerror";
+                                } else if (isInRenameMode) {
+                                    return "oversecondary";
+                                } else if (root.selectedIndex === index) {
+                                    return "overprimary";
+                                } else if (modelData.isCreateButton) {
+                                    return "primary";
+                                } else {
+                                    return "common";
                                 }
+                            }
+                            radius: Styling.radius(-4)
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: {
+                                    if (isInDeleteMode) {
+                                        return Icons.alert;
+                                    } else if (isInRenameMode) {
+                                        return Icons.edit;
+                                    } else if (modelData.isCreateButton) {
+                                        return Icons.plus;
+                                    } else if (modelData.isMarkdown) {
+                                        return Icons.markdown;
+                                    } else {
+                                        return Icons.file;
+                                    }
+                                }
+                                color: iconBackground.itemColor
+                                font.family: Icons.font
+                                font.pixelSize: 16
+                                textFormat: Text.RichText
                             }
                         }
 
                         ColumnLayout {
                             Layout.fillWidth: true
+                            Layout.alignment: Qt.AlignVCenter
                             spacing: 2
 
-                            Text {
+                            Loader {
                                 Layout.fillWidth: true
-                                text: displayText
-                                font.family: Config.theme.font
-                                font.pixelSize: Config.theme.fontSize
-                                font.weight: isSelected ? Font.Bold : Font.Normal
-                                color: textColor
-                                elide: Text.ElideRight
-                                maximumLineCount: 1
+                                sourceComponent: {
+                                    if (root.renameMode && modelData.id === root.noteToRename) {
+                                        return renameTextInput;
+                                    } else {
+                                        return normalText;
+                                    }
+                                }
+                            }
 
-                                Behavior on color {
-                                    enabled: Config.animDuration > 0
-                                    ColorAnimation {
-                                        duration: Config.animDuration / 2
-                                        easing.type: Easing.OutQuart
+                            Component {
+                                id: normalText
+                                Text {
+                                    text: displayText
+                                    font.family: Config.theme.font
+                                    font.pixelSize: Config.theme.fontSize
+                                    font.weight: isInDeleteMode ? Font.Bold : (isSelected ? Font.Bold : Font.Normal)
+                                    color: textColor
+                                    elide: Text.ElideRight
+
+                                    Behavior on color {
+                                        enabled: Config.animDuration > 0
+                                        ColorAnimation {
+                                            duration: Config.animDuration / 2
+                                            easing.type: Easing.OutQuart
+                                        }
+                                    }
+                                }
+                            }
+
+                            Component {
+                                id: renameTextInput
+                                TextField {
+                                    text: root.newNoteName
+                                    color: Colors.overSecondary
+                                    selectionColor: Colors.overSecondary
+                                    selectedTextColor: Colors.secondary
+                                    font.family: Config.theme.font
+                                    font.pixelSize: Config.theme.fontSize
+                                    font.weight: Font.Bold
+                                    background: Rectangle {
+                                        color: "transparent"
+                                        border.width: 0
+                                    }
+                                    selectByMouse: true
+
+                                    onTextChanged: {
+                                        root.newNoteName = text;
+                                    }
+
+                                    Component.onCompleted: {
+                                        Qt.callLater(() => {
+                                            forceActiveFocus();
+                                            selectAll();
+                                        });
+                                    }
+
+                                    Keys.onPressed: event => {
+                                        if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                                            root.confirmRenameNote();
+                                            event.accepted = true;
+                                        } else if (event.key === Qt.Key_Escape) {
+                                            root.cancelRenameMode();
+                                            event.accepted = true;
+                                        } else if (event.key === Qt.Key_Left) {
+                                            root.renameButtonIndex = 0;
+                                            event.accepted = true;
+                                        } else if (event.key === Qt.Key_Right) {
+                                            root.renameButtonIndex = 1;
+                                            event.accepted = true;
+                                        }
                                     }
                                 }
                             }
@@ -1801,44 +1768,210 @@ Item {
                                 color: Qt.rgba(textColor.r, textColor.g, textColor.b, 0.6)
                                 elide: Text.ElideRight
                                 maximumLineCount: 1
-                                visible: !modelData.isCreateButton && text !== ""
+                                visible: !modelData.isCreateButton && text !== "" && !isInRenameMode
                             }
                         }
                     }
 
-                    // Expanded options
-                    Column {
-                        id: expandedOptionsColumn
-                        anchors.left: parent.left
+                    // Rename action buttons (cancel/confirm)
+                    Rectangle {
+                        id: renameActionContainer
                         anchors.right: parent.right
                         anchors.top: parent.top
-                        anchors.topMargin: 52
+                        anchors.rightMargin: 8
+                        anchors.topMargin: 8
+                        width: 68
+                        height: 32
+                        color: "transparent"
+                        opacity: isInRenameMode ? 1.0 : 0.0
+                        visible: opacity > 0
+
+                        transform: Translate {
+                            x: isInRenameMode ? 0 : 80
+
+                            Behavior on x {
+                                enabled: Config.animDuration > 0
+                                NumberAnimation {
+                                    duration: Config.animDuration
+                                    easing.type: Easing.OutQuart
+                                }
+                            }
+                        }
+
+                        Behavior on opacity {
+                            enabled: Config.animDuration > 0
+                            NumberAnimation {
+                                duration: Config.animDuration / 2
+                                easing.type: Easing.OutQuart
+                            }
+                        }
+
+                        StyledRect {
+                            id: renameHighlight
+                            variant: "oversecondary"
+                            radius: Styling.radius(-4)
+                            visible: isInRenameMode
+                            z: 0
+
+                            property real activeButtonMargin: 2
+                            property real idx1X: root.renameButtonIndex
+                            property real idx2X: root.renameButtonIndex
+
+                            x: {
+                                let minX = Math.min(idx1X, idx2X) * 36 + activeButtonMargin;
+                                return minX;
+                            }
+
+                            y: activeButtonMargin
+
+                            width: {
+                                let stretchX = Math.abs(idx1X - idx2X) * 36 + 32 - activeButtonMargin * 2;
+                                return stretchX;
+                            }
+
+                            height: 32 - activeButtonMargin * 2
+
+                            Behavior on idx1X {
+                                enabled: Config.animDuration > 0
+                                NumberAnimation {
+                                    duration: Config.animDuration / 3
+                                    easing.type: Easing.OutSine
+                                }
+                            }
+                            Behavior on idx2X {
+                                enabled: Config.animDuration > 0
+                                NumberAnimation {
+                                    duration: Config.animDuration
+                                    easing.type: Easing.OutSine
+                                }
+                            }
+                        }
+
+                        Row {
+                            id: renameActionButtons
+                            anchors.fill: parent
+                            spacing: 4
+
+                            Rectangle {
+                                id: renameCancelButton
+                                width: 32
+                                height: 32
+                                color: "transparent"
+                                radius: 6
+                                z: 1
+
+                                property bool isHighlighted: root.renameButtonIndex === 0
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    onClicked: root.cancelRenameMode()
+                                    onEntered: root.renameButtonIndex = 0
+                                }
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: Icons.cancel
+                                    color: renameCancelButton.isHighlighted ? Colors.overSecondaryContainer : Colors.overSecondary
+                                    font.pixelSize: 14
+                                    font.family: Icons.font
+                                    textFormat: Text.RichText
+
+                                    Behavior on color {
+                                        enabled: Config.animDuration > 0
+                                        ColorAnimation {
+                                            duration: Config.animDuration / 2
+                                            easing.type: Easing.OutQuart
+                                        }
+                                    }
+                                }
+                            }
+
+                            Rectangle {
+                                id: renameConfirmButton
+                                width: 32
+                                height: 32
+                                color: "transparent"
+                                radius: 6
+                                z: 1
+
+                                property bool isHighlighted: root.renameButtonIndex === 1
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    onClicked: root.confirmRenameNote()
+                                    onEntered: root.renameButtonIndex = 1
+                                }
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: Icons.accept
+                                    color: renameConfirmButton.isHighlighted ? Colors.overSecondaryContainer : Colors.overSecondary
+                                    font.pixelSize: 14
+                                    font.family: Icons.font
+                                    textFormat: Text.RichText
+
+                                    Behavior on color {
+                                        enabled: Config.animDuration > 0
+                                        ColorAnimation {
+                                            duration: Config.animDuration / 2
+                                            easing.type: Easing.OutQuart
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Expandable options list (matching TmuxTab styling)
+                    RowLayout {
+                        id: expandedOptionsLayout
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.bottom: parent.bottom
                         anchors.leftMargin: 8
                         anchors.rightMargin: 8
+                        anchors.bottomMargin: 8
+                        spacing: 4
                         visible: isExpanded && !isInDeleteMode && !isInRenameMode
-                        spacing: 0
+                        opacity: (isExpanded && !isInDeleteMode && !isInRenameMode) ? 1 : 0
+
+                        Behavior on opacity {
+                            enabled: Config.animDuration > 0
+                            NumberAnimation {
+                                duration: Config.animDuration
+                                easing.type: Easing.OutQuart
+                            }
+                        }
 
                         property var noteOptions: [
                             {
                                 text: "Edit",
                                 icon: Icons.edit,
-                                variant: "primary",
+                                highlightColor: Colors.primary,
                                 textColor: Config.resolveColor(Config.theme.srPrimary.itemColor),
                                 action: function() { openNoteInEditor(modelData.id); }
                             },
                             {
                                 text: "Rename",
                                 icon: Icons.edit,
-                                variant: "secondary",
+                                highlightColor: Colors.secondary,
                                 textColor: Config.resolveColor(Config.theme.srSecondary.itemColor),
-                                action: function() { enterRenameMode(modelData.id); }
+                                action: function() { 
+                                    enterRenameMode(modelData.id); 
+                                    root.expandedItemIndex = -1;
+                                }
                             },
                             {
                                 text: "Delete",
                                 icon: Icons.trash,
-                                variant: "error",
+                                highlightColor: Colors.error,
                                 textColor: Config.resolveColor(Config.theme.srError.itemColor),
-                                action: function() { enterDeleteMode(modelData.id); }
+                                action: function() { 
+                                    enterDeleteMode(modelData.id); 
+                                    root.expandedItemIndex = -1;
+                                }
                             }
                         ]
 
@@ -1846,7 +1979,7 @@ Item {
                             {
                                 text: "Rich Text",
                                 icon: Icons.file,
-                                variant: "primary",
+                                highlightColor: Colors.primary,
                                 textColor: Config.resolveColor(Config.theme.srPrimary.itemColor),
                                 action: function() { 
                                     root.expandedItemIndex = -1;
@@ -1856,7 +1989,7 @@ Item {
                             {
                                 text: "Markdown",
                                 icon: Icons.markdown,
-                                variant: "secondary",
+                                highlightColor: Colors.secondary,
                                 textColor: Config.resolveColor(Config.theme.srSecondary.itemColor),
                                 action: function() { 
                                     root.expandedItemIndex = -1;
@@ -1865,107 +1998,150 @@ Item {
                             }
                         ]
 
-                        ListView {
-                            id: optionsListView
-                            width: parent.width
-                            height: 36 * (modelData.isCreateButton ? 2 : 3)
-                            interactive: false
-                            currentIndex: root.keyboardNavigation ? root.selectedOptionIndex : -1
+                        ClippingRectangle {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 36 * (modelData.isCreateButton ? 2 : 3)
+                            color: Colors.background
+                            radius: Styling.radius(0)
 
-                            model: modelData.isCreateButton ? expandedOptionsColumn.createOptions : expandedOptionsColumn.noteOptions
-
-                            highlight: StyledRect {
-                                width: optionsListView.width
-                                height: 36
-                                variant: {
-                                    let opt = optionsListView.model[optionsListView.currentIndex];
-                                    return opt ? opt.variant : "primary";
+                            Behavior on Layout.preferredHeight {
+                                enabled: Config.animDuration > 0
+                                NumberAnimation {
+                                    duration: Config.animDuration
+                                    easing.type: Easing.OutQuart
                                 }
-                                radius: Styling.radius(-4)
                             }
 
-                            highlightMoveDuration: Config.animDuration > 0 ? Config.animDuration / 2 : 0
-                            highlightMoveVelocity: -1
-                            highlightResizeDuration: Config.animDuration / 2
-                            highlightResizeVelocity: -1
+                            ListView {
+                                id: optionsListView
+                                anchors.fill: parent
+                                clip: true
+                                interactive: false
+                                boundsBehavior: Flickable.StopAtBounds
+                                model: modelData.isCreateButton ? expandedOptionsLayout.createOptions : expandedOptionsLayout.noteOptions
+                                currentIndex: root.selectedOptionIndex
+                                highlightFollowsCurrentItem: true
+                                highlightRangeMode: ListView.ApplyRange
+                                preferredHighlightBegin: 0
+                                preferredHighlightEnd: height
 
-                            delegate: Item {
-                                required property var modelData
-                                required property int index
-
-                                width: optionsListView.width
-                                height: 36
-
-                                Rectangle {
-                                    anchors.fill: parent
-                                    color: "transparent"
-
-                                    RowLayout {
-                                        anchors.fill: parent
-                                        anchors.margins: 8
-                                        spacing: 8
-
-                                        Text {
-                                            text: modelData && modelData.icon ? modelData.icon : ""
-                                            font.family: Icons.font
-                                            font.pixelSize: 14
-                                            font.weight: Font.Bold
-                                            textFormat: Text.RichText
-                                            color: {
-                                                if (optionsListView.currentIndex === index && modelData && modelData.textColor) {
-                                                    return modelData.textColor;
-                                                }
-                                                return Colors.overSurface;
-                                            }
-
-                                            Behavior on color {
-                                                enabled: Config.animDuration > 0
-                                                ColorAnimation {
-                                                    duration: Config.animDuration / 2
-                                                    easing.type: Easing.OutQuart
-                                                }
+                                highlight: StyledRect {
+                                    variant: {
+                                        if (optionsListView.currentIndex >= 0 && optionsListView.currentIndex < optionsListView.count) {
+                                            var item = optionsListView.model[optionsListView.currentIndex];
+                                            if (item && item.highlightColor) {
+                                                if (item.highlightColor === Colors.error)
+                                                    return "error";
+                                                if (item.highlightColor === Colors.secondary)
+                                                    return "secondary";
+                                                return "primary";
                                             }
                                         }
+                                        return "primary";
+                                    }
+                                    radius: Styling.radius(0)
+                                    visible: optionsListView.currentIndex >= 0
+                                    z: -1
 
-                                        Text {
-                                            Layout.fillWidth: true
-                                            text: modelData && modelData.text ? modelData.text : ""
-                                            font.family: Config.theme.font
-                                            font.pixelSize: Config.theme.fontSize
-                                            font.weight: optionsListView.currentIndex === index ? Font.Bold : Font.Normal
-                                            color: {
-                                                if (optionsListView.currentIndex === index && modelData && modelData.textColor) {
-                                                    return modelData.textColor;
-                                                }
-                                                return Colors.overSurface;
-                                            }
-                                            elide: Text.ElideRight
-                                            maximumLineCount: 1
-
-                                            Behavior on color {
-                                                enabled: Config.animDuration > 0
-                                                ColorAnimation {
-                                                    duration: Config.animDuration / 2
-                                                    easing.type: Easing.OutQuart
-                                                }
-                                            }
+                                    Behavior on opacity {
+                                        enabled: Config.animDuration > 0
+                                        NumberAnimation {
+                                            duration: Config.animDuration / 2
+                                            easing.type: Easing.OutQuart
                                         }
                                     }
+                                }
 
-                                    MouseArea {
+                                highlightMoveDuration: Config.animDuration > 0 ? Config.animDuration / 2 : 0
+                                highlightMoveVelocity: -1
+                                highlightResizeDuration: Config.animDuration / 2
+                                highlightResizeVelocity: -1
+
+                                delegate: Item {
+                                    required property var modelData
+                                    required property int index
+
+                                    property alias itemData: delegateData.modelData
+
+                                    QtObject {
+                                        id: delegateData
+                                        property var modelData: parent ? parent.modelData : null
+                                    }
+
+                                    width: optionsListView.width
+                                    height: 36
+
+                                    Rectangle {
                                         anchors.fill: parent
-                                        hoverEnabled: true
-                                        cursorShape: Qt.PointingHandCursor
+                                        color: "transparent"
 
-                                        onEntered: {
-                                            optionsListView.currentIndex = index;
-                                            root.selectedOptionIndex = index;
-                                            root.keyboardNavigation = false;
+                                        RowLayout {
+                                            anchors.fill: parent
+                                            anchors.margins: 8
+                                            spacing: 8
+
+                                            Text {
+                                                text: modelData && modelData.icon ? modelData.icon : ""
+                                                font.family: Icons.font
+                                                font.pixelSize: 14
+                                                font.weight: Font.Bold
+                                                textFormat: Text.RichText
+                                                color: {
+                                                    if (optionsListView.currentIndex === index && modelData && modelData.textColor) {
+                                                        return modelData.textColor;
+                                                    }
+                                                    return Colors.overSurface;
+                                                }
+
+                                                Behavior on color {
+                                                    enabled: Config.animDuration > 0
+                                                    ColorAnimation {
+                                                        duration: Config.animDuration / 2
+                                                        easing.type: Easing.OutQuart
+                                                    }
+                                                }
+                                            }
+
+                                            Text {
+                                                Layout.fillWidth: true
+                                                text: modelData && modelData.text ? modelData.text : ""
+                                                font.family: Config.theme.font
+                                                font.pixelSize: Config.theme.fontSize
+                                                font.weight: optionsListView.currentIndex === index ? Font.Bold : Font.Normal
+                                                color: {
+                                                    if (optionsListView.currentIndex === index && modelData && modelData.textColor) {
+                                                        return modelData.textColor;
+                                                    }
+                                                    return Colors.overSurface;
+                                                }
+                                                elide: Text.ElideRight
+                                                maximumLineCount: 1
+
+                                                Behavior on color {
+                                                    enabled: Config.animDuration > 0
+                                                    ColorAnimation {
+                                                        duration: Config.animDuration / 2
+                                                        easing.type: Easing.OutQuart
+                                                    }
+                                                }
+                                            }
                                         }
 
-                                        onClicked: {
-                                            if (modelData && modelData.action) {
-                                                modelData.action();
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            cursorShape: Qt.PointingHandCursor
+
+                                            onEntered: {
+                                                optionsListView.currentIndex = index;
+                                                root.selectedOptionIndex = index;
+                                                root.keyboardNavigation = false;
+                                            }
+
+                                            onClicked: {
+                                                if (modelData && modelData.action) {
+                                                    modelData.action();
+                                                }
                                             }
                                         }
                                     }
@@ -3267,6 +3443,40 @@ Item {
                 duration: 1000
                 loops: Animation.Infinite
                 running: loadingNote
+            }
+        }
+    }
+
+    // Root-level key handler for delete/rename mode navigation
+    Keys.onPressed: event => {
+        if (root.deleteMode) {
+            if (event.key === Qt.Key_Left) {
+                root.deleteButtonIndex = 0;
+                event.accepted = true;
+            } else if (event.key === Qt.Key_Right) {
+                root.deleteButtonIndex = 1;
+                event.accepted = true;
+            } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Space) {
+                if (root.deleteButtonIndex === 0) {
+                    root.cancelDeleteMode();
+                } else {
+                    root.confirmDeleteNote();
+                }
+                event.accepted = true;
+            } else if (event.key === Qt.Key_Escape) {
+                root.cancelDeleteMode();
+                event.accepted = true;
+            }
+        } else if (root.renameMode) {
+            if (event.key === Qt.Key_Left) {
+                root.renameButtonIndex = 0;
+                event.accepted = true;
+            } else if (event.key === Qt.Key_Right) {
+                root.renameButtonIndex = 1;
+                event.accepted = true;
+            } else if (event.key === Qt.Key_Escape) {
+                root.cancelRenameMode();
+                event.accepted = true;
             }
         }
     }

@@ -143,11 +143,17 @@ StyledRect {
                     root.upPressed();
                     event.accepted = true;
                 } else if (event.key === Qt.Key_Left) {
-                    root.leftPressed();
-                    event.accepted = true;
+                    // Only emit signal if cursor is at the beginning or text is empty
+                    if (textField.cursorPosition === 0 || textField.text.length === 0) {
+                        root.leftPressed();
+                        event.accepted = true;
+                    }
                 } else if (event.key === Qt.Key_Right) {
-                    root.rightPressed();
-                    event.accepted = true;
+                    // Only emit signal if cursor is at the end or text is empty
+                    if (textField.cursorPosition === textField.text.length || textField.text.length === 0) {
+                        root.rightPressed();
+                        event.accepted = true;
+                    }
                 } else if (event.key === Qt.Key_PageDown) {
                     root.pageDownPressed();
                     event.accepted = true;
