@@ -3,10 +3,11 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import qs.modules.theme
+import qs.modules.components
 import qs.config
 import "../../../../config/ConfigDefaults.js" as ConfigDefaults
 
-GroupBox {
+Item {
     id: root
 
     required property var colorNames
@@ -42,45 +43,51 @@ GroupBox {
         return [["surface", 0.0]];
     }
 
-    title: "Gradient Stops (" + stops.length + "/20)"
-
-    background: Rectangle {
-        color: Colors.surfaceContainer
-        radius: Styling.radius(-1)
-        border.color: Colors.outlineVariant
-        border.width: 1
-    }
-
-    label: Text {
-        text: parent.title
-        font.family: Styling.defaultFont
-        font.pixelSize: Styling.fontSize(0)
-        font.bold: true
-        color: Colors.primary
-        leftPadding: 10
-    }
-
     ColumnLayout {
-        anchors.fill: parent
-        anchors.topMargin: 0
-        anchors.bottomMargin: 4
-        anchors.leftMargin: 4
-        anchors.rightMargin: 4
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
         spacing: 8
+
+        // Title row: "Gradient Stops (X/20)" + Separator + "Stop X"
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 8
+
+            Text {
+                text: "Gradient Stops (" + root.stops.length + "/20)"
+                font.family: Config.theme.font
+                font.pixelSize: Styling.fontSize(-1)
+                font.weight: Font.Medium
+                color: Colors.overSurfaceVariant
+            }
+
+            Separator {
+                Layout.fillWidth: true
+            }
+
+            Text {
+                text: "Stop " + (root.selectedStopIndex + 1)
+                font.family: Config.theme.font
+                font.pixelSize: Styling.fontSize(-1)
+                font.weight: Font.Medium
+                color: Colors.primary
+                visible: root.selectedStopIndex >= 0 && root.selectedStopIndex < root.stops.length
+            }
+        }
 
         // Gradient bar with Add/Reset buttons on sides
         RowLayout {
             Layout.fillWidth: true
-            Layout.preferredHeight: 56
-            Layout.topMargin: 4
-            spacing: 4
+            Layout.preferredHeight: 40
+            spacing: 16
 
             // Add button
             Button {
                 id: addButton
                 Layout.preferredWidth: 32
                 Layout.preferredHeight: 32
-                Layout.alignment: Qt.AlignTop
+                Layout.alignment: Qt.AlignVCenter
                 enabled: root.stops.length < 20
 
                 background: Rectangle {
@@ -117,18 +124,18 @@ GroupBox {
             Item {
                 id: gradientContainer
                 Layout.fillWidth: true
-                Layout.preferredHeight: 56
+                Layout.preferredHeight: 40
 
                 // The gradient bar
                 Rectangle {
                     id: gradientBar
                     anchors.left: parent.left
                     anchors.right: parent.right
-                    anchors.top: parent.top
+                    anchors.verticalCenter: parent.verticalCenter
                     height: 32
                     radius: Styling.radius(-4)
                     border.color: Colors.outline
-                    border.width: 1
+                    border.width: 2
 
                     gradient: Gradient {
                         orientation: Gradient.Horizontal
@@ -210,29 +217,37 @@ GroupBox {
                         readonly property bool isSelected: root.selectedStopIndex === index
                         readonly property bool isDragging: root.draggingIndex === index
 
-                        x: ((isDragging ? root.dragPosition : stopPosition) * gradientBar.width) - (handleCircle.width / 2)
-                        y: gradientBar.height - 6
+                        x: ((isDragging ? root.dragPosition : stopPosition) * gradientBar.width) - (width / 2)
+                        y: 0
                         width: 20
-                        height: 26
+                        height: gradientContainer.height
 
-                        // Handle visual
+                        // Top connector line
+                        Rectangle {
+                            width: 2
+                            height: 6
+                            anchors.top: parent.top
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            color: stopHandle.isSelected ? Colors.primary : Colors.outline
+                        }
+
+                        // Handle visual (centered)
                         Rectangle {
                             id: handleCircle
-                            width: 20
-                            height: 20
-                            radius: 10
-                            anchors.bottom: parent.bottom
-                            anchors.horizontalCenter: parent.horizontalCenter
+                            width: 16
+                            height: 16
+                            radius: 8
+                            anchors.centerIn: parent
                             color: Config.resolveColor(stopHandle.stopColor)
                             border.color: stopHandle.isSelected ? Colors.primary : Colors.outline
-                            border.width: stopHandle.isSelected ? 3 : 2
+                            border.width: stopHandle.isSelected ? 2 : 1
 
                             // Inner highlight
                             Rectangle {
                                 anchors.centerIn: parent
-                                width: 8
-                                height: 8
-                                radius: 4
+                                width: 6
+                                height: 6
+                                radius: 3
                                 color: Qt.lighter(parent.color, 1.4)
                                 opacity: 0.6
                             }
@@ -245,19 +260,19 @@ GroupBox {
                             }
                         }
 
-                        // Connector line to gradient bar
+                        // Bottom connector line
                         Rectangle {
                             width: 2
-                            height: 8
-                            anchors.bottom: handleCircle.top
-                            anchors.horizontalCenter: handleCircle.horizontalCenter
+                            height: 6
+                            anchors.bottom: parent.bottom
+                            anchors.horizontalCenter: parent.horizontalCenter
                             color: stopHandle.isSelected ? Colors.primary : Colors.outline
                         }
 
                         MouseArea {
                             id: handleMouseArea
                             anchors.fill: parent
-                            anchors.margins: -6
+                            anchors.margins: -4
                             cursorShape: Qt.PointingHandCursor
                             hoverEnabled: true
                             acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
@@ -335,7 +350,7 @@ GroupBox {
                 id: resetButton
                 Layout.preferredWidth: 32
                 Layout.preferredHeight: 32
-                Layout.alignment: Qt.AlignTop
+                Layout.alignment: Qt.AlignVCenter
 
                 background: Rectangle {
                     color: Colors.error
@@ -363,122 +378,14 @@ GroupBox {
             }
         }
 
-        // Selected stop editor - only visible when a stop is selected
-        ColumnLayout {
+        // Selected stop editor - ColorButton + Position/Delete panel
+        RowLayout {
             id: stopEditor
             Layout.fillWidth: true
-            Layout.fillHeight: true
             spacing: 8
-            visible: root.selectedStopIndex >= 0 && root.selectedStopIndex < root.stops.length
 
             // Current stop info
             readonly property var currentStop: root.selectedStopIndex >= 0 && root.selectedStopIndex < root.stops.length ? root.stops[root.selectedStopIndex] : null
-
-            // Header row: Stop number, position, delete
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 8
-
-                Text {
-                    text: "Stop " + (root.selectedStopIndex + 1)
-                    font.family: Styling.defaultFont
-                    font.pixelSize: Styling.fontSize(0)
-                    font.bold: true
-                    color: Colors.primary
-                }
-
-                Item {
-                    Layout.fillWidth: true
-                }
-
-                Text {
-                    text: "Position:"
-                    font.family: Styling.defaultFont
-                    font.pixelSize: Styling.fontSize(0)
-                    color: Colors.overBackground
-                    opacity: 0.7
-                }
-
-                Rectangle {
-                    Layout.preferredWidth: 70
-                    Layout.preferredHeight: 28
-                    color: positionInput.activeFocus ? Colors.surfaceContainerHigh : Colors.surfaceContainer
-                    radius: Styling.radius(-2)
-                    border.color: positionInput.activeFocus ? Colors.primary : Colors.outlineVariant
-                    border.width: 1
-
-                    TextInput {
-                        id: positionInput
-                        anchors.fill: parent
-                        anchors.margins: 6
-
-                        readonly property var currentStop: root.selectedStopIndex >= 0 && root.selectedStopIndex < root.stops.length ? root.stops[root.selectedStopIndex] : null
-                        readonly property real displayPosition: root.draggingIndex === root.selectedStopIndex ? root.dragPosition : (currentStop ? currentStop[1] : 0)
-
-                        text: currentStop ? displayPosition.toFixed(3) : ""
-
-                        font.family: "monospace"
-                        font.pixelSize: Styling.fontSize(0)
-                        color: Colors.overBackground
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                        selectByMouse: true
-
-                        onEditingFinished: {
-                            if (!currentStop)
-                                return;
-                            let val = parseFloat(text);
-                            if (!isNaN(val)) {
-                                val = Math.round(Math.max(0, Math.min(1, val)) * 1000) / 1000;
-                                let newStops = root.stops.slice();
-                                newStops[root.selectedStopIndex] = [newStops[root.selectedStopIndex][0], val];
-                                root.updateStops(newStops);
-                            }
-                        }
-
-                        Keys.onReturnPressed: editingFinished()
-                        Keys.onEnterPressed: editingFinished()
-                    }
-                }
-
-                // Delete button
-                Button {
-                    id: deleteStopButton
-                    Layout.preferredWidth: 28
-                    Layout.preferredHeight: 28
-                    enabled: root.stops.length > 1
-
-                    background: Rectangle {
-                        color: deleteStopButton.enabled ? (deleteStopButton.hovered ? Colors.error : Colors.surfaceContainer) : Colors.surfaceContainer
-                        radius: Styling.radius(-2)
-                        border.color: deleteStopButton.enabled ? (deleteStopButton.hovered ? Colors.error : Colors.outlineVariant) : Colors.outlineVariant
-                        border.width: 1
-                        opacity: deleteStopButton.enabled ? 1.0 : 0.3
-                    }
-
-                    contentItem: Text {
-                        text: Icons.trash
-                        font.family: Icons.font
-                        font.pixelSize: 16
-                        color: deleteStopButton.enabled ? (deleteStopButton.hovered ? Colors.overError : Colors.overBackground) : Colors.overBackground
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                    }
-
-                    onClicked: {
-                        if (root.stops.length <= 1)
-                            return;
-                        let newStops = root.stops.slice();
-                        newStops.splice(root.selectedStopIndex, 1);
-                        root.updateStops(newStops);
-                        root.selectedStopIndex = Math.min(root.selectedStopIndex, root.stops.length - 2);
-                    }
-
-                    ToolTip.visible: hovered
-                    ToolTip.text: "Delete stop"
-                    ToolTip.delay: 500
-                }
-            }
 
             // Color selector - using ColorButton
             ColorButton {
@@ -506,51 +413,119 @@ GroupBox {
                 }
             }
 
-            Item {
-                Layout.fillHeight: true
-            }
-        }
+            // Position + Delete panel
+            StyledRect {
+                id: positionPanel
+                variant: "pane"
+                Layout.preferredWidth: 100
+                Layout.preferredHeight: 56
+                radius: Styling.radius(-1)
 
-        // Placeholder when no stop selected
-        ColumnLayout {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            visible: root.selectedStopIndex < 0 || root.selectedStopIndex >= root.stops.length
+                ColumnLayout {
+                    anchors.fill: parent
+                    anchors.margins: 6
+                    spacing: 4
 
-            Item {
-                Layout.fillHeight: true
-            }
+                    // Position label
+                    Text {
+                        text: "Position"
+                        font.family: Styling.defaultFont
+                        font.pixelSize: Styling.fontSize(-2)
+                        font.bold: true
+                        color: positionPanel.itemColor
+                        opacity: 0.6
+                        Layout.alignment: Qt.AlignHCenter
+                    }
 
-            Text {
-                text: Icons.mousePointer
-                font.family: Icons.font
-                font.pixelSize: 32
-                color: Colors.overBackground
-                opacity: 0.4
-                Layout.alignment: Qt.AlignHCenter
-            }
+                    // Input + Delete row
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 4
 
-            Text {
-                text: "Click a stop to edit"
-                font.family: Styling.defaultFont
-                font.pixelSize: Styling.fontSize(0)
-                color: Colors.overBackground
-                opacity: 0.5
-                Layout.alignment: Qt.AlignHCenter
-            }
+                        // Position input
+                        StyledRect {
+                            id: positionInputContainer
+                            variant: "internalbg"
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 24
+                            radius: Styling.radius(-3)
 
-            Text {
-                text: "Double-click bar to add\nRight/middle-click stop to delete"
-                font.family: Styling.defaultFont
-                font.pixelSize: Styling.fontSize(-2)
-                color: Colors.overBackground
-                opacity: 0.4
-                horizontalAlignment: Text.AlignHCenter
-                Layout.alignment: Qt.AlignHCenter
-            }
+                            TextInput {
+                                id: positionInput
+                                anchors.fill: parent
+                                anchors.margins: 4
 
-            Item {
-                Layout.fillHeight: true
+                                readonly property var currentStop: root.selectedStopIndex >= 0 && root.selectedStopIndex < root.stops.length ? root.stops[root.selectedStopIndex] : null
+                                readonly property real displayPosition: root.draggingIndex === root.selectedStopIndex ? root.dragPosition : (currentStop ? currentStop[1] : 0)
+
+                                text: currentStop ? displayPosition.toFixed(3) : ""
+
+                                font.family: "monospace"
+                                font.pixelSize: Styling.fontSize(-1)
+                                color: positionInputContainer.itemColor
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                                selectByMouse: true
+
+                                onEditingFinished: {
+                                    if (!currentStop)
+                                        return;
+                                    let val = parseFloat(text);
+                                    if (!isNaN(val)) {
+                                        val = Math.round(Math.max(0, Math.min(1, val)) * 1000) / 1000;
+                                        let newStops = root.stops.slice();
+                                        newStops[root.selectedStopIndex] = [newStops[root.selectedStopIndex][0], val];
+                                        root.updateStops(newStops);
+                                    }
+                                }
+
+                                Keys.onReturnPressed: editingFinished()
+                                Keys.onEnterPressed: editingFinished()
+                            }
+                        }
+
+                        // Delete button
+                        StyledRect {
+                            id: deleteStopButton
+                            variant: deleteStopButton.isEnabled && deleteMouseArea.containsMouse ? "focus" : "common"
+                            Layout.preferredWidth: 24
+                            Layout.preferredHeight: 24
+                            radius: Styling.radius(-3)
+                            opacity: isEnabled ? 1.0 : 0.3
+
+                            property bool isEnabled: root.stops.length > 1
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: Icons.trash
+                                font.family: Icons.font
+                                font.pixelSize: 12
+                                color: deleteStopButton.itemColor
+                            }
+
+                            MouseArea {
+                                id: deleteMouseArea
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: deleteStopButton.isEnabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+
+                                onClicked: {
+                                    if (!deleteStopButton.isEnabled || root.stops.length <= 1)
+                                        return;
+                                    let newStops = root.stops.slice();
+                                    newStops.splice(root.selectedStopIndex, 1);
+                                    root.updateStops(newStops);
+                                    root.selectedStopIndex = Math.min(root.selectedStopIndex, root.stops.length - 2);
+                                }
+                            }
+
+                            StyledToolTip {
+                                visible: deleteMouseArea.containsMouse
+                                text: "Delete stop"
+                            }
+                        }
+                    }
+                }
             }
         }
     }
