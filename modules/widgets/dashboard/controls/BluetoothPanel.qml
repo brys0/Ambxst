@@ -48,22 +48,26 @@ Item {
                 title: "Bluetooth"
                 showToggle: true
                 toggleChecked: BluetoothService.enabled
-                
+
                 actions: [
                     {
-                        icon: Icons.externalLink,
+                        icon: Icons.popOpen,
                         tooltip: "Open Blueman",
-                        onClicked: function() { Quickshell.execDetached(["blueman-manager"]); }
+                        onClicked: function () {
+                            Quickshell.execDetached(["blueman-manager"]);
+                        }
                     },
                     {
                         icon: Icons.sync,
                         tooltip: "Scan for devices",
                         enabled: BluetoothService.enabled,
                         loading: BluetoothService.discovering,
-                        onClicked: function() { BluetoothService.startDiscovery(); }
+                        onClicked: function () {
+                            BluetoothService.startDiscovery();
+                        }
                     }
                 ]
-                
+
                 onToggleChanged: checked => {
                     BluetoothService.setEnabled(checked);
                     if (checked) {

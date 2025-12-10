@@ -43,20 +43,24 @@ Item {
                     statusColor: Colors.error
                     showToggle: EasyEffectsService.available
                     toggleChecked: !EasyEffectsService.bypassed
-                    
+
                     actions: EasyEffectsService.available ? [
                         {
-                            icon: Icons.externalLink,
+                            icon: Icons.popOpen,
                             tooltip: "Open EasyEffects",
-                            onClicked: function() { EasyEffectsService.openApp(); }
+                            onClicked: function () {
+                                EasyEffectsService.openApp();
+                            }
                         },
                         {
                             icon: Icons.sync,
                             tooltip: "Refresh",
-                            onClicked: function() { EasyEffectsService.refresh(); }
+                            onClicked: function () {
+                                EasyEffectsService.refresh();
+                            }
                         }
                     ] : []
-                    
+
                     onToggleChanged: checked => {
                         if (checked !== !EasyEffectsService.bypassed) {
                             EasyEffectsService.setBypass(!checked);
@@ -112,7 +116,7 @@ Item {
                                     id: presetButton
                                     required property string modelData
                                     flat: true
-                                    
+
                                     property bool isActive: EasyEffectsService.activeOutputPreset === modelData
 
                                     background: StyledRect {
@@ -173,9 +177,7 @@ Item {
                                             font.family: Config.theme.font
                                             font.pixelSize: Styling.fontSize(-1)
                                             font.weight: presetButton.isActive ? Font.Bold : Font.Normal
-                                            color: presetButton.isActive 
-                                                ? Config.resolveColor(Config.theme.srPrimary.itemColor)
-                                                : Colors.overBackground
+                                            color: presetButton.isActive ? Config.resolveColor(Config.theme.srPrimary.itemColor) : Colors.overBackground
                                             anchors.verticalCenter: parent.verticalCenter
                                         }
                                     }
@@ -211,7 +213,7 @@ Item {
                                     id: inputPresetButton
                                     required property string modelData
                                     flat: true
-                                    
+
                                     property bool isActive: EasyEffectsService.activeInputPreset === modelData
 
                                     background: StyledRect {
@@ -272,9 +274,7 @@ Item {
                                             font.family: Config.theme.font
                                             font.pixelSize: Styling.fontSize(-1)
                                             font.weight: inputPresetButton.isActive ? Font.Bold : Font.Normal
-                                            color: inputPresetButton.isActive 
-                                                ? Config.resolveColor(Config.theme.srPrimary.itemColor)
-                                                : Colors.overBackground
+                                            color: inputPresetButton.isActive ? Config.resolveColor(Config.theme.srPrimary.itemColor) : Colors.overBackground
                                             anchors.verticalCenter: parent.verticalCenter
                                         }
                                     }

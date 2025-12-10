@@ -42,17 +42,21 @@ Item {
                     width: root.contentWidth
                     anchors.horizontalCenter: parent.horizontalCenter
                     title: "Sound"
-                    
+
                     actions: [
                         {
                             icon: Audio.protectionEnabled ? Icons.shieldCheck : Icons.shield,
                             tooltip: Audio.protectionEnabled ? "Volume protection enabled" : "Volume protection disabled",
-                            onClicked: function() { Audio.setProtectionEnabled(!Audio.protectionEnabled); }
+                            onClicked: function () {
+                                Audio.setProtectionEnabled(!Audio.protectionEnabled);
+                            }
                         },
                         {
-                            icon: Icons.externalLink,
+                            icon: Icons.popOpen,
                             tooltip: "Open PipeWire Volume Control",
-                            onClicked: function() { Quickshell.execDetached(["pwvucontrol"]); }
+                            onClicked: function () {
+                                Quickshell.execDetached(["pwvucontrol"]);
+                            }
                         }
                     ]
 
@@ -60,8 +64,14 @@ Item {
                     SegmentedSwitch {
                         currentIndex: root.showOutput ? 0 : 1
                         options: [
-                            { icon: Icons.speakerHigh, tooltip: "Output" },
-                            { icon: Icons.mic, tooltip: "Input" }
+                            {
+                                icon: Icons.speakerHigh,
+                                tooltip: "Output"
+                            },
+                            {
+                                icon: Icons.mic,
+                                tooltip: "Input"
+                            }
                         ]
                         onIndexChanged: index => {
                             root.showOutput = (index === 0);

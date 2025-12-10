@@ -38,33 +38,38 @@ Item {
                 width: root.contentWidth
                 anchors.horizontalCenter: parent.horizontalCenter
                 title: "Wi-Fi"
-                statusText: NetworkService.wifiConnecting ? "Connecting..." : 
-                           (NetworkService.wifiStatus === "limited" ? "Limited" : "")
+                statusText: NetworkService.wifiConnecting ? "Connecting..." : (NetworkService.wifiStatus === "limited" ? "Limited" : "")
                 statusColor: NetworkService.wifiStatus === "limited" ? Colors.warning : Colors.primary
                 showToggle: true
                 toggleChecked: NetworkService.wifiStatus !== "disabled"
-                
+
                 actions: [
                     {
                         icon: Icons.globe,
                         tooltip: "Open captive portal",
                         enabled: NetworkService.wifiStatus === "limited",
-                        onClicked: function() { NetworkService.openPublicWifiPortal(); }
+                        onClicked: function () {
+                            NetworkService.openPublicWifiPortal();
+                        }
                     },
                     {
-                        icon: Icons.externalLink,
+                        icon: Icons.popOpen,
                         tooltip: "Network settings",
-                        onClicked: function() { Quickshell.execDetached(["nm-connection-editor"]); }
+                        onClicked: function () {
+                            Quickshell.execDetached(["nm-connection-editor"]);
+                        }
                     },
                     {
                         icon: Icons.sync,
                         tooltip: "Rescan networks",
                         enabled: NetworkService.wifiEnabled,
                         loading: NetworkService.wifiScanning,
-                        onClicked: function() { NetworkService.rescanWifi(); }
+                        onClicked: function () {
+                            NetworkService.rescanWifi();
+                        }
                     }
                 ]
-                
+
                 onToggleChanged: checked => {
                     NetworkService.enableWifi(checked);
                     if (checked) {

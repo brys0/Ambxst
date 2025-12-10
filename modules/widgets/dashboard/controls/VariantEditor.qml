@@ -120,11 +120,15 @@ Item {
                         anchors.leftMargin: 12
                         anchors.verticalCenter: parent.verticalCenter
                         text: {
-                            switch(typeButton.modelData) {
-                                case "linear": return Icons.arrowFatLinesDown;
-                                case "radial": return Icons.arrowsOutCardinal;
-                                case "halftone": return Icons.dotsNine;
-                                default: return "";
+                            switch (typeButton.modelData) {
+                            case "linear":
+                                return Icons.arrowFatLinesDown;
+                            case "radial":
+                                return Icons.arrowsOutCardinal;
+                            case "halftone":
+                                return Icons.dotsNine;
+                            default:
+                                return "";
                             }
                         }
                         font.family: Icons.font
@@ -170,7 +174,7 @@ Item {
                 dialogTitle: "Select Item Color"
                 onColorSelected: color => root.updateProp("itemColor", color)
                 onOpenColorPicker: (names, current, title) => {
-                    root.openColorPickerRequested(names, current, title, function(color) {
+                    root.openColorPickerRequested(names, current, title, function (color) {
                         root.updateProp("itemColor", color);
                     });
                 }
@@ -283,15 +287,11 @@ Item {
                                     anchors.fill: parent
                                     cursorShape: Qt.PointingHandCursor
                                     onClicked: {
-                                        root.openColorPickerRequested(
-                                            root.colorNames,
-                                            root.variantConfig ? root.variantConfig.border[0] : "outline",
-                                            "Select Border Color",
-                                            function(color) {
-                                                if (!root.variantConfig) return;
-                                                root.updateProp("border", [color, root.variantConfig.border[1]]);
-                                            }
-                                        );
+                                        root.openColorPickerRequested(root.colorNames, root.variantConfig ? root.variantConfig.border[0] : "outline", "Select Border Color", function (color) {
+                                            if (!root.variantConfig)
+                                                return;
+                                            root.updateProp("border", [color, root.variantConfig.border[1]]);
+                                        });
                                     }
                                 }
                             }
@@ -354,7 +354,7 @@ Item {
                 spacing: 16
 
                 Text {
-                    text: Icons.arrowRightLine
+                    text: Icons.arrowDown
                     font.family: Icons.font
                     font.pixelSize: 20
                     color: Colors.primary
@@ -400,7 +400,8 @@ Item {
                     tooltipText: Math.round(value * 360) + "°"
 
                     readonly property real configValue: root.variantConfig ? root.variantConfig.gradientAngle / 360 : 0
-                    onConfigValueChanged: if (Math.abs(value - configValue) > 0.001) value = configValue
+                    onConfigValueChanged: if (Math.abs(value - configValue) > 0.001)
+                        value = configValue
                     Component.onCompleted: value = configValue
 
                     onValueChanged: {
@@ -452,7 +453,8 @@ Item {
                         tooltipText: (value * 100).toFixed(0) + "%"
 
                         readonly property real configValue: root.variantConfig ? root.variantConfig.gradientCenterX : 0.5
-                        onConfigValueChanged: if (Math.abs(value - configValue) > 0.001) value = configValue
+                        onConfigValueChanged: if (Math.abs(value - configValue) > 0.001)
+                            value = configValue
                         Component.onCompleted: value = configValue
 
                         onValueChanged: {
@@ -497,7 +499,8 @@ Item {
                         tooltipText: (value * 100).toFixed(0) + "%"
 
                         readonly property real configValue: root.variantConfig ? root.variantConfig.gradientCenterY : 0.5
-                        onConfigValueChanged: if (Math.abs(value - configValue) > 0.001) value = configValue
+                        onConfigValueChanged: if (Math.abs(value - configValue) > 0.001)
+                            value = configValue
                         Component.onCompleted: value = configValue
 
                         onValueChanged: {
@@ -541,7 +544,7 @@ Item {
                     dialogTitle: "Select Dot Color"
                     onColorSelected: color => root.updateProp("halftoneDotColor", color)
                     onOpenColorPicker: (names, current, title) => {
-                        root.openColorPickerRequested(names, current, title, function(color) {
+                        root.openColorPickerRequested(names, current, title, function (color) {
                             root.updateProp("halftoneDotColor", color);
                         });
                     }
@@ -556,7 +559,7 @@ Item {
                     dialogTitle: "Select Background Color"
                     onColorSelected: color => root.updateProp("halftoneBackgroundColor", color)
                     onOpenColorPicker: (names, current, title) => {
-                        root.openColorPickerRequested(names, current, title, function(color) {
+                        root.openColorPickerRequested(names, current, title, function (color) {
                             root.updateProp("halftoneBackgroundColor", color);
                         });
                     }
@@ -581,7 +584,7 @@ Item {
                         spacing: 12
 
                         Text {
-                            text: Icons.grid
+                            text: Icons.arrowDown
                             font.family: Icons.font
                             font.pixelSize: 18
                             color: Colors.primary
@@ -615,7 +618,8 @@ Item {
                             tooltip: false
 
                             readonly property real configValue: root.variantConfig ? root.variantConfig.gradientAngle / 360 : 0
-                            onConfigValueChanged: if (Math.abs(value - configValue) > 0.001) value = configValue
+                            onConfigValueChanged: if (Math.abs(value - configValue) > 0.001)
+                                value = configValue
                             Component.onCompleted: value = configValue
 
                             onValueChanged: {
@@ -678,7 +682,8 @@ Item {
                             tooltip: false
 
                             readonly property real configValue: root.variantConfig ? root.variantConfig.halftoneDotMin / 20 : 0.1
-                            onConfigValueChanged: if (Math.abs(value - configValue) > 0.001) value = configValue
+                            onConfigValueChanged: if (Math.abs(value - configValue) > 0.001)
+                                value = configValue
                             Component.onCompleted: value = configValue
 
                             onValueChanged: {
@@ -708,7 +713,8 @@ Item {
                             tooltip: false
 
                             readonly property real configValue: root.variantConfig ? root.variantConfig.halftoneDotMax / 20 : 0.4
-                            onConfigValueChanged: if (Math.abs(value - configValue) > 0.001) value = configValue
+                            onConfigValueChanged: if (Math.abs(value - configValue) > 0.001)
+                                value = configValue
                             Component.onCompleted: value = configValue
 
                             onValueChanged: {
@@ -736,7 +742,7 @@ Item {
                         spacing: 12
 
                         Text {
-                            text: Icons.gradientVertical
+                            text: Icons.range
                             font.family: Icons.font
                             font.pixelSize: 18
                             color: Colors.primary
@@ -769,7 +775,8 @@ Item {
                             tooltip: false
 
                             readonly property real configValue: root.variantConfig ? root.variantConfig.halftoneStart : 0
-                            onConfigValueChanged: if (Math.abs(value - configValue) > 0.001) value = configValue
+                            onConfigValueChanged: if (Math.abs(value - configValue) > 0.001)
+                                value = configValue
                             Component.onCompleted: value = configValue
 
                             onValueChanged: {
@@ -796,7 +803,8 @@ Item {
                             tooltip: false
 
                             readonly property real configValue: root.variantConfig ? root.variantConfig.halftoneEnd : 1
-                            onConfigValueChanged: if (Math.abs(value - configValue) > 0.001) value = configValue
+                            onConfigValueChanged: if (Math.abs(value - configValue) > 0.001)
+                                value = configValue
                             Component.onCompleted: value = configValue
 
                             onValueChanged: {

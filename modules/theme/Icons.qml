@@ -194,46 +194,34 @@ QtObject {
     readonly property string dotsNine: ""
     readonly property string circleHalf: ""
 
-    // Theme editor icons
-    readonly property string arrowRightLine: ""  // Arrow right line icon
-    readonly property string sunFogFill: ""      // Sun with fog/radial icon
-    readonly property string grid: ""            // Grid pattern icon
-    readonly property string circle: ""          // Circle icon
-    readonly property string gradientVertical: "" // Gradient vertical icon
-    readonly property string mousePointer: ""    // Mouse pointer/cursor icon
+    readonly property string circle: ""
+    readonly property string range: ""
+    readonly property string cursor: ""
 
-    // Bluetooth device types (TODO: find appropriate Phosphor icons)
-    readonly property string headphones: ""      // Headphones/audio headset icon
-    readonly property string mouse: ""           // Computer mouse icon
-    readonly property string phone: ""           // Smartphone/mobile phone icon
-    readonly property string watch: ""           // Smartwatch icon
-    readonly property string gamepad: ""         // Game controller icon
-    readonly property string printer: ""         // Printer icon
-    readonly property string camera: ""          // Camera icon
-    readonly property string speaker: ""         // External speaker icon
+    readonly property string headphones: ""
+    readonly property string mouse: ""
+    readonly property string phone: ""
+    readonly property string watch: ""
+    readonly property string gamepad: ""
+    readonly property string printer: ""
+    readonly property string camera: ""
+    readonly property string speaker: ""
 
-    // Battery levels (TODO: find battery level Phosphor icons)
-    readonly property string batteryFull: ""     // Battery 100% icon
-    readonly property string batteryHigh: ""     // Battery 75% icon
-    readonly property string batteryMedium: ""   // Battery 50% icon
-    readonly property string batteryLow: ""      // Battery 25% icon
-    readonly property string batteryEmpty: ""    // Battery empty/critical icon
-    readonly property string batteryCharging: "" // Battery charging icon
+    readonly property string batteryFull: ""
+    readonly property string batteryHigh: ""
+    readonly property string batteryMedium: ""
+    readonly property string batteryLow: ""
+    readonly property string batteryEmpty: ""
+    readonly property string batteryCharging: ""
 
-    // Audio/EasyEffects
-    readonly property string waveform: ""        // Audio waveform/equalizer icon
-    readonly property string sparkle: ""         // Effects/magic sparkle icon
+    readonly property string waveform: ""
+    readonly property string sparkle: ""
 
-    // Network extras
-    readonly property string ethernet: ""        // Ethernet/LAN cable icon
-    readonly property string router: ""          // Router/access point icon
-    readonly property string signalNone: ""      // No signal icon
-    readonly property string vpn: ""             // VPN/shield lock icon
+    readonly property string ethernet: ""
+    readonly property string router: ""
+    readonly property string signalNone: ""
+    readonly property string vpn: ""
 
-    // External apps
-    readonly property string externalLink: ""    // Open in external app icon
-
-    // Protection/Security
-    readonly property string shieldCheck: ""     // Shield with checkmark icon
-    readonly property string shield: ""          // Shield icon
+    readonly property string shieldCheck: ""
+    readonly property string shield: ""
 }
