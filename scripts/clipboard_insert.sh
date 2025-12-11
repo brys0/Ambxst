@@ -13,7 +13,13 @@ BINARY_PATH="$5"
 SIZE="${6:-0}"
 
 # Read content from stdin and strip carriage returns
-CONTENT=$(cat | tr -d '\r')
+# Use a temp file to preserve all unicode characters exactly
+CONTENT_FILE=$(mktemp)
+trap 'rm -f "$CONTENT_FILE"' EXIT
+cat | tr -d '\r' > "$CONTENT_FILE"
+
+# Read content back
+CONTENT=$(cat "$CONTENT_FILE")
 
 # Don't insert empty content for text items
 if [ "$IS_IMAGE" = "0" ] && [ -z "$CONTENT" ]; then
@@ -32,19 +38,34 @@ fi
 # Get timestamp in milliseconds
 TIMESTAMP=$(date +%s)000
 
-# Escape single quotes by replacing ' with ''
-ESCAPED_PREVIEW="${PREVIEW//\'/\'\'}"
-ESCAPED_CONTENT="${CONTENT//\'/\'\'}"
+# Write preview to temp file
+PREVIEW_FILE=$(mktemp)
+trap 'rm -f "$CONTENT_FILE" "$PREVIEW_FILE"' EXIT
+printf '%s' "$PREVIEW" > "$PREVIEW_FILE"
 
+# Use sqlite3 with -cmd to read from files using readfile() function
+# This avoids all shell escaping issues
 sqlite3 "$DB_PATH" <<EOSQL
 .timeout 5000
 BEGIN TRANSACTION;
 -- Insert or update item (unpinned items always get display_index 0)
 INSERT INTO clipboard_items 
 (content_hash, mime_type, preview, full_content, is_image, binary_path, size, pinned, display_index, created_at, updated_at) 
-VALUES ('$HASH', '$MIME_TYPE', '$ESCAPED_PREVIEW', '$ESCAPED_CONTENT', $IS_IMAGE, '$BINARY_PATH', $SIZE, 0, 0, $TIMESTAMP, $TIMESTAMP)
+VALUES (
+    '${HASH}',
+    '${MIME_TYPE}',
+    readfile('${PREVIEW_FILE}'),
+    readfile('${CONTENT_FILE}'),
+    ${IS_IMAGE},
+    '${BINARY_PATH}',
+    ${SIZE},
+    0,
+    0,
+    ${TIMESTAMP},
+    ${TIMESTAMP}
+)
 ON CONFLICT(content_hash) DO UPDATE SET
-updated_at = $TIMESTAMP,
+updated_at = ${TIMESTAMP},
 display_index = 0;
 -- Reindex unpinned items (new item is at 0, others shift down)
 WITH reindexed AS (

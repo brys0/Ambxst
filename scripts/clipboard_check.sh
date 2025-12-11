@@ -54,8 +54,13 @@ if IMAGE_MIME=$(wl-paste --list-types 2>/dev/null | grep '^image/' | head -1); t
     fi
 fi
 
-# Check for plain text
-if TEXT_CONTENT=$(wl-paste --type text/plain 2>/dev/null); then
+# Check for plain text - prefer UTF-8 charset to preserve unicode characters
+if TEXT_CONTENT=$(wl-paste --type 'text/plain;charset=utf-8' 2>/dev/null); then
+    HASH=$(echo -n "$TEXT_CONTENT" | md5sum | cut -d' ' -f1)
+    TEXT_SIZE=${#TEXT_CONTENT}
+    echo -n "$TEXT_CONTENT" | "$SCRIPT_PATH" "$DB_PATH" "$HASH" "text/plain" 0 "" "$TEXT_SIZE"
+    exit 0
+elif TEXT_CONTENT=$(wl-paste --type text/plain 2>/dev/null); then
     HASH=$(echo -n "$TEXT_CONTENT" | md5sum | cut -d' ' -f1)
     TEXT_SIZE=${#TEXT_CONTENT}
     echo -n "$TEXT_CONTENT" | "$SCRIPT_PATH" "$DB_PATH" "$HASH" "text/plain" 0 "" "$TEXT_SIZE"
