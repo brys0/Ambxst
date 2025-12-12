@@ -1,5 +1,9 @@
 .pragma library
 
+// Legacy consolidated defaults
+// Individual module defaults are now in config/defaults/*.js
+// This file provides the full structure for backward compatibility
+
 var data = {
     "theme": {
         "oledMode": false,
@@ -311,11 +315,9 @@ var data = {
         "launcherIconFullTint": true,
         "launcherIconSize": 24,
         "showBackground": false,
-        "bgOpacity": 0.5,
         "screenList": [],
         "enableFirefoxPlayer": false,
-        "barColor": [["surface", 0.0]],
-        "barOrientation": "vertical"
+        "barColor": [["surface", 0.0]]
     },
     "workspaces": {
         "shown": 10,

@@ -6,66 +6,975 @@ import Quickshell.Io
 import qs.modules.globals
 import qs.modules.theme
 import qs.modules.services as Services
-import "ConfigDefaults.js" as ConfigDefaults
+import "defaults/theme.js" as ThemeDefaults
+import "defaults/bar.js" as BarDefaults
+import "defaults/workspaces.js" as WorkspacesDefaults
+import "defaults/overview.js" as OverviewDefaults
+import "defaults/notch.js" as NotchDefaults
+import "defaults/hyprland.js" as HyprlandDefaults
+import "defaults/performance.js" as PerformanceDefaults
+import "defaults/weather.js" as WeatherDefaults
+import "defaults/desktop.js" as DesktopDefaults
+import "defaults/lockscreen.js" as LockscreenDefaults
+import "defaults/prefix.js" as PrefixDefaults
+import "defaults/system.js" as SystemDefaults
 import "ConfigValidator.js" as ConfigValidator
 
 Singleton {
     id: root
 
-    property alias loader: loader
-    property alias keybindsLoader: keybindsLoader
-    property bool initialLoadComplete: false
-    property bool keybindsInitialLoadComplete: false
-    property bool pauseAutoSave: false  // When true, changes won't auto-save to JSON
-    property string configPath: (Quickshell.env("XDG_CONFIG_HOME") || (Quickshell.env("HOME") + "/.config")) + "/Ambxst/config.json"
+    property string configDir: (Quickshell.env("XDG_CONFIG_HOME") || (Quickshell.env("HOME") + "/.config")) + "/Ambxst/config"
     property string keybindsPath: (Quickshell.env("XDG_CONFIG_HOME") || (Quickshell.env("HOME") + "/.config")) + "/Ambxst/binds.json"
 
-    FileView {
-        id: rawLoader
-        path: configPath
-        onLoaded: {
-            if (!root.initialLoadComplete) {
-                validateConfig();
-            }
-        }
+    property bool pauseAutoSave: false
+
+    // Track initialization of all modules
+    property bool themeReady: false
+    property bool barReady: false
+    property bool workspacesReady: false
+    property bool overviewReady: false
+    property bool notchReady: false
+    property bool hyprlandReady: false
+    property bool performanceReady: false
+    property bool weatherReady: false
+    property bool desktopReady: false
+    property bool lockscreenReady: false
+    property bool prefixReady: false
+    property bool systemReady: false
+    property bool keybindsInitialLoadComplete: false
+
+    property bool initialLoadComplete: themeReady && barReady && workspacesReady &&
+        overviewReady && notchReady && hyprlandReady && performanceReady &&
+        weatherReady && desktopReady && lockscreenReady && prefixReady && systemReady
+
+    // Aliases for backward compatibility
+    property alias loader: themeLoader
+    property alias keybindsLoader: keybindsLoader
+
+    // ============================================
+    // DIRECTORY SETUP
+    // ============================================
+    Process {
+        id: setupConfigDir
+        running: true
+        command: ["mkdir", "-p", root.configDir]
     }
 
-    function validateConfig() {
-        var raw = rawLoader.text();
-        if (!raw)
-            return;
-
-        try {
-            var current = JSON.parse(raw);
-            var validated = ConfigValidator.validate(current, ConfigDefaults.data);
-
-            if (JSON.stringify(current) !== JSON.stringify(validated)) {
-                console.log("Merging and updating config.json...");
-                rawLoader.setText(JSON.stringify(validated, null, 4));
+    // ============================================
+    // THEME MODULE
+    // ============================================
+    FileView {
+        id: themeRawLoader
+        path: root.configDir + "/theme.json"
+        onLoaded: {
+            if (!root.themeReady) {
+                validateModule("theme", themeRawLoader, ThemeDefaults.data, () => { root.themeReady = true; });
             }
-            root.initialLoadComplete = true;
-        } catch (e) {
-            console.log("Error validating config (invalid JSON?): " + e);
-            console.log("Overwriting with defaults due to error.");
-            rawLoader.setText(JSON.stringify(ConfigDefaults.data, null, 4));
-            root.initialLoadComplete = true;
         }
     }
 
     Process {
-        id: checkFile
+        id: checkThemeFile
         running: true
-        command: ["sh", "-c", "mkdir -p \"$(dirname '" + configPath + "')\" && test -f \"" + configPath + "\""]
-
+        command: ["sh", "-c", "test -f \"" + root.configDir + "/theme.json\""]
         onExited: exitCode => {
             if (exitCode !== 0) {
-                console.log("config.json not found, creating with default values...");
-                rawLoader.setText(JSON.stringify(ConfigDefaults.data, null, 4));
-                root.initialLoadComplete = true;
+                console.log("theme.json not found, creating with default values...");
+                themeRawLoader.setText(JSON.stringify(ThemeDefaults.data, null, 4));
+                root.themeReady = true;
             }
         }
     }
 
+    FileView {
+        id: themeLoader
+        path: root.configDir + "/theme.json"
+        atomicWrites: true
+        watchChanges: true
+        onFileChanged: reload()
+        onPathChanged: reload()
+        onAdapterUpdated: {
+            if (root.themeReady && !root.pauseAutoSave) {
+                themeLoader.writeAdapter();
+            }
+        }
+
+        adapter: JsonAdapter {
+            property bool oledMode: false
+            property bool lightMode: false
+            property int roundness: 16
+            property string font: "Roboto Condensed"
+            property int fontSize: 14
+            property bool tintIcons: false
+            property bool enableCorners: true
+            property int animDuration: 300
+            property real shadowOpacity: 0.5
+            property string shadowColor: "shadow"
+            property int shadowXOffset: 0
+            property int shadowYOffset: 0
+            property real shadowBlur: 1
+
+            property JsonObject srBg: JsonObject {
+                property list<var> gradient: [["background", 0.0]]
+                property string gradientType: "linear"
+                property int gradientAngle: 0
+                property real gradientCenterX: 0.5
+                property real gradientCenterY: 0.5
+                property real halftoneDotMin: 0.0
+                property real halftoneDotMax: 2.0
+                property real halftoneStart: 0.0
+                property real halftoneEnd: 1.0
+                property string halftoneDotColor: "surface"
+                property string halftoneBackgroundColor: "background"
+                property list<var> border: ["surfaceBright", 0]
+                property string itemColor: "overBackground"
+                property real opacity: 1.0
+            }
+
+            property JsonObject srInternalBg: JsonObject {
+                property list<var> gradient: [["background", 0.0]]
+                property string gradientType: "linear"
+                property int gradientAngle: 0
+                property real gradientCenterX: 0.5
+                property real gradientCenterY: 0.5
+                property real halftoneDotMin: 0.0
+                property real halftoneDotMax: 2.0
+                property real halftoneStart: 0.0
+                property real halftoneEnd: 1.0
+                property string halftoneDotColor: "surface"
+                property string halftoneBackgroundColor: "background"
+                property list<var> border: ["surfaceBright", 0]
+                property string itemColor: "overBackground"
+                property real opacity: 1.0
+            }
+
+            property JsonObject srBarBg: JsonObject {
+                property list<var> gradient: [["surfaceDim", 0.0]]
+                property string gradientType: "linear"
+                property int gradientAngle: 0
+                property real gradientCenterX: 0.5
+                property real gradientCenterY: 0.5
+                property real halftoneDotMin: 0.0
+                property real halftoneDotMax: 2.0
+                property real halftoneStart: 0.0
+                property real halftoneEnd: 1.0
+                property string halftoneDotColor: "surface"
+                property string halftoneBackgroundColor: "surfaceDim"
+                property list<var> border: ["surfaceBright", 0]
+                property string itemColor: "overBackground"
+                property real opacity: 1.0
+            }
+
+            property JsonObject srPane: JsonObject {
+                property list<var> gradient: [["surface", 0.0]]
+                property string gradientType: "linear"
+                property int gradientAngle: 0
+                property real gradientCenterX: 0.5
+                property real gradientCenterY: 0.5
+                property real halftoneDotMin: 0.0
+                property real halftoneDotMax: 2.0
+                property real halftoneStart: 0.0
+                property real halftoneEnd: 1.0
+                property string halftoneDotColor: "surfaceBright"
+                property string halftoneBackgroundColor: "surface"
+                property list<var> border: ["surfaceBright", 0]
+                property string itemColor: "overBackground"
+                property real opacity: 1.0
+            }
+
+            property JsonObject srCommon: JsonObject {
+                property list<var> gradient: [["surface", 0.0]]
+                property string gradientType: "linear"
+                property int gradientAngle: 0
+                property real gradientCenterX: 0.5
+                property real gradientCenterY: 0.5
+                property real halftoneDotMin: 0.0
+                property real halftoneDotMax: 2.0
+                property real halftoneStart: 0.0
+                property real halftoneEnd: 1.0
+                property string halftoneDotColor: "background"
+                property string halftoneBackgroundColor: "surface"
+                property list<var> border: ["surfaceBright", 0]
+                property string itemColor: "overBackground"
+                property real opacity: 1.0
+            }
+
+            property JsonObject srFocus: JsonObject {
+                property list<var> gradient: [["surfaceBright", 0.0]]
+                property string gradientType: "linear"
+                property int gradientAngle: 0
+                property real gradientCenterX: 0.5
+                property real gradientCenterY: 0.5
+                property real halftoneDotMin: 0.0
+                property real halftoneDotMax: 2.0
+                property real halftoneStart: 0.0
+                property real halftoneEnd: 1.0
+                property string halftoneDotColor: "surfaceVariant"
+                property string halftoneBackgroundColor: "surfaceBright"
+                property list<var> border: ["surfaceBright", 0]
+                property string itemColor: "overBackground"
+                property real opacity: 1.0
+            }
+
+            property JsonObject srPrimary: JsonObject {
+                property list<var> gradient: [["primary", 0.0]]
+                property string gradientType: "linear"
+                property int gradientAngle: 0
+                property real gradientCenterX: 0.5
+                property real gradientCenterY: 0.5
+                property real halftoneDotMin: 0.0
+                property real halftoneDotMax: 2.0
+                property real halftoneStart: 0.0
+                property real halftoneEnd: 1.0
+                property string halftoneDotColor: "overPrimaryContainer"
+                property string halftoneBackgroundColor: "primary"
+                property list<var> border: ["primary", 0]
+                property string itemColor: "overPrimary"
+                property real opacity: 1.0
+            }
+
+            property JsonObject srPrimaryFocus: JsonObject {
+                property list<var> gradient: [["overPrimaryContainer", 0.0]]
+                property string gradientType: "linear"
+                property int gradientAngle: 0
+                property real gradientCenterX: 0.5
+                property real gradientCenterY: 0.5
+                property real halftoneDotMin: 0.0
+                property real halftoneDotMax: 2.0
+                property real halftoneStart: 0.0
+                property real halftoneEnd: 1.0
+                property string halftoneDotColor: "primary"
+                property string halftoneBackgroundColor: "overPrimaryContainer"
+                property list<var> border: ["overBackground", 0]
+                property string itemColor: "overPrimary"
+                property real opacity: 1.0
+            }
+
+            property JsonObject srOverPrimary: JsonObject {
+                property list<var> gradient: [["overPrimary", 0.0]]
+                property string gradientType: "linear"
+                property int gradientAngle: 0
+                property real gradientCenterX: 0.5
+                property real gradientCenterY: 0.5
+                property real halftoneDotMin: 0.0
+                property real halftoneDotMax: 2.0
+                property real halftoneStart: 0.0
+                property real halftoneEnd: 1.0
+                property string halftoneDotColor: "primaryContainer"
+                property string halftoneBackgroundColor: "overPrimary"
+                property list<var> border: ["overPrimary", 0]
+                property string itemColor: "primary"
+                property real opacity: 1.0
+            }
+
+            property JsonObject srSecondary: JsonObject {
+                property list<var> gradient: [["secondary", 0.0]]
+                property string gradientType: "linear"
+                property int gradientAngle: 0
+                property real gradientCenterX: 0.5
+                property real gradientCenterY: 0.5
+                property real halftoneDotMin: 0.0
+                property real halftoneDotMax: 2.0
+                property real halftoneStart: 0.0
+                property real halftoneEnd: 1.0
+                property string halftoneDotColor: "overSecondaryContainer"
+                property string halftoneBackgroundColor: "secondary"
+                property list<var> border: ["secondary", 0]
+                property string itemColor: "overSecondary"
+                property real opacity: 1.0
+            }
+
+            property JsonObject srSecondaryFocus: JsonObject {
+                property list<var> gradient: [["overSecondaryContainer", 0.0]]
+                property string gradientType: "linear"
+                property int gradientAngle: 0
+                property real gradientCenterX: 0.5
+                property real gradientCenterY: 0.5
+                property real halftoneDotMin: 0.0
+                property real halftoneDotMax: 2.0
+                property real halftoneStart: 0.0
+                property real halftoneEnd: 1.0
+                property string halftoneDotColor: "secondary"
+                property string halftoneBackgroundColor: "overSecondaryContainer"
+                property list<var> border: ["overBackground", 0]
+                property string itemColor: "overSecondary"
+                property real opacity: 1.0
+            }
+
+            property JsonObject srOverSecondary: JsonObject {
+                property list<var> gradient: [["overSecondary", 0.0]]
+                property string gradientType: "linear"
+                property int gradientAngle: 0
+                property real gradientCenterX: 0.5
+                property real gradientCenterY: 0.5
+                property real halftoneDotMin: 0.0
+                property real halftoneDotMax: 2.0
+                property real halftoneStart: 0.0
+                property real halftoneEnd: 1.0
+                property string halftoneDotColor: "secondaryContainer"
+                property string halftoneBackgroundColor: "overSecondary"
+                property list<var> border: ["overSecondary", 0]
+                property string itemColor: "secondary"
+                property real opacity: 1.0
+            }
+
+            property JsonObject srTertiary: JsonObject {
+                property list<var> gradient: [["tertiary", 0.0]]
+                property string gradientType: "linear"
+                property int gradientAngle: 0
+                property real gradientCenterX: 0.5
+                property real gradientCenterY: 0.5
+                property real halftoneDotMin: 0.0
+                property real halftoneDotMax: 2.0
+                property real halftoneStart: 0.0
+                property real halftoneEnd: 1.0
+                property string halftoneDotColor: "overTertiaryContainer"
+                property string halftoneBackgroundColor: "tertiary"
+                property list<var> border: ["tertiary", 0]
+                property string itemColor: "overTertiary"
+                property real opacity: 1.0
+            }
+
+            property JsonObject srTertiaryFocus: JsonObject {
+                property list<var> gradient: [["overTertiaryContainer", 0.0]]
+                property string gradientType: "linear"
+                property int gradientAngle: 0
+                property real gradientCenterX: 0.5
+                property real gradientCenterY: 0.5
+                property real halftoneDotMin: 0.0
+                property real halftoneDotMax: 2.0
+                property real halftoneStart: 0.0
+                property real halftoneEnd: 1.0
+                property string halftoneDotColor: "tertiary"
+                property string halftoneBackgroundColor: "overTertiaryContainer"
+                property list<var> border: ["overBackground", 0]
+                property string itemColor: "overTertiary"
+                property real opacity: 1.0
+            }
+
+            property JsonObject srOverTertiary: JsonObject {
+                property list<var> gradient: [["overTertiary", 0.0]]
+                property string gradientType: "linear"
+                property int gradientAngle: 0
+                property real gradientCenterX: 0.5
+                property real gradientCenterY: 0.5
+                property real halftoneDotMin: 0.0
+                property real halftoneDotMax: 2.0
+                property real halftoneStart: 0.0
+                property real halftoneEnd: 1.0
+                property string halftoneDotColor: "tertiaryContainer"
+                property string halftoneBackgroundColor: "overTertiary"
+                property list<var> border: ["overTertiary", 0]
+                property string itemColor: "tertiary"
+                property real opacity: 1.0
+            }
+
+            property JsonObject srError: JsonObject {
+                property list<var> gradient: [["error", 0.0]]
+                property string gradientType: "linear"
+                property int gradientAngle: 0
+                property real gradientCenterX: 0.5
+                property real gradientCenterY: 0.5
+                property real halftoneDotMin: 0.0
+                property real halftoneDotMax: 2.0
+                property real halftoneStart: 0.0
+                property real halftoneEnd: 1.0
+                property string halftoneDotColor: "overErrorContainer"
+                property string halftoneBackgroundColor: "error"
+                property list<var> border: ["error", 0]
+                property string itemColor: "overError"
+                property real opacity: 1.0
+            }
+
+            property JsonObject srErrorFocus: JsonObject {
+                property list<var> gradient: [["overBackground", 0.0]]
+                property string gradientType: "linear"
+                property int gradientAngle: 0
+                property real gradientCenterX: 0.5
+                property real gradientCenterY: 0.5
+                property real halftoneDotMin: 0.0
+                property real halftoneDotMax: 2.0
+                property real halftoneStart: 0.0
+                property real halftoneEnd: 1.0
+                property string halftoneDotColor: "error"
+                property string halftoneBackgroundColor: "overErrorContainer"
+                property list<var> border: ["overBackground", 0]
+                property string itemColor: "overError"
+                property real opacity: 1.0
+            }
+
+            property JsonObject srOverError: JsonObject {
+                property list<var> gradient: [["overError", 0.0]]
+                property string gradientType: "linear"
+                property int gradientAngle: 0
+                property real gradientCenterX: 0.5
+                property real gradientCenterY: 0.5
+                property real halftoneDotMin: 0.0
+                property real halftoneDotMax: 2.0
+                property real halftoneStart: 0.0
+                property real halftoneEnd: 1.0
+                property string halftoneDotColor: "errorContainer"
+                property string halftoneBackgroundColor: "overError"
+                property list<var> border: ["overError", 0]
+                property string itemColor: "error"
+                property real opacity: 1.0
+            }
+        }
+    }
+
+    // ============================================
+    // BAR MODULE
+    // ============================================
+    FileView {
+        id: barRawLoader
+        path: root.configDir + "/bar.json"
+        onLoaded: {
+            if (!root.barReady) {
+                validateModule("bar", barRawLoader, BarDefaults.data, () => { root.barReady = true; });
+            }
+        }
+    }
+
+    Process {
+        id: checkBarFile
+        running: true
+        command: ["sh", "-c", "test -f \"" + root.configDir + "/bar.json\""]
+        onExited: exitCode => {
+            if (exitCode !== 0) {
+                console.log("bar.json not found, creating with default values...");
+                barRawLoader.setText(JSON.stringify(BarDefaults.data, null, 4));
+                root.barReady = true;
+            }
+        }
+    }
+
+    FileView {
+        id: barLoader
+        path: root.configDir + "/bar.json"
+        atomicWrites: true
+        watchChanges: true
+        onFileChanged: reload()
+        onPathChanged: reload()
+        onAdapterUpdated: {
+            if (root.barReady && !root.pauseAutoSave) {
+                barLoader.writeAdapter();
+            }
+        }
+
+        adapter: JsonAdapter {
+            property string position: "top"
+            property string launcherIcon: ""
+            property bool launcherIconTint: true
+            property bool launcherIconFullTint: true
+            property int launcherIconSize: 24
+            property bool showBackground: false
+            property real bgOpacity: 0.5
+            property list<string> screenList: []
+            property bool enableFirefoxPlayer: false
+            property list<var> barColor: [["surface", 0.0]]
+            property string barOrientation: "vertical"
+        }
+    }
+
+    // ============================================
+    // WORKSPACES MODULE
+    // ============================================
+    FileView {
+        id: workspacesRawLoader
+        path: root.configDir + "/workspaces.json"
+        onLoaded: {
+            if (!root.workspacesReady) {
+                validateModule("workspaces", workspacesRawLoader, WorkspacesDefaults.data, () => { root.workspacesReady = true; });
+            }
+        }
+    }
+
+    Process {
+        id: checkWorkspacesFile
+        running: true
+        command: ["sh", "-c", "test -f \"" + root.configDir + "/workspaces.json\""]
+        onExited: exitCode => {
+            if (exitCode !== 0) {
+                console.log("workspaces.json not found, creating with default values...");
+                workspacesRawLoader.setText(JSON.stringify(WorkspacesDefaults.data, null, 4));
+                root.workspacesReady = true;
+            }
+        }
+    }
+
+    FileView {
+        id: workspacesLoader
+        path: root.configDir + "/workspaces.json"
+        atomicWrites: true
+        watchChanges: true
+        onFileChanged: reload()
+        onPathChanged: reload()
+        onAdapterUpdated: {
+            if (root.workspacesReady && !root.pauseAutoSave) {
+                workspacesLoader.writeAdapter();
+            }
+        }
+
+        adapter: JsonAdapter {
+            property int shown: 10
+            property bool showAppIcons: true
+            property bool alwaysShowNumbers: false
+            property bool showNumbers: false
+            property bool dynamic: false
+        }
+    }
+
+    // ============================================
+    // OVERVIEW MODULE
+    // ============================================
+    FileView {
+        id: overviewRawLoader
+        path: root.configDir + "/overview.json"
+        onLoaded: {
+            if (!root.overviewReady) {
+                validateModule("overview", overviewRawLoader, OverviewDefaults.data, () => { root.overviewReady = true; });
+            }
+        }
+    }
+
+    Process {
+        id: checkOverviewFile
+        running: true
+        command: ["sh", "-c", "test -f \"" + root.configDir + "/overview.json\""]
+        onExited: exitCode => {
+            if (exitCode !== 0) {
+                console.log("overview.json not found, creating with default values...");
+                overviewRawLoader.setText(JSON.stringify(OverviewDefaults.data, null, 4));
+                root.overviewReady = true;
+            }
+        }
+    }
+
+    FileView {
+        id: overviewLoader
+        path: root.configDir + "/overview.json"
+        atomicWrites: true
+        watchChanges: true
+        onFileChanged: reload()
+        onPathChanged: reload()
+        onAdapterUpdated: {
+            if (root.overviewReady && !root.pauseAutoSave) {
+                overviewLoader.writeAdapter();
+            }
+        }
+
+        adapter: JsonAdapter {
+            property int rows: 2
+            property int columns: 5
+            property real scale: 0.1
+            property real workspaceSpacing: 4
+        }
+    }
+
+    // ============================================
+    // NOTCH MODULE
+    // ============================================
+    FileView {
+        id: notchRawLoader
+        path: root.configDir + "/notch.json"
+        onLoaded: {
+            if (!root.notchReady) {
+                validateModule("notch", notchRawLoader, NotchDefaults.data, () => { root.notchReady = true; });
+            }
+        }
+    }
+
+    Process {
+        id: checkNotchFile
+        running: true
+        command: ["sh", "-c", "test -f \"" + root.configDir + "/notch.json\""]
+        onExited: exitCode => {
+            if (exitCode !== 0) {
+                console.log("notch.json not found, creating with default values...");
+                notchRawLoader.setText(JSON.stringify(NotchDefaults.data, null, 4));
+                root.notchReady = true;
+            }
+        }
+    }
+
+    FileView {
+        id: notchLoader
+        path: root.configDir + "/notch.json"
+        atomicWrites: true
+        watchChanges: true
+        onFileChanged: reload()
+        onPathChanged: reload()
+        onAdapterUpdated: {
+            if (root.notchReady && !root.pauseAutoSave) {
+                notchLoader.writeAdapter();
+            }
+        }
+
+        adapter: JsonAdapter {
+            property string theme: "default"
+        }
+    }
+
+    // ============================================
+    // HYPRLAND MODULE
+    // ============================================
+    FileView {
+        id: hyprlandRawLoader
+        path: root.configDir + "/hyprland.json"
+        onLoaded: {
+            if (!root.hyprlandReady) {
+                validateModule("hyprland", hyprlandRawLoader, HyprlandDefaults.data, () => { root.hyprlandReady = true; });
+            }
+        }
+    }
+
+    Process {
+        id: checkHyprlandFile
+        running: true
+        command: ["sh", "-c", "test -f \"" + root.configDir + "/hyprland.json\""]
+        onExited: exitCode => {
+            if (exitCode !== 0) {
+                console.log("hyprland.json not found, creating with default values...");
+                hyprlandRawLoader.setText(JSON.stringify(HyprlandDefaults.data, null, 4));
+                root.hyprlandReady = true;
+            }
+        }
+    }
+
+    FileView {
+        id: hyprlandLoader
+        path: root.configDir + "/hyprland.json"
+        atomicWrites: true
+        watchChanges: true
+        onFileChanged: reload()
+        onPathChanged: reload()
+        onAdapterUpdated: {
+            if (root.hyprlandReady && !root.pauseAutoSave) {
+                hyprlandLoader.writeAdapter();
+            }
+        }
+
+        adapter: JsonAdapter {
+            property list<string> activeBorderColor: ["primary"]
+            property int borderAngle: 45
+            property list<string> inactiveBorderColor: ["surface"]
+            property int inactiveBorderAngle: 45
+            property int borderSize: 2
+            property int rounding: 16
+            property bool syncRoundness: true
+            property bool syncBorderWidth: false
+            property bool syncBorderColor: false
+            property bool syncShadowOpacity: false
+            property bool syncShadowColor: false
+            property int gapsIn: 2
+            property int gapsOut: 4
+            property string layout: "dwindle"
+            property bool shadowEnabled: true
+            property int shadowRange: 8
+            property int shadowRenderPower: 3
+            property bool shadowSharp: false
+            property bool shadowIgnoreWindow: true
+            property string shadowColor: "shadow"
+            property string shadowColorInactive: "shadow"
+            property real shadowOpacity: 0.5
+            property string shadowOffset: "0 0"
+            property real shadowScale: 1.0
+            property bool blurEnabled: true
+            property int blurSize: 4
+            property int blurPasses: 2
+            property bool blurIgnoreOpacity: true
+            property bool blurNewOptimizations: true
+            property bool blurXray: false
+            property real blurNoise: 0.0
+            property real blurContrast: 1.0
+            property real blurBrightness: 1.0
+            property real blurVibrancy: 0.0
+            property real blurVibrancyDarkness: 0.0
+            property bool blurSpecial: true
+            property bool blurPopups: false
+            property real blurPopupsIgnorealpha: 0.2
+            property bool blurInputMethods: false
+            property real blurInputMethodsIgnorealpha: 0.2
+        }
+    }
+
+    // ============================================
+    // PERFORMANCE MODULE
+    // ============================================
+    FileView {
+        id: performanceRawLoader
+        path: root.configDir + "/performance.json"
+        onLoaded: {
+            if (!root.performanceReady) {
+                validateModule("performance", performanceRawLoader, PerformanceDefaults.data, () => { root.performanceReady = true; });
+            }
+        }
+    }
+
+    Process {
+        id: checkPerformanceFile
+        running: true
+        command: ["sh", "-c", "test -f \"" + root.configDir + "/performance.json\""]
+        onExited: exitCode => {
+            if (exitCode !== 0) {
+                console.log("performance.json not found, creating with default values...");
+                performanceRawLoader.setText(JSON.stringify(PerformanceDefaults.data, null, 4));
+                root.performanceReady = true;
+            }
+        }
+    }
+
+    FileView {
+        id: performanceLoader
+        path: root.configDir + "/performance.json"
+        atomicWrites: true
+        watchChanges: true
+        onFileChanged: reload()
+        onPathChanged: reload()
+        onAdapterUpdated: {
+            if (root.performanceReady && !root.pauseAutoSave) {
+                performanceLoader.writeAdapter();
+            }
+        }
+
+        adapter: JsonAdapter {
+            property bool blurTransition: true
+            property bool windowPreview: true
+            property bool wavyLine: true
+        }
+    }
+
+    // ============================================
+    // WEATHER MODULE
+    // ============================================
+    FileView {
+        id: weatherRawLoader
+        path: root.configDir + "/weather.json"
+        onLoaded: {
+            if (!root.weatherReady) {
+                validateModule("weather", weatherRawLoader, WeatherDefaults.data, () => { root.weatherReady = true; });
+            }
+        }
+    }
+
+    Process {
+        id: checkWeatherFile
+        running: true
+        command: ["sh", "-c", "test -f \"" + root.configDir + "/weather.json\""]
+        onExited: exitCode => {
+            if (exitCode !== 0) {
+                console.log("weather.json not found, creating with default values...");
+                weatherRawLoader.setText(JSON.stringify(WeatherDefaults.data, null, 4));
+                root.weatherReady = true;
+            }
+        }
+    }
+
+    FileView {
+        id: weatherLoader
+        path: root.configDir + "/weather.json"
+        atomicWrites: true
+        watchChanges: true
+        onFileChanged: reload()
+        onPathChanged: reload()
+        onAdapterUpdated: {
+            if (root.weatherReady && !root.pauseAutoSave) {
+                weatherLoader.writeAdapter();
+            }
+        }
+
+        adapter: JsonAdapter {
+            property string location: ""
+            property string unit: "C"
+        }
+    }
+
+    // ============================================
+    // DESKTOP MODULE
+    // ============================================
+    FileView {
+        id: desktopRawLoader
+        path: root.configDir + "/desktop.json"
+        onLoaded: {
+            if (!root.desktopReady) {
+                validateModule("desktop", desktopRawLoader, DesktopDefaults.data, () => { root.desktopReady = true; });
+            }
+        }
+    }
+
+    Process {
+        id: checkDesktopFile
+        running: true
+        command: ["sh", "-c", "test -f \"" + root.configDir + "/desktop.json\""]
+        onExited: exitCode => {
+            if (exitCode !== 0) {
+                console.log("desktop.json not found, creating with default values...");
+                desktopRawLoader.setText(JSON.stringify(DesktopDefaults.data, null, 4));
+                root.desktopReady = true;
+            }
+        }
+    }
+
+    FileView {
+        id: desktopLoader
+        path: root.configDir + "/desktop.json"
+        atomicWrites: true
+        watchChanges: true
+        onFileChanged: reload()
+        onPathChanged: reload()
+        onAdapterUpdated: {
+            if (root.desktopReady && !root.pauseAutoSave) {
+                desktopLoader.writeAdapter();
+            }
+        }
+
+        adapter: JsonAdapter {
+            property bool enabled: false
+            property int iconSize: 40
+            property int spacingVertical: 16
+            property string textColor: "overBackground"
+        }
+    }
+
+    // ============================================
+    // LOCKSCREEN MODULE
+    // ============================================
+    FileView {
+        id: lockscreenRawLoader
+        path: root.configDir + "/lockscreen.json"
+        onLoaded: {
+            if (!root.lockscreenReady) {
+                validateModule("lockscreen", lockscreenRawLoader, LockscreenDefaults.data, () => { root.lockscreenReady = true; });
+            }
+        }
+    }
+
+    Process {
+        id: checkLockscreenFile
+        running: true
+        command: ["sh", "-c", "test -f \"" + root.configDir + "/lockscreen.json\""]
+        onExited: exitCode => {
+            if (exitCode !== 0) {
+                console.log("lockscreen.json not found, creating with default values...");
+                lockscreenRawLoader.setText(JSON.stringify(LockscreenDefaults.data, null, 4));
+                root.lockscreenReady = true;
+            }
+        }
+    }
+
+    FileView {
+        id: lockscreenLoader
+        path: root.configDir + "/lockscreen.json"
+        atomicWrites: true
+        watchChanges: true
+        onFileChanged: reload()
+        onPathChanged: reload()
+        onAdapterUpdated: {
+            if (root.lockscreenReady && !root.pauseAutoSave) {
+                lockscreenLoader.writeAdapter();
+            }
+        }
+
+        adapter: JsonAdapter {
+            property string position: "bottom"
+        }
+    }
+
+    // ============================================
+    // PREFIX MODULE
+    // ============================================
+    FileView {
+        id: prefixRawLoader
+        path: root.configDir + "/prefix.json"
+        onLoaded: {
+            if (!root.prefixReady) {
+                validateModule("prefix", prefixRawLoader, PrefixDefaults.data, () => { root.prefixReady = true; });
+            }
+        }
+    }
+
+    Process {
+        id: checkPrefixFile
+        running: true
+        command: ["sh", "-c", "test -f \"" + root.configDir + "/prefix.json\""]
+        onExited: exitCode => {
+            if (exitCode !== 0) {
+                console.log("prefix.json not found, creating with default values...");
+                prefixRawLoader.setText(JSON.stringify(PrefixDefaults.data, null, 4));
+                root.prefixReady = true;
+            }
+        }
+    }
+
+    FileView {
+        id: prefixLoader
+        path: root.configDir + "/prefix.json"
+        atomicWrites: true
+        watchChanges: true
+        onFileChanged: reload()
+        onPathChanged: reload()
+        onAdapterUpdated: {
+            if (root.prefixReady && !root.pauseAutoSave) {
+                prefixLoader.writeAdapter();
+            }
+        }
+
+        adapter: JsonAdapter {
+            property string clipboard: "cc"
+            property string emoji: "ee"
+            property string tmux: "tt"
+            property string wallpapers: "ww"
+            property string notes: "nn"
+        }
+    }
+
+    // ============================================
+    // SYSTEM MODULE
+    // ============================================
+    FileView {
+        id: systemRawLoader
+        path: root.configDir + "/system.json"
+        onLoaded: {
+            if (!root.systemReady) {
+                validateModule("system", systemRawLoader, SystemDefaults.data, () => { root.systemReady = true; });
+            }
+        }
+    }
+
+    Process {
+        id: checkSystemFile
+        running: true
+        command: ["sh", "-c", "test -f \"" + root.configDir + "/system.json\""]
+        onExited: exitCode => {
+            if (exitCode !== 0) {
+                console.log("system.json not found, creating with default values...");
+                systemRawLoader.setText(JSON.stringify(SystemDefaults.data, null, 4));
+                root.systemReady = true;
+            }
+        }
+    }
+
+    FileView {
+        id: systemLoader
+        path: root.configDir + "/system.json"
+        atomicWrites: true
+        watchChanges: true
+        onFileChanged: reload()
+        onPathChanged: reload()
+        onAdapterUpdated: {
+            if (root.systemReady && !root.pauseAutoSave) {
+                systemLoader.writeAdapter();
+            }
+        }
+
+        adapter: JsonAdapter {
+            property list<string> disks: ["/"]
+        }
+    }
+
+    // ============================================
+    // KEYBINDS (kept separate as binds.json)
+    // ============================================
     Process {
         id: checkKeybindsFile
         running: true
@@ -77,470 +986,6 @@ Singleton {
                 keybindsLoader.writeAdapter();
             }
             root.keybindsInitialLoadComplete = true;
-        }
-    }
-
-    FileView {
-        id: loader
-        path: configPath
-        atomicWrites: true
-        watchChanges: true
-        onFileChanged: reload()
-        onPathChanged: reload()
-        onAdapterUpdated: {
-            if (root.initialLoadComplete && !root.pauseAutoSave) {
-                loader.writeAdapter();
-            }
-        }
-
-        adapter: JsonAdapter {
-            property JsonObject theme: JsonObject {
-                property bool oledMode: false
-                property bool lightMode: false
-                property int roundness: 16
-                property string font: "Roboto Condensed"
-                property int fontSize: 14
-                property bool tintIcons: false
-                property bool enableCorners: true
-                property int animDuration: 300
-                property real shadowOpacity: 0.5
-                property string shadowColor: "shadow"
-                property int shadowXOffset: 0
-                property int shadowYOffset: 0
-                property real shadowBlur: 1
-
-                // StyledRect variant configurations
-                // Each variant (bg, pane, common, focus, primary, etc.) contains:
-                // - gradient properties (stops, type, angle, center, halftone)
-                // - border properties [color, width]
-                // - item color (text/icon color to use on top of the variant)
-
-                // SR: Background variant
-                property JsonObject srBg: JsonObject {
-                    property list<var> gradient: [["background", 0.0]]
-                    property string gradientType: "linear"
-                    property int gradientAngle: 0
-                    property real gradientCenterX: 0.5
-                    property real gradientCenterY: 0.5
-                    property real halftoneDotMin: 0.0
-                    property real halftoneDotMax: 2.0
-                    property real halftoneStart: 0.0
-                    property real halftoneEnd: 1.0
-                    property string halftoneDotColor: "surface"
-                    property string halftoneBackgroundColor: "background"
-                    property list<var> border: ["surfaceBright", 0]
-                    property string itemColor: "overBackground"
-                    property real opacity: 1.0
-                }
-
-                // SR: Internal Background variant (same as bg, but for internal components)
-                property JsonObject srInternalBg: JsonObject {
-                    property list<var> gradient: [["background", 0.0]]
-                    property string gradientType: "linear"
-                    property int gradientAngle: 0
-                    property real gradientCenterX: 0.5
-                    property real gradientCenterY: 0.5
-                    property real halftoneDotMin: 0.0
-                    property real halftoneDotMax: 2.0
-                    property real halftoneStart: 0.0
-                    property real halftoneEnd: 1.0
-                    property string halftoneDotColor: "surface"
-                    property string halftoneBackgroundColor: "background"
-                    property list<var> border: ["surfaceBright", 0]
-                    property string itemColor: "overBackground"
-                    property real opacity: 1.0
-                }
-
-                // SR: Bar Background variant (for bar background with corners)
-                property JsonObject srBarBg: JsonObject {
-                    property list<var> gradient: [["surfaceDim", 0.0]]
-                    property string gradientType: "linear"
-                    property int gradientAngle: 0
-                    property real gradientCenterX: 0.5
-                    property real gradientCenterY: 0.5
-                    property real halftoneDotMin: 0.0
-                    property real halftoneDotMax: 2.0
-                    property real halftoneStart: 0.0
-                    property real halftoneEnd: 1.0
-                    property string halftoneDotColor: "surface"
-                    property string halftoneBackgroundColor: "surfaceDim"
-                    property list<var> border: ["surfaceBright", 0]
-                    property string itemColor: "overBackground"
-                    property real opacity: 1.0
-                }
-
-                // SR: Pane variant
-                property JsonObject srPane: JsonObject {
-                    property list<var> gradient: [["surface", 0.0]]
-                    property string gradientType: "linear"
-                    property int gradientAngle: 0
-                    property real gradientCenterX: 0.5
-                    property real gradientCenterY: 0.5
-                    property real halftoneDotMin: 0.0
-                    property real halftoneDotMax: 2.0
-                    property real halftoneStart: 0.0
-                    property real halftoneEnd: 1.0
-                    property string halftoneDotColor: "surfaceBright"
-                    property string halftoneBackgroundColor: "surface"
-                    property list<var> border: ["surfaceBright", 0]
-                    property string itemColor: "overBackground"
-                    property real opacity: 1.0
-                }
-
-                // SR: Common variant (default/neutral)
-                property JsonObject srCommon: JsonObject {
-                    property list<var> gradient: [["surface", 0.0]]
-                    property string gradientType: "linear"
-                    property int gradientAngle: 0
-                    property real gradientCenterX: 0.5
-                    property real gradientCenterY: 0.5
-                    property real halftoneDotMin: 0.0
-                    property real halftoneDotMax: 2.0
-                    property real halftoneStart: 0.0
-                    property real halftoneEnd: 1.0
-                    property string halftoneDotColor: "background"
-                    property string halftoneBackgroundColor: "surface"
-                    property list<var> border: ["surfaceBright", 0]
-                    property string itemColor: "overBackground"
-                    property real opacity: 1.0
-                }
-
-                // SR: Focus variant
-                property JsonObject srFocus: JsonObject {
-                    property list<var> gradient: [["surfaceBright", 0.0]]
-                    property string gradientType: "linear"
-                    property int gradientAngle: 0
-                    property real gradientCenterX: 0.5
-                    property real gradientCenterY: 0.5
-                    property real halftoneDotMin: 0.0
-                    property real halftoneDotMax: 2.0
-                    property real halftoneStart: 0.0
-                    property real halftoneEnd: 1.0
-                    property string halftoneDotColor: "surfaceVariant"
-                    property string halftoneBackgroundColor: "surfaceBright"
-                    property list<var> border: ["surfaceBright", 0]
-                    property string itemColor: "overBackground"
-                    property real opacity: 1.0
-                }
-
-                // SR: Primary variants
-                property JsonObject srPrimary: JsonObject {
-                    property list<var> gradient: [["primary", 0.0]]
-                    property string gradientType: "linear"
-                    property int gradientAngle: 0
-                    property real gradientCenterX: 0.5
-                    property real gradientCenterY: 0.5
-                    property real halftoneDotMin: 0.0
-                    property real halftoneDotMax: 2.0
-                    property real halftoneStart: 0.0
-                    property real halftoneEnd: 1.0
-                    property string halftoneDotColor: "overPrimaryContainer"
-                    property string halftoneBackgroundColor: "primary"
-                    property list<var> border: ["primary", 0]
-                    property string itemColor: "overPrimary"
-                    property real opacity: 1.0
-                }
-
-                property JsonObject srPrimaryFocus: JsonObject {
-                    property list<var> gradient: [["overPrimaryContainer", 0.0]]
-                    property string gradientType: "linear"
-                    property int gradientAngle: 0
-                    property real gradientCenterX: 0.5
-                    property real gradientCenterY: 0.5
-                    property real halftoneDotMin: 0.0
-                    property real halftoneDotMax: 2.0
-                    property real halftoneStart: 0.0
-                    property real halftoneEnd: 1.0
-                    property string halftoneDotColor: "primary"
-                    property string halftoneBackgroundColor: "overPrimaryContainer"
-                    property list<var> border: ["overBackground", 0]
-                    property string itemColor: "overPrimary"
-                    property real opacity: 1.0
-                }
-
-                property JsonObject srOverPrimary: JsonObject {
-                    property list<var> gradient: [["overPrimary", 0.0]]
-                    property string gradientType: "linear"
-                    property int gradientAngle: 0
-                    property real gradientCenterX: 0.5
-                    property real gradientCenterY: 0.5
-                    property real halftoneDotMin: 0.0
-                    property real halftoneDotMax: 2.0
-                    property real halftoneStart: 0.0
-                    property real halftoneEnd: 1.0
-                    property string halftoneDotColor: "primaryContainer"
-                    property string halftoneBackgroundColor: "overPrimary"
-                    property list<var> border: ["overPrimary", 0]
-                    property string itemColor: "primary"
-                    property real opacity: 1.0
-                }
-
-                // SR: Secondary variants
-                property JsonObject srSecondary: JsonObject {
-                    property list<var> gradient: [["secondary", 0.0]]
-                    property string gradientType: "linear"
-                    property int gradientAngle: 0
-                    property real gradientCenterX: 0.5
-                    property real gradientCenterY: 0.5
-                    property real halftoneDotMin: 0.0
-                    property real halftoneDotMax: 2.0
-                    property real halftoneStart: 0.0
-                    property real halftoneEnd: 1.0
-                    property string halftoneDotColor: "overSecondaryContainer"
-                    property string halftoneBackgroundColor: "secondary"
-                    property list<var> border: ["secondary", 0]
-                    property string itemColor: "overSecondary"
-                    property real opacity: 1.0
-                }
-
-                property JsonObject srSecondaryFocus: JsonObject {
-                    property list<var> gradient: [["overSecondaryContainer", 0.0]]
-                    property string gradientType: "linear"
-                    property int gradientAngle: 0
-                    property real gradientCenterX: 0.5
-                    property real gradientCenterY: 0.5
-                    property real halftoneDotMin: 0.0
-                    property real halftoneDotMax: 2.0
-                    property real halftoneStart: 0.0
-                    property real halftoneEnd: 1.0
-                    property string halftoneDotColor: "secondary"
-                    property string halftoneBackgroundColor: "overSecondaryContainer"
-                    property list<var> border: ["overBackground", 0]
-                    property string itemColor: "overSecondary"
-                    property real opacity: 1.0
-                }
-
-                property JsonObject srOverSecondary: JsonObject {
-                    property list<var> gradient: [["overSecondary", 0.0]]
-                    property string gradientType: "linear"
-                    property int gradientAngle: 0
-                    property real gradientCenterX: 0.5
-                    property real gradientCenterY: 0.5
-                    property real halftoneDotMin: 0.0
-                    property real halftoneDotMax: 2.0
-                    property real halftoneStart: 0.0
-                    property real halftoneEnd: 1.0
-                    property string halftoneDotColor: "secondaryContainer"
-                    property string halftoneBackgroundColor: "overSecondary"
-                    property list<var> border: ["overSecondary", 0]
-                    property string itemColor: "secondary"
-                    property real opacity: 1.0
-                }
-
-                // SR: Tertiary variants
-                property JsonObject srTertiary: JsonObject {
-                    property list<var> gradient: [["tertiary", 0.0]]
-                    property string gradientType: "linear"
-                    property int gradientAngle: 0
-                    property real gradientCenterX: 0.5
-                    property real gradientCenterY: 0.5
-                    property real halftoneDotMin: 0.0
-                    property real halftoneDotMax: 2.0
-                    property real halftoneStart: 0.0
-                    property real halftoneEnd: 1.0
-                    property string halftoneDotColor: "overTertiaryContainer"
-                    property string halftoneBackgroundColor: "tertiary"
-                    property list<var> border: ["tertiary", 0]
-                    property string itemColor: "overTertiary"
-                    property real opacity: 1.0
-                }
-
-                property JsonObject srTertiaryFocus: JsonObject {
-                    property list<var> gradient: [["overTertiaryContainer", 0.0]]
-                    property string gradientType: "linear"
-                    property int gradientAngle: 0
-                    property real gradientCenterX: 0.5
-                    property real gradientCenterY: 0.5
-                    property real halftoneDotMin: 0.0
-                    property real halftoneDotMax: 2.0
-                    property real halftoneStart: 0.0
-                    property real halftoneEnd: 1.0
-                    property string halftoneDotColor: "tertiary"
-                    property string halftoneBackgroundColor: "overTertiaryContainer"
-                    property list<var> border: ["overBackground", 0]
-                    property string itemColor: "overTertiary"
-                    property real opacity: 1.0
-                }
-
-                property JsonObject srOverTertiary: JsonObject {
-                    property list<var> gradient: [["overTertiary", 0.0]]
-                    property string gradientType: "linear"
-                    property int gradientAngle: 0
-                    property real gradientCenterX: 0.5
-                    property real gradientCenterY: 0.5
-                    property real halftoneDotMin: 0.0
-                    property real halftoneDotMax: 2.0
-                    property real halftoneStart: 0.0
-                    property real halftoneEnd: 1.0
-                    property string halftoneDotColor: "tertiaryContainer"
-                    property string halftoneBackgroundColor: "overTertiary"
-                    property list<var> border: ["overTertiary", 0]
-                    property string itemColor: "tertiary"
-                    property real opacity: 1.0
-                }
-
-                // SR: Error variants
-                property JsonObject srError: JsonObject {
-                    property list<var> gradient: [["error", 0.0]]
-                    property string gradientType: "linear"
-                    property int gradientAngle: 0
-                    property real gradientCenterX: 0.5
-                    property real gradientCenterY: 0.5
-                    property real halftoneDotMin: 0.0
-                    property real halftoneDotMax: 2.0
-                    property real halftoneStart: 0.0
-                    property real halftoneEnd: 1.0
-                    property string halftoneDotColor: "overErrorContainer"
-                    property string halftoneBackgroundColor: "error"
-                    property list<var> border: ["error", 0]
-                    property string itemColor: "overError"
-                    property real opacity: 1.0
-                }
-
-                property JsonObject srErrorFocus: JsonObject {
-                    property list<var> gradient: [["overBackground", 0.0]]
-                    property string gradientType: "linear"
-                    property int gradientAngle: 0
-                    property real gradientCenterX: 0.5
-                    property real gradientCenterY: 0.5
-                    property real halftoneDotMin: 0.0
-                    property real halftoneDotMax: 2.0
-                    property real halftoneStart: 0.0
-                    property real halftoneEnd: 1.0
-                    property string halftoneDotColor: "error"
-                    property string halftoneBackgroundColor: "overErrorContainer"
-                    property list<var> border: ["overBackground", 0]
-                    property string itemColor: "overError"
-                    property real opacity: 1.0
-                }
-
-                property JsonObject srOverError: JsonObject {
-                    property list<var> gradient: [["overError", 0.0]]
-                    property string gradientType: "linear"
-                    property int gradientAngle: 0
-                    property real gradientCenterX: 0.5
-                    property real gradientCenterY: 0.5
-                    property real halftoneDotMin: 0.0
-                    property real halftoneDotMax: 2.0
-                    property real halftoneStart: 0.0
-                    property real halftoneEnd: 1.0
-                    property string halftoneDotColor: "errorContainer"
-                    property string halftoneBackgroundColor: "overError"
-                    property list<var> border: ["overError", 0]
-                    property string itemColor: "error"
-                    property real opacity: 1.0
-                }
-            }
-
-            property JsonObject bar: JsonObject {
-                property string position: "top"
-                property string launcherIcon: ""
-                property bool launcherIconTint: true
-                property bool launcherIconFullTint: true
-                property int launcherIconSize: 24
-                property bool showBackground: false
-                property real bgOpacity: 0.5
-                property list<string> screenList: []
-                property bool enableFirefoxPlayer: false
-                property list<var> barColor: [["surface", 0.0]]
-                property string barOrientation: "vertical"
-            }
-
-            property JsonObject workspaces: JsonObject {
-                property int shown: 10
-                property bool showAppIcons: true
-                property bool alwaysShowNumbers: false
-                property bool showNumbers: false
-                property bool dynamic: false
-            }
-
-            property JsonObject overview: JsonObject {
-                property int rows: 2
-                property int columns: 5
-                property real scale: 0.1
-                property real workspaceSpacing: 4
-            }
-
-            property JsonObject notch: JsonObject {
-                property string theme: "default"
-            }
-
-            property JsonObject hyprland: JsonObject {
-                property list<string> activeBorderColor: ["primary"]
-                property int borderAngle: 45
-                property list<string> inactiveBorderColor: ["surface"]
-                property int inactiveBorderAngle: 45
-                property int borderSize: 2
-                property int rounding: 16
-                property bool syncRoundness: true
-                property bool syncBorderWidth: false
-                property bool syncBorderColor: false
-                property bool syncShadowOpacity: false
-                property bool syncShadowColor: false
-                property int gapsIn: 2
-                property int gapsOut: 4
-                property string layout: "dwindle"
-                property bool shadowEnabled: true
-                property int shadowRange: 8
-                property int shadowRenderPower: 3
-                property bool shadowSharp: false
-                property bool shadowIgnoreWindow: true
-                property string shadowColor: "shadow"
-                property string shadowColorInactive: "shadow"
-                property real shadowOpacity: 0.5
-                property string shadowOffset: "0 0"
-                property real shadowScale: 1.0
-                property bool blurEnabled: true
-                property int blurSize: 4
-                property int blurPasses: 2
-                property bool blurIgnoreOpacity: true
-                property bool blurNewOptimizations: true
-                property bool blurXray: false
-                property real blurNoise: 0.0
-                property real blurContrast: 1.0
-                property real blurBrightness: 1.0
-                property real blurVibrancy: 0.0
-                property real blurVibrancyDarkness: 0.0
-                property bool blurSpecial: true
-                property bool blurPopups: false
-                property real blurPopupsIgnorealpha: 0.2
-                property bool blurInputMethods: false
-                property real blurInputMethodsIgnorealpha: 0.2
-            }
-
-            property JsonObject performance: JsonObject {
-                property bool blurTransition: true
-                property bool windowPreview: true
-                property bool wavyLine: true
-            }
-
-            property JsonObject weather: JsonObject {
-                property string location: ""
-                property string unit: "C"
-            }
-
-            property JsonObject desktop: JsonObject {
-                property bool enabled: false
-                property int iconSize: 40
-                property int spacingVertical: 16
-                property string textColor: "overBackground"
-            }
-
-            property JsonObject lockscreen: JsonObject {
-                property string position: "bottom"
-            }
-
-            property JsonObject prefix: JsonObject {
-                property string clipboard: "cc"
-                property string emoji: "ee"
-                property string tmux: "tt"
-                property string wallpapers: "ww"
-                property string notes: "nn"
-            }
-
-            property JsonObject system: JsonObject {
-                property list<string> disks: ["/"]
-            }
         }
     }
 
@@ -991,8 +1436,39 @@ Singleton {
         }
     }
 
+    // ============================================
+    // VALIDATION HELPER
+    // ============================================
+    function validateModule(name, rawLoader, defaults, onComplete) {
+        var raw = rawLoader.text();
+        if (!raw) {
+            onComplete();
+            return;
+        }
+
+        try {
+            var current = JSON.parse(raw);
+            var validated = ConfigValidator.validate(current, defaults);
+
+            if (JSON.stringify(current) !== JSON.stringify(validated)) {
+                console.log("Merging and updating " + name + ".json...");
+                rawLoader.setText(JSON.stringify(validated, null, 4));
+            }
+            onComplete();
+        } catch (e) {
+            console.log("Error validating " + name + " config (invalid JSON?): " + e);
+            console.log("Overwriting with defaults due to error.");
+            rawLoader.setText(JSON.stringify(defaults, null, 4));
+            onComplete();
+        }
+    }
+
+    // ============================================
+    // EXPOSED PROPERTIES (backward compatibility)
+    // ============================================
+
     // Theme configuration
-    property QtObject theme: loader.adapter.theme
+    property QtObject theme: themeLoader.adapter
     property bool oledMode: lightMode ? false : theme.oledMode
     property bool lightMode: theme.lightMode
 
@@ -1001,10 +1477,9 @@ Singleton {
     property int animDuration: Services.GameModeService.toggled ? 0 : theme.animDuration
     property bool tintIcons: theme.tintIcons
 
-    // Detectar cambios en lightMode y ejecutar Matugen
+    // Detect lightMode changes and run Matugen
     onLightModeChanged: {
         console.log("lightMode changed to:", lightMode);
-        // Ejecutar Matugen con el wallpaper actual si existe un wallpaper manager
         if (GlobalStates.wallpaperManager) {
             var wallpaperManager = GlobalStates.wallpaperManager;
             if (wallpaperManager.currentWallpaper) {
@@ -1015,21 +1490,21 @@ Singleton {
     }
 
     // Bar configuration
-    property QtObject bar: loader.adapter.bar
-    property real bgOpacity: Math.min(Math.max(bar.opacity, 0.1), 1.0)
+    property QtObject bar: barLoader.adapter
+    property real bgOpacity: Math.min(Math.max(bar.bgOpacity, 0.1), 1.0)
 
     // Workspace configuration
-    property QtObject workspaces: loader.adapter.workspaces
+    property QtObject workspaces: workspacesLoader.adapter
 
     // Overview configuration
-    property QtObject overview: loader.adapter.overview
+    property QtObject overview: overviewLoader.adapter
 
     // Notch configuration
-    property QtObject notch: loader.adapter.notch
+    property QtObject notch: notchLoader.adapter
     property string notchTheme: notch.theme
 
     // Hyprland configuration
-    property QtObject hyprland: loader.adapter.hyprland
+    property QtObject hyprland: hyprlandLoader.adapter
     property int hyprlandRounding: hyprland.syncRoundness ? Math.max(0, roundness - (hyprland.gapsOut - hyprlandBorderSize)) : Math.max(0, hyprland.rounding - hyprlandBorderSize)
     property int hyprlandBorderSize: hyprland.syncBorderWidth ? (theme.srBg.border[1] || 0) : hyprland.borderSize
     property string hyprlandBorderColor: hyprland.syncBorderColor ? (theme.srBg.border[0] || "primary") : (hyprland.activeBorderColor.length > 0 ? hyprland.activeBorderColor[0] : "primary")
@@ -1037,23 +1512,23 @@ Singleton {
     property string hyprlandShadowColor: hyprland.syncShadowColor ? theme.shadowColor : hyprland.shadowColor
 
     // Performance configuration
-    property QtObject performance: loader.adapter.performance
+    property QtObject performance: performanceLoader.adapter
     property bool blurTransition: performance.blurTransition
 
     // Weather configuration
-    property QtObject weather: loader.adapter.weather
+    property QtObject weather: weatherLoader.adapter
 
     // Desktop configuration
-    property QtObject desktop: loader.adapter.desktop
+    property QtObject desktop: desktopLoader.adapter
 
     // Lockscreen configuration
-    property QtObject lockscreen: loader.adapter.lockscreen
+    property QtObject lockscreen: lockscreenLoader.adapter
 
     // Prefix configuration
-    property QtObject prefix: loader.adapter.prefix
+    property QtObject prefix: prefixLoader.adapter
 
     // System configuration
-    property QtObject system: loader.adapter.system
+    property QtObject system: systemLoader.adapter
 
     // Helper functions for color handling (HEX or named colors)
     function isHexColor(colorValue) {

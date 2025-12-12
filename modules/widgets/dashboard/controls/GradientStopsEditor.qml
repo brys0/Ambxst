@@ -58,6 +58,10 @@ Item {
             "overerror": "srOverError"
         };
         const variantKey = variantKeyMap[variantId] || "srCommon";
+        // Guard against undefined ConfigDefaults.data or ConfigDefaults.data.theme
+        if (!ConfigDefaults.data || !ConfigDefaults.data.theme) {
+            return [["surface", 0.0]];
+        }
         const defaults = ConfigDefaults.data.theme[variantKey];
         if (defaults && defaults.gradient) {
             return defaults.gradient;
