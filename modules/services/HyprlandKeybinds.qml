@@ -99,8 +99,10 @@ QtObject {
         if (customBinds && customBinds.length > 0) {
             for (let i = 0; i < customBinds.length; i++) {
                 const bind = customBinds[i];
+                // Siempre hacer unbind primero para limpiar el estado anterior
+                unbindCommands.push(createUnbindCommand(bind));
+                // Solo crear el bind si está habilitado
                 if (bind.enabled !== false) {  // Por defecto enabled=true
-                    unbindCommands.push(createUnbindCommand(bind));
                     const flags = bind.flags || "";
                     batchCommands.push(createBindCommand(bind, flags));
                 }
@@ -121,6 +123,9 @@ QtObject {
             applyKeybinds();
         }
         function onLoaded() {
+            applyKeybinds();
+        }
+        function onAdapterUpdated() {
             applyKeybinds();
         }
     }

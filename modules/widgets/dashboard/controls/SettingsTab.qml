@@ -14,7 +14,7 @@ Rectangle {
     implicitWidth: 400
     implicitHeight: 300
 
-    property int currentSection: 0  // 0: Network, 1: Bluetooth, 2: Mixer, 3: Effects, 4: Theme
+    property int currentSection: 0  // 0: Network, 1: Bluetooth, 2: Mixer, 3: Effects, 4: Theme, 5: Binds
 
     RowLayout {
         anchors.fill: parent
@@ -74,7 +74,8 @@ Rectangle {
                             { icon: Icons.bluetooth, label: "Bluetooth", section: 1 },
                             { icon: Icons.faders, label: "Mixer", section: 2 },
                             { icon: Icons.waveform, label: "Effects", section: 3 },
-                            { icon: Icons.paintBrush, label: "Theme", section: 4 }
+                            { icon: Icons.paintBrush, label: "Theme", section: 4 },
+                            { icon: Icons.keyboard, label: "Binds", section: 5 }
                         ]
 
                         delegate: Button {
@@ -154,7 +155,7 @@ Rectangle {
                         // Otherwise, navigate sections
                         if (event.angleDelta.y > 0 && root.currentSection > 0) {
                             root.currentSection--;
-                        } else if (event.angleDelta.y < 0 && root.currentSection < 4) {
+                        } else if (event.angleDelta.y < 0 && root.currentSection < 5) {
                             root.currentSection++;
                         }
                     }
@@ -320,6 +321,35 @@ Rectangle {
 
                 transform: Translate {
                     y: root.currentSection === 4 ? 0 : (root.currentSection > 4 ? -20 : 20)
+
+                    Behavior on y {
+                        enabled: Config.animDuration > 0
+                        NumberAnimation {
+                            duration: Config.animDuration
+                            easing.type: Easing.OutCubic
+                        }
+                    }
+                }
+            }
+
+            // Binds Panel
+            BindsPanel {
+                id: bindsPanel
+                anchors.fill: parent
+                maxContentWidth: contentArea.maxContentWidth
+                visible: opacity > 0
+                opacity: root.currentSection === 5 ? 1 : 0
+
+                Behavior on opacity {
+                    enabled: Config.animDuration > 0
+                    NumberAnimation {
+                        duration: Config.animDuration
+                        easing.type: Easing.OutCubic
+                    }
+                }
+
+                transform: Translate {
+                    y: root.currentSection === 5 ? 0 : (root.currentSection > 5 ? -20 : 20)
 
                     Behavior on y {
                         enabled: Config.animDuration > 0
