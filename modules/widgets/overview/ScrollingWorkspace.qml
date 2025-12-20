@@ -52,6 +52,79 @@ Item {
         });
     }
 
+    // Calculate content bounds based on actual window positions
+    // Windows are positioned relative to monitor, scaled, then offset by viewportOffset
+    readonly property var contentBounds: {
+        if (workspaceWindows.length === 0) {
+            return { minX: 0, maxX: 0, hasOverflow: false };
+        }
+
+        let minX = Infinity;
+        let maxX = -Infinity;
+
+        for (const win of workspaceWindows) {
+            // Calculate window position the same way as in the delegate
+            let baseX = (win?.at?.[0] || 0) - (monitorData?.x || 0);
+            if (barPosition === "left") baseX -= barReserved;
+            const scaledX = baseX * scale_;
+            const winWidth = (win?.size?.[0] || 100) * scale_;
+
+            minX = Math.min(minX, scaledX);
+            maxX = Math.max(maxX, scaledX + winWidth);
+        }
+
+        // The visible viewport in content coordinates is [0, viewportWidth]
+        // Content extends from minX to maxX
+        // Overflow exists if content extends beyond viewport bounds
+        const hasOverflow = minX < 0 || maxX > viewportWidth;
+
+        return { minX, maxX, hasOverflow };
+    }
+
+    // Calculate scroll limits based on content
+    // We want to allow scrolling so that all content can be brought into view
+    readonly property real maxHorizontalScroll: {
+        if (!contentBounds.hasOverflow) return 0;
+        // If content extends to the right (maxX > viewportWidth), we need negative scroll to see it
+        // maxX - viewportWidth is how much we need to scroll left (negative offset)
+        return Math.max(0, -contentBounds.minX);
+    }
+    readonly property real minHorizontalScroll: {
+        if (!contentBounds.hasOverflow) return 0;
+        // If content extends to the left (minX < 0), we need positive scroll to see it
+        return Math.min(0, viewportWidth - contentBounds.maxX);
+    }
+
+    // Horizontal scroll state
+    property real horizontalScrollOffset: 0
+    property bool isScrollDragging: false  // Track if any right-click drag is active
+
+    // Reset scroll when windows change (added, removed, or moved)
+    onWorkspaceWindowsChanged: resetScroll()
+    onContentBoundsChanged: {
+        // If no overflow, ensure we're at center (0)
+        if (!contentBounds.hasOverflow && horizontalScrollOffset !== 0) {
+            horizontalScrollOffset = 0;
+        }
+    }
+
+    function resetScroll() {
+        horizontalScrollOffset = 0;
+    }
+
+    Behavior on horizontalScrollOffset {
+        enabled: Config.animDuration > 0 && !root.isScrollDragging
+        NumberAnimation {
+            duration: Config.animDuration / 2
+            easing.type: Easing.OutQuart
+        }
+    }
+
+    function clampHorizontalScroll(value) {
+        if (!contentBounds.hasOverflow) return 0;
+        return Math.max(minHorizontalScroll, Math.min(maxHorizontalScroll, value));
+    }
+
     // Main workspace container
     Item {
         id: workspaceContainer
@@ -117,6 +190,62 @@ Item {
             anchors.fill: parent
             anchors.margins: root.workspacePadding
 
+            // Horizontal scroll handler - right-click drag
+            MouseArea {
+                id: scrollArea
+                anchors.fill: parent
+                acceptedButtons: Qt.RightButton
+                propagateComposedEvents: true
+
+                property real dragStartX: 0
+                property real scrollStartOffset: 0
+
+                onPressed: mouse => {
+                    if (mouse.button === Qt.RightButton && root.contentBounds.hasOverflow) {
+                        dragStartX = mouse.x;
+                        scrollStartOffset = root.horizontalScrollOffset;
+                        root.isScrollDragging = true;
+                        mouse.accepted = true;
+                    } else {
+                        mouse.accepted = false;
+                    }
+                }
+
+                onPositionChanged: mouse => {
+                    if (root.isScrollDragging && (mouse.buttons & Qt.RightButton)) {
+                        const delta = mouse.x - dragStartX;
+                        root.horizontalScrollOffset = root.clampHorizontalScroll(scrollStartOffset + delta);
+                    }
+                }
+
+                onReleased: mouse => {
+                    if (mouse.button === Qt.RightButton) {
+                        root.isScrollDragging = false;
+                    }
+                }
+
+                onCanceled: {
+                    root.isScrollDragging = false;
+                }
+
+                // Pass through clicks that we don't handle
+                onClicked: mouse => mouse.accepted = false
+            }
+
+            // Wheel handler for Shift+scroll (horizontal scrolling)
+            WheelHandler {
+                id: wheelHandler
+                acceptedModifiers: Qt.ShiftModifier
+                acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                onWheel: event => {
+                    if (!root.contentBounds.hasOverflow) return;
+                    // Use vertical scroll delta for horizontal movement
+                    const delta = event.angleDelta.y !== 0 ? event.angleDelta.y : event.angleDelta.x;
+                    root.horizontalScrollOffset = root.clampHorizontalScroll(root.horizontalScrollOffset + delta);
+                    event.accepted = true;
+                }
+            }
+
             // Double-click on empty space to switch workspace
             TapHandler {
                 acceptedButtons: Qt.LeftButton
@@ -143,7 +272,7 @@ Item {
                     readonly property real baseX: {
                         let base = (windowData?.at?.[0] || 0) - (monitorData?.x || 0);
                         if (barPosition === "left") base -= barReserved;
-                        return (base * scale_) + root.viewportOffset;
+                        return (base * scale_) + root.viewportOffset + root.horizontalScrollOffset;
                     }
                     readonly property real baseY: {
                         let base = (windowData?.at?.[1] || 0) - (monitorData?.y || 0);
@@ -279,9 +408,13 @@ Item {
                         id: dragArea
                         anchors.fill: parent
                         hoverEnabled: true
-                        acceptedButtons: Qt.LeftButton | Qt.MiddleButton
+                        acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
                         drag.target: windowDelegate.dragging ? windowDelegate : null
                         drag.threshold: 0
+
+                        // Right-click drag state for horizontal scroll
+                        property real rightDragStartX: 0
+                        property real rightScrollStartOffset: 0
 
                         onEntered: windowDelegate.hovered = true
                         onExited: windowDelegate.hovered = false
@@ -291,10 +424,21 @@ Item {
                                 windowDelegate.pressPos = Qt.point(mouse.x, mouse.y);
                                 windowDelegate.initX = windowDelegate.x;
                                 windowDelegate.initY = windowDelegate.y;
+                            } else if (mouse.button === Qt.RightButton && root.contentBounds.hasOverflow) {
+                                rightDragStartX = mouse.x;
+                                rightScrollStartOffset = root.horizontalScrollOffset;
+                                root.isScrollDragging = true;
                             }
                         }
 
                         onPositionChanged: mouse => {
+                            // Handle right-click drag for horizontal scroll
+                            if (root.isScrollDragging && (mouse.buttons & Qt.RightButton) && root.contentBounds.hasOverflow) {
+                                const delta = mouse.x - rightDragStartX;
+                                root.horizontalScrollOffset = root.clampHorizontalScroll(rightScrollStartOffset + delta);
+                                return;
+                            }
+
                             if (!(mouse.buttons & Qt.LeftButton)) return;
                             
                             // Check if we should start dragging
@@ -358,6 +502,8 @@ Item {
                                     root.draggingFromWorkspace = -1;
                                     root.draggingTargetWorkspace = -1;
                                 }
+                            } else if (mouse.button === Qt.RightButton) {
+                                root.isScrollDragging = false;
                             }
                         }
 
