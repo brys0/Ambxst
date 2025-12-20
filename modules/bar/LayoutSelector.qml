@@ -71,50 +71,9 @@ StyledRect {
         anchors.fill: parent
         anchors.margins: padding
 
-        // Sliding highlight indicator (behind buttons)
-        StyledRect {
-            id: highlight
-            variant: "primary"
-            z: 0
-            radius: Styling.radius(-2)
-
-            property int currentIndex: {
-                for (let i = 0; i < root.displayLayouts.length; i++) {
-                    if (root.displayLayouts[i] === GlobalStates.hyprlandLayout) {
-                        return i;
-                    }
-                }
-                return 0;
-            }
-
-            width: orientation === "horizontal" ? buttonSize : parent.width
-            height: orientation === "vertical" ? buttonSize : parent.height
-
-            x: orientation === "horizontal" ? currentIndex * (buttonSize + spacing) : 0
-            y: orientation === "vertical" ? currentIndex * (buttonSize + spacing) : 0
-
-            Behavior on x {
-                enabled: Config.animDuration > 0
-                NumberAnimation {
-                    duration: Config.animDuration / 2
-                    easing.type: Easing.OutCubic
-                }
-            }
-
-            Behavior on y {
-                enabled: Config.animDuration > 0
-                NumberAnimation {
-                    duration: Config.animDuration / 2
-                    easing.type: Easing.OutCubic
-                }
-            }
-        }
-
-        // Buttons layout (in front of highlight)
         Loader {
             id: contentLoader
             anchors.fill: parent
-            z: 1
 
             sourceComponent: orientation === "horizontal" ? horizontalLayout : verticalLayout
         }

@@ -69,8 +69,7 @@ Item {
         id: controlsPopup
         anchorItem: buttonBg
         bar: root.bar
-        visualMargin: 8
-        popupPadding: 12
+        popupPadding: 16
 
         contentWidth: 220
         contentHeight: slidersColumn.implicitHeight + popupPadding * 2
@@ -211,8 +210,11 @@ Item {
 
     Component.onCompleted: {
         // Initialize values
-        if (Audio.sink?.audio) volumeRow.sliderValue = Audio.sink.audio.volume;
-        if (Audio.source?.audio) micRow.sliderValue = Audio.source.audio.volume;
-        if (brightnessRow.currentMonitor?.ready) brightnessRow.sliderValue = brightnessRow.currentMonitor.brightness;
+        if (Audio.sink?.audio)
+            volumeRow.sliderValue = Audio.sink.audio.volume;
+        if (Audio.source?.audio)
+            micRow.sliderValue = Audio.source.audio.volume;
+        if (brightnessRow.currentMonitor?.ready)
+            brightnessRow.sliderValue = brightnessRow.currentMonitor.brightness;
     }
 }

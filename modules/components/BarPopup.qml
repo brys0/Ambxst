@@ -11,7 +11,6 @@ import qs.config
 
 // BarPopup: A popup component that anchors to bar elements
 // Inspired by end-4/dots-hyprland BarPopup implementation
-// Uses PopupWindow with HyprlandFocusGrab for proper focus management
 PopupWindow {
     id: root
 
@@ -24,8 +23,8 @@ PopupWindow {
     default property alias contentData: contentContainer.data
 
     // Visual configuration
-    property int popupPadding: 12
-    property int visualMargin: 8  // Distance from bar
+    property int popupPadding: 8
+    property int visualMargin: 4  // Distance from bar
     property int shadowMargin: 16  // Extra margin for shadow
 
     // Behavior configuration
@@ -124,7 +123,7 @@ PopupWindow {
             anchors.fill: parent
             variant: "popup"
             enableShadow: true
-            radius: Styling.radius(4)
+            radius: Styling.radius(8)
 
             Item {
                 id: contentContainer

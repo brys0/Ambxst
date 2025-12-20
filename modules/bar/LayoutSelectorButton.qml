@@ -102,7 +102,7 @@ Item {
         anchorItem: buttonBg
         bar: root.bar
         visualMargin: 8
-        popupPadding: 16
+        popupPadding: 8
 
         contentWidth: layoutRow.implicitWidth + popupPadding * 2
         contentHeight: 36 + popupPadding * 2
@@ -130,13 +130,22 @@ Item {
                     required property int index
 
                     readonly property bool isSelected: layoutRow.currentIndex === index
+                    readonly property bool isFirst: index === 0
+                    readonly property bool isLast: index === GlobalStates.availableLayouts.length - 1
                     property bool buttonHovered: false
+
+                    readonly property real defaultRadius: Styling.radius(0)
+                    readonly property real selectedRadius: Styling.radius(0) / 2
 
                     variant: isSelected ? "primary" : (buttonHovered ? "focus" : "common")
                     enableShadow: false
                     width: layoutLabel.implicitWidth + 48
                     height: 36
-                    radius: isSelected ? Styling.radius(0) / 2 : Styling.radius(0)
+
+                    topLeftRadius: isSelected ? (isFirst ? defaultRadius : selectedRadius) : defaultRadius
+                    bottomLeftRadius: isSelected ? (isFirst ? defaultRadius : selectedRadius) : defaultRadius
+                    topRightRadius: isSelected ? (isLast ? defaultRadius : selectedRadius) : defaultRadius
+                    bottomRightRadius: isSelected ? (isLast ? defaultRadius : selectedRadius) : defaultRadius
 
                     RowLayout {
                         anchors.centerIn: parent

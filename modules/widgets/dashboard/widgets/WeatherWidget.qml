@@ -12,12 +12,11 @@ Rectangle {
 
     // Configurable properties
     property bool showDebugControls: true
-    property real cornerRadius: Styling.radius(4)
 
     // Internal alias for celestial body position (used by sun rays)
     readonly property alias celestialBodyItem: celestialBody
 
-    radius: cornerRadius
+    radius: Styling.radius(0)
     clip: true
     
     // Request weather update when widget becomes visible if no data
@@ -171,9 +170,9 @@ Rectangle {
     Item {
         id: sunRaysEffect
         
-        // Bind directly to celestialBody's calculated position
-        x: arcContainer.arcCenterX + (arcContainer.arcWidth / 2) * Math.cos(celestialBody.angle)
-        y: arcContainer.arcCenterY - arcContainer.arcHeight * Math.sin(celestialBody.angle)
+        // Follow the visual position of celestialBody (after animation)
+        x: celestialBody.x + celestialBody.width / 2
+        y: celestialBody.y + celestialBody.height / 2
         width: 0
         height: 0
         

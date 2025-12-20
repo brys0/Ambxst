@@ -151,11 +151,9 @@ Item {
         id: clockPopup
         anchorItem: buttonBg
         bar: root.bar
-        visualMargin: 8
-        popupPadding: 0
 
-        contentWidth: 300
-        contentHeight: WeatherService.debugMode ? 290 : 100
+        contentWidth: popupContent.width + popupPadding * 2
+        contentHeight: popupContent.height + popupPadding * 2
 
         Behavior on contentHeight {
             enabled: Config.animDuration > 0
@@ -172,29 +170,22 @@ Item {
         }
 
         // Content container
-        Item {
+        Column {
             id: popupContent
-            anchors.fill: parent
-            anchors.margins: Config.theme.srPopup.border[1]
+            spacing: 8
 
             // Weather widget with sun arc
             WeatherWidget {
                 id: weatherWidget
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.top: parent.top
-                height: 100 - Config.theme.srPopup.border[1] * 2
-                cornerRadius: Styling.radius(4 - Config.theme.srPopup.border[1])
+                width: 300
+                height: 100
                 showDebugControls: true
             }
 
             // Debug panel (below weather widget)
             Rectangle {
                 id: debugPanel
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.top: weatherWidget.bottom
-                anchors.topMargin: 8
+                width: weatherWidget.width
                 height: WeatherService.debugMode ? debugContent.height + 16 : 0
                 radius: Styling.radius(3)
                 color: Colors.surface
@@ -224,14 +215,14 @@ Item {
 
                         Row {
                             spacing: 4
-                            
+
                             Text {
                                 text: "Time:"
                                 color: Colors.overSurface
                                 font.pixelSize: Config.theme.fontSize - 2
                                 opacity: 0.7
                             }
-                            
+
                             Text {
                                 text: {
                                     var h = Math.floor(WeatherService.debugHour);
@@ -242,7 +233,7 @@ Item {
                                 font.pixelSize: Config.theme.fontSize - 2
                                 font.weight: Font.Bold
                             }
-                            
+
                             Text {
                                 text: WeatherService.debugIsDay ? "☀" : "☽"
                                 font.pixelSize: Config.theme.fontSize
@@ -267,13 +258,13 @@ Item {
 
                             MouseArea {
                                 anchors.fill: parent
-                                onPositionChanged: function(mouse) {
+                                onPositionChanged: function (mouse) {
                                     if (pressed) {
                                         var ratio = Math.max(0, Math.min(1, mouse.x / width));
                                         WeatherService.debugHour = ratio * 24;
                                     }
                                 }
-                                onPressed: function(mouse) {
+                                onPressed: function (mouse) {
                                     var ratio = Math.max(0, Math.min(1, mouse.x / width));
                                     WeatherService.debugHour = ratio * 24;
                                 }
@@ -300,33 +291,78 @@ Item {
 
                             Repeater {
                                 model: [
-                                    { code: 0, emoji: "☀️", name: "Clear" },
-                                    { code: 1, emoji: "🌤️", name: "Mainly clear" },
-                                    { code: 2, emoji: "⛅", name: "Partly cloudy" },
-                                    { code: 3, emoji: "☁️", name: "Overcast" },
-                                    { code: 45, emoji: "🌫️", name: "Fog" },
-                                    { code: 51, emoji: "🌦️", name: "Drizzle" },
-                                    { code: 61, emoji: "🌧️", name: "Rain" },
-                                    { code: 65, emoji: "🌧️", name: "Heavy rain" },
-                                    { code: 71, emoji: "❄️", name: "Snow" },
-                                    { code: 75, emoji: "❄️", name: "Heavy snow" },
-                                    { code: 95, emoji: "⛈️", name: "Thunder" },
-                                    { code: 96, emoji: "🌩️", name: "Hail" }
+                                    {
+                                        code: 0,
+                                        emoji: "☀️",
+                                        name: "Clear"
+                                    },
+                                    {
+                                        code: 1,
+                                        emoji: "🌤️",
+                                        name: "Mainly clear"
+                                    },
+                                    {
+                                        code: 2,
+                                        emoji: "⛅",
+                                        name: "Partly cloudy"
+                                    },
+                                    {
+                                        code: 3,
+                                        emoji: "☁️",
+                                        name: "Overcast"
+                                    },
+                                    {
+                                        code: 45,
+                                        emoji: "🌫️",
+                                        name: "Fog"
+                                    },
+                                    {
+                                        code: 51,
+                                        emoji: "🌦️",
+                                        name: "Drizzle"
+                                    },
+                                    {
+                                        code: 61,
+                                        emoji: "🌧️",
+                                        name: "Rain"
+                                    },
+                                    {
+                                        code: 65,
+                                        emoji: "🌧️",
+                                        name: "Heavy rain"
+                                    },
+                                    {
+                                        code: 71,
+                                        emoji: "❄️",
+                                        name: "Snow"
+                                    },
+                                    {
+                                        code: 75,
+                                        emoji: "❄️",
+                                        name: "Heavy snow"
+                                    },
+                                    {
+                                        code: 95,
+                                        emoji: "⛈️",
+                                        name: "Thunder"
+                                    },
+                                    {
+                                        code: 96,
+                                        emoji: "🌩️",
+                                        name: "Hail"
+                                    }
                                 ]
 
                                 Rectangle {
                                     id: weatherBtn
                                     required property var modelData
                                     required property int index
-                                    
+
                                     width: (debugContent.width - 20) / 6
                                     height: width
                                     radius: Styling.radius(1)
-                                    color: WeatherService.debugWeatherCode === modelData.code 
-                                        ? Colors.primary 
-                                        : (weatherBtnMouse.containsMouse ? Colors.background : "transparent")
-                                    border.color: WeatherService.debugWeatherCode === modelData.code 
-                                        ? Colors.primary : Colors.outline
+                                    color: WeatherService.debugWeatherCode === modelData.code ? Colors.primary : (weatherBtnMouse.containsMouse ? Colors.background : "transparent")
+                                    border.color: WeatherService.debugWeatherCode === modelData.code ? Colors.primary : Colors.outline
                                     border.width: 1
 
                                     Text {
