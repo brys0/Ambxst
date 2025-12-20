@@ -868,60 +868,6 @@ ClippingRectangle {
         }
     }
 
-    // Date display (top right)
-    Item {
-        id: dateContainer
-        anchors.right: parent.right
-        anchors.top: parent.top
-        anchors.margins: 12
-
-        property date currentDate: new Date()
-
-        function formatDate(date) {
-            var dayName = date.toLocaleDateString(Qt.locale(), "ddd");
-            var monthName = date.toLocaleDateString(Qt.locale(), "MMM");
-            var dayNum = date.getDate();
-
-            // Capitalize first letter and ensure abbreviation dot
-            dayName = dayName.charAt(0).toUpperCase() + dayName.slice(1);
-            if (!dayName.endsWith("."))
-                dayName += ".";
-
-            monthName = monthName.charAt(0).toUpperCase() + monthName.slice(1);
-            if (!monthName.endsWith("."))
-                monthName += ".";
-
-            return dayName + " " + monthName + " " + dayNum;
-        }
-
-        // Update date every minute
-        Timer {
-            interval: 60000
-            running: true
-            repeat: true
-            onTriggered: dateContainer.currentDate = new Date()
-        }
-
-        Text {
-            id: dateText
-            anchors.right: parent.right
-            text: dateContainer.formatDate(dateContainer.currentDate)
-            color: Qt.rgba(1, 1, 1, 0.85)
-            font.family: "Noto Sans"
-            font.pixelSize: Config.theme.fontSize - 2
-            font.weight: Font.Bold
-
-            layer.enabled: true
-            layer.effect: MultiEffect {
-                shadowEnabled: true
-                shadowColor: Qt.rgba(0, 0, 0, 0.5)
-                shadowBlur: 0.4
-                shadowHorizontalOffset: 1
-                shadowVerticalOffset: 1
-            }
-        }
-    }
-
     // ═══════════════════════════════════════════════════════════
     // DEBUG CONTROLS
     // ═══════════════════════════════════════════════════════════

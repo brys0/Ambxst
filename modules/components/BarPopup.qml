@@ -26,6 +26,7 @@ PopupWindow {
     property int popupPadding: 8
     property int visualMargin: 4  // Distance from bar
     property int shadowMargin: 16  // Extra margin for shadow
+    property string variant: "popup"  // StyledRect variant for background
 
     // Behavior configuration
     property bool closeOnFocusLost: true
@@ -121,7 +122,7 @@ PopupWindow {
         StyledRect {
             id: background
             anchors.fill: parent
-            variant: "popup"
+            variant: root.variant
             enableShadow: true
             radius: Styling.radius(8)
 

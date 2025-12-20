@@ -19,36 +19,15 @@ Item {
         var now = new Date();
         return (now.getDay() + 6) % 7;
     }
-    property var weekDays: [
-        {
-            day: 'Mo',
-            today: 0
-        },
-        {
-            day: 'Tu',
-            today: 0
-        },
-        {
-            day: 'We',
-            today: 0
-        },
-        {
-            day: 'Th',
-            today: 0
-        },
-        {
-            day: 'Fr',
-            today: 0
-        },
-        {
-            day: 'Sa',
-            today: 0
-        },
-        {
-            day: 'Su',
-            today: 0
-        }
-    ]
+
+    // Helper function to get localized day abbreviation
+    function getDayAbbrev(dayIndex) {
+        // Create a date for a known Monday (e.g., 2024-01-01 was a Monday)
+        var d = new Date(2024, 0, 1 + dayIndex);
+        var dayName = d.toLocaleDateString(Qt.locale(), "ddd");
+        // Capitalize first letter and limit to 2 chars
+        return (dayName.charAt(0).toUpperCase() + dayName.slice(1, 2)).replace(".", "");
+    }
 
     ColumnLayout {
         anchors.fill: parent
@@ -157,11 +136,11 @@ Item {
                             Layout.alignment: Qt.AlignHCenter
 
                             Repeater {
-                                model: weekDays
+                                model: 7
                                 delegate: CalendarDayButton {
                                     required property int index
-                                    day: root.weekDays[index].day
-                                    isToday: root.weekDays[index].today
+                                    day: root.getDayAbbrev(index)
+                                    isToday: 0
                                     bold: true
                                     isCurrentDayOfWeek: index === root.currentDayOfWeek
                                 }

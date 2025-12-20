@@ -27,6 +27,26 @@ ClippingRectangle {
 
     readonly property var variantConfig: {
         switch (variant) {
+        case "transparent":
+            // Internal variant: uses bg config but with opacity, border and radius forced to 0
+            const bgConfig = Config.theme.srBg;
+            return {
+                gradient: bgConfig.gradient,
+                gradientType: bgConfig.gradientType,
+                gradientAngle: bgConfig.gradientAngle,
+                gradientCenterX: bgConfig.gradientCenterX,
+                gradientCenterY: bgConfig.gradientCenterY,
+                halftoneDotMin: bgConfig.halftoneDotMin,
+                halftoneDotMax: bgConfig.halftoneDotMax,
+                halftoneStart: bgConfig.halftoneStart,
+                halftoneEnd: bgConfig.halftoneEnd,
+                halftoneDotColor: bgConfig.halftoneDotColor,
+                halftoneBackgroundColor: bgConfig.halftoneBackgroundColor,
+                itemColor: bgConfig.itemColor,
+                opacity: 0,
+                border: [bgConfig.border[0], 0],
+                radius: 0
+            };
         case "bg":
             return Config.theme.srBg;
         case "popup":
@@ -98,7 +118,7 @@ ClippingRectangle {
 
     readonly property real rectOpacity: backgroundOpacity >= 0 ? backgroundOpacity : variantConfig.opacity
 
-    radius: Styling.radius(0)
+    radius: variantConfig.radius !== undefined ? variantConfig.radius : Styling.radius(0)
     color: "transparent"
 
     Behavior on radius {
