@@ -170,23 +170,41 @@ Item {
                 radius: Styling.radius(4 - Config.theme.srPopup.border[1])
                 clip: true
 
-                // Dynamic gradient based on time of day
+                // Color blending helper function
+                function blendColors(color1, color2, color3, blend) {
+                    var r = color1.r * blend.day + color2.r * blend.evening + color3.r * blend.night;
+                    var g = color1.g * blend.day + color2.g * blend.evening + color3.g * blend.night;
+                    var b = color1.b * blend.day + color2.b * blend.evening + color3.b * blend.night;
+                    return Qt.rgba(r, g, b, 1);
+                }
+
+                // Color definitions for each time of day
+                // Day colors (sky blue)
+                readonly property color dayTop: "#87CEEB"
+                readonly property color dayMid: "#B0E0E6"
+                readonly property color dayBot: "#E0F6FF"
+                
+                // Evening colors (sunset)
+                readonly property color eveningTop: "#1a1a2e"
+                readonly property color eveningMid: "#e94560"
+                readonly property color eveningBot: "#ffeaa7"
+                
+                // Night colors (dark blue)
+                readonly property color nightTop: "#0f0f23"
+                readonly property color nightMid: "#1a1a3a"
+                readonly property color nightBot: "#2d2d5a"
+
+                // Blended colors based on time
+                readonly property var blend: WeatherService.effectiveTimeBlend
+                readonly property color topColor: blendColors(dayTop, eveningTop, nightTop, blend)
+                readonly property color midColor: blendColors(dayMid, eveningMid, nightMid, blend)
+                readonly property color botColor: blendColors(dayBot, eveningBot, nightBot, blend)
+
+                // Dynamic gradient based on time of day (smooth interpolation)
                 gradient: Gradient {
-                    GradientStop { 
-                        position: 0.0
-                        color: WeatherService.timeOfDay === "Night" ? "#0f0f23" :
-                               WeatherService.timeOfDay === "Evening" ? "#1a1a2e" : "#87CEEB"
-                    }
-                    GradientStop { 
-                        position: 0.5
-                        color: WeatherService.timeOfDay === "Night" ? "#1a1a3a" :
-                               WeatherService.timeOfDay === "Evening" ? "#e94560" : "#B0E0E6"
-                    }
-                    GradientStop { 
-                        position: 1.0
-                        color: WeatherService.timeOfDay === "Night" ? "#2d2d5a" :
-                               WeatherService.timeOfDay === "Evening" ? "#ffeaa7" : "#E0F6FF"
-                    }
+                    GradientStop { position: 0.0; color: weatherCard.topColor }
+                    GradientStop { position: 0.5; color: weatherCard.midColor }
+                    GradientStop { position: 1.0; color: weatherCard.botColor }
                 }
 
                 // Sun arc container
@@ -208,7 +226,7 @@ Item {
                         onPaint: {
                             var ctx = getContext("2d");
                             ctx.reset();
-                            ctx.strokeStyle = WeatherService.isDay ? 
+                            ctx.strokeStyle = WeatherService.effectiveIsDay ? 
                                 "rgba(255, 255, 255, 0.3)" : "rgba(255, 255, 255, 0.15)";
                             ctx.lineWidth = 1.5;
                             
@@ -237,7 +255,7 @@ Item {
                         
                         Connections {
                             target: WeatherService
-                            function onIsDayChanged() { arcCanvas.requestPaint() }
+                            function onEffectiveIsDayChanged() { arcCanvas.requestPaint() }
                         }
                         
                         onWidthChanged: requestPaint()
@@ -260,7 +278,7 @@ Item {
                         height: 20
                         radius: 10
 
-                        property real progress: WeatherService.sunProgress
+                        property real progress: WeatherService.effectiveSunProgress
                         
                         // Elliptical arc position calculation
                         property real angle: Math.PI * (1 - progress)  // PI to 0
@@ -276,15 +294,15 @@ Item {
                         gradient: Gradient {
                             GradientStop { 
                                 position: 0.0
-                                color: WeatherService.isDay ? "#FFF9C4" : "#FFFFFF"
+                                color: WeatherService.effectiveIsDay ? "#FFF9C4" : "#FFFFFF"
                             }
                             GradientStop { 
                                 position: 0.5
-                                color: WeatherService.isDay ? "#FFE082" : "#E8E8E8"
+                                color: WeatherService.effectiveIsDay ? "#FFE082" : "#E8E8E8"
                             }
                             GradientStop { 
                                 position: 1.0
-                                color: WeatherService.isDay ? "#FFB74D" : "#C0C0C0"
+                                color: WeatherService.effectiveIsDay ? "#FFB74D" : "#C0C0C0"
                             }
                         }
 
@@ -295,7 +313,7 @@ Item {
                             height: parent.height + 12
                             radius: width / 2
                             color: "transparent"
-                            border.color: WeatherService.isDay ? 
+                            border.color: WeatherService.effectiveIsDay ? 
                                 Qt.rgba(1, 0.95, 0.7, 0.4) : Qt.rgba(1, 1, 1, 0.2)
                             border.width: 3
                             z: -1
@@ -308,13 +326,27 @@ Item {
                             height: parent.height + 6
                             radius: width / 2
                             color: "transparent"
-                            border.color: WeatherService.isDay ? 
+                            border.color: WeatherService.effectiveIsDay ? 
                                 Qt.rgba(1, 0.95, 0.7, 0.6) : Qt.rgba(1, 1, 1, 0.3)
                             border.width: 2
                             z: -1
                         }
                     }
                 }
+
+                // Text colors (interpolated)
+                readonly property color textPrimary: blendColors(
+                    Qt.color("#1a5276"),  // Day
+                    Qt.color("#FFFFFF"),  // Evening
+                    Qt.color("#FFFFFF"),  // Night
+                    blend
+                )
+                readonly property color textSecondary: blendColors(
+                    Qt.color("#2980b9"),  // Day
+                    Qt.rgba(1, 1, 1, 0.7),  // Evening
+                    Qt.rgba(1, 1, 1, 0.7),  // Night
+                    blend
+                )
 
                 // Time of day label (top left)
                 Column {
@@ -324,17 +356,16 @@ Item {
                     spacing: 2
 
                     Text {
-                        text: WeatherService.timeOfDay
-                        color: WeatherService.timeOfDay === "Day" ? "#1a5276" : "#FFFFFF"
+                        text: WeatherService.effectiveTimeOfDay
+                        color: weatherCard.textPrimary
                         font.family: Config.theme.font
                         font.pixelSize: Config.theme.fontSize + 4
                         font.weight: Font.Bold
                     }
 
                     Text {
-                        text: WeatherService.weatherDescription
-                        color: WeatherService.timeOfDay === "Day" ? "#2980b9" : 
-                               Qt.rgba(1, 1, 1, 0.7)
+                        text: WeatherService.effectiveWeatherDescription
+                        color: weatherCard.textSecondary
                         font.family: Config.theme.font
                         font.pixelSize: Config.theme.fontSize - 2
                     }
@@ -346,10 +377,117 @@ Item {
                     anchors.top: parent.top
                     anchors.margins: 12
                     text: Math.round(WeatherService.currentTemp) + Config.weather.unit + "°"
-                    color: WeatherService.timeOfDay === "Day" ? "#1a5276" : "#FFFFFF"
+                    color: weatherCard.textPrimary
                     font.family: Config.theme.font
                     font.pixelSize: Config.theme.fontSize + 6
                     font.weight: Font.Medium
+                }
+
+                // Debug controls
+                Column {
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    anchors.margins: 8
+                    spacing: 4
+                    visible: WeatherService.debugMode
+
+                    // Hour display and indicator
+                    Row {
+                        spacing: 4
+
+                        Text {
+                            text: {
+                                var h = Math.floor(WeatherService.debugHour);
+                                var m = Math.round((WeatherService.debugHour - h) * 60);
+                                return (h < 10 ? "0" : "") + h + ":" + (m < 10 ? "0" : "") + m;
+                            }
+                            color: "#fff"
+                            font.pixelSize: 11
+                            font.bold: true
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+
+                        Rectangle {
+                            width: 20; height: 20
+                            radius: 10
+                            color: WeatherService.debugIsDay ? "#FFE082" : "#C0C0C0"
+                            Text { 
+                                anchors.centerIn: parent
+                                text: WeatherService.debugIsDay ? "☀" : "☽"
+                                font.pixelSize: 12
+                            }
+                        }
+                    }
+
+                    // Hour controls
+                    Row {
+                        spacing: 4
+
+                        Rectangle {
+                            width: 24; height: 20
+                            radius: 4
+                            color: "#555"
+                            Text { anchors.centerIn: parent; text: "−1h"; font.pixelSize: 8; color: "#fff" }
+                            MouseArea { 
+                                anchors.fill: parent
+                                onClicked: WeatherService.debugHour = (WeatherService.debugHour - 1 + 24) % 24
+                            }
+                        }
+                        Rectangle {
+                            width: 24; height: 20
+                            radius: 4
+                            color: "#555"
+                            Text { anchors.centerIn: parent; text: "+1h"; font.pixelSize: 8; color: "#fff" }
+                            MouseArea { 
+                                anchors.fill: parent
+                                onClicked: WeatherService.debugHour = (WeatherService.debugHour + 1) % 24
+                            }
+                        }
+                    }
+
+                    // Weather code control
+                    Row {
+                        spacing: 4
+
+                        Rectangle {
+                            width: 50; height: 20
+                            radius: 4
+                            color: "#555"
+                            Text { anchors.centerIn: parent; text: WeatherService.effectiveWeatherSymbol; font.pixelSize: 12 }
+                            MouseArea { 
+                                anchors.fill: parent
+                                onClicked: {
+                                    var codes = [0, 1, 2, 3, 45, 51, 61, 71, 80, 95];
+                                    var idx = codes.indexOf(WeatherService.debugWeatherCode);
+                                    WeatherService.debugWeatherCode = codes[(idx + 1) % codes.length];
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Debug toggle button
+                Rectangle {
+                    anchors.left: parent.left
+                    anchors.bottom: parent.bottom
+                    anchors.margins: 8
+                    width: 20; height: 20
+                    radius: 10
+                    color: WeatherService.debugMode ? Colors.primary : "#555"
+                    opacity: 0.8
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "D"
+                        font.pixelSize: 10
+                        font.bold: true
+                        color: "#fff"
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: WeatherService.debugMode = !WeatherService.debugMode
+                    }
                 }
             }
         }

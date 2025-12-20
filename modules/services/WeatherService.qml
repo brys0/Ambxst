@@ -23,6 +23,119 @@ QtObject {
     property string timeOfDay: "Day"  // "Day", "Evening", "Night"
     property string weatherDescription: ""
 
+    // Debug mode
+    property bool debugMode: false
+    property real debugHour: 12.0  // 0-24 hour format (e.g., 14.5 = 2:30 PM)
+    property int debugWeatherCode: 0
+
+    // Debug sunrise/sunset (default: 6:00 and 18:00)
+    readonly property real debugSunriseHour: 6.0
+    readonly property real debugSunsetHour: 18.0
+
+    // Calculate debug values based on debugHour
+    readonly property real debugSunProgress: {
+        if (debugHour >= debugSunriseHour && debugHour <= debugSunsetHour) {
+            // Daytime: sun moves from 0 to 1
+            return (debugHour - debugSunriseHour) / (debugSunsetHour - debugSunriseHour);
+        } else {
+            // Nighttime: moon moves from 0 to 1
+            var nightDuration = 24 - (debugSunsetHour - debugSunriseHour);
+            if (debugHour > debugSunsetHour) {
+                return (debugHour - debugSunsetHour) / nightDuration;
+            } else {
+                return (debugHour + (24 - debugSunsetHour)) / nightDuration;
+            }
+        }
+    }
+
+    readonly property bool debugIsDay: debugHour >= debugSunriseHour && debugHour <= debugSunsetHour
+
+    // Time periods with smooth transitions
+    // 6-8: Evening (dawn), 8-18: Day, 18-20: Evening (dusk), 20-6: Night
+    readonly property real debugDayAmount: {
+        var h = debugHour;
+        if (h >= 8 && h <= 18) return 1.0;  // Full day
+        if (h > 6 && h < 8) return (h - 6) / 2;  // Dawn transition: 0 -> 1
+        if (h > 18 && h < 20) return 1.0 - (h - 18) / 2;  // Dusk transition: 1 -> 0
+        return 0.0;  // Night
+    }
+
+    readonly property real debugEveningAmount: {
+        var h = debugHour;
+        if (h >= 6 && h <= 8) return 1.0 - (h - 6) / 2;  // Dawn: 1 -> 0
+        if (h >= 18 && h <= 20) return (h - 18) / 2 + (1.0 - (h - 18) / 2) * (h < 19 ? 1 : 0);  // Dusk
+        if (h > 18 && h < 20) return 1.0 - Math.abs(h - 19);  // Peak at 19
+        return 0.0;
+    }
+
+    readonly property real debugNightAmount: {
+        var h = debugHour;
+        if (h >= 20 || h <= 6) return 1.0;  // Full night
+        if (h > 18 && h < 20) return (h - 18) / 2;  // Dusk transition: 0 -> 1
+        if (h > 6 && h < 8) return 1.0 - (h - 6) / 2;  // Dawn transition: 1 -> 0
+        return 0.0;  // Day
+    }
+
+    // Simplified: calculate blend factors for smooth transitions
+    // Returns values 0-1 for day, evening, night that sum to 1
+    function calculateTimeBlend(hour) {
+        var day = 0, evening = 0, night = 0;
+        
+        if (hour >= 8 && hour <= 17) {
+            // Pure day (8:00 - 17:00)
+            day = 1.0;
+        } else if (hour > 6 && hour < 8) {
+            // Dawn transition (6:00 - 8:00): evening -> day
+            var t = (hour - 6) / 2;
+            evening = 1.0 - t;
+            day = t;
+        } else if (hour > 17 && hour < 18) {
+            // Pre-dusk (17:00 - 18:00): day -> evening
+            var t = hour - 17;
+            day = 1.0 - t;
+            evening = t;
+        } else if (hour >= 18 && hour < 20) {
+            // Dusk transition (18:00 - 20:00): evening -> night
+            var t = (hour - 18) / 2;
+            evening = 1.0 - t;
+            night = t;
+        } else if (hour >= 20 || hour < 5) {
+            // Pure night (20:00 - 5:00)
+            night = 1.0;
+        } else if (hour >= 5 && hour <= 6) {
+            // Pre-dawn (5:00 - 6:00): night -> evening
+            var t = hour - 5;
+            night = 1.0 - t;
+            evening = t;
+        }
+        
+        return { day: day, evening: evening, night: night };
+    }
+
+    readonly property var debugTimeBlend: calculateTimeBlend(debugHour)
+    readonly property var realTimeBlend: {
+        var now = new Date();
+        return calculateTimeBlend(now.getHours() + now.getMinutes() / 60);
+    }
+
+    // Effective blend (use debug or real)
+    readonly property var effectiveTimeBlend: debugMode ? debugTimeBlend : realTimeBlend
+
+    // For backward compatibility
+    readonly property string debugTimeOfDay: {
+        var blend = debugTimeBlend;
+        if (blend.day >= blend.evening && blend.day >= blend.night) return "Day";
+        if (blend.evening >= blend.night) return "Evening";
+        return "Night";
+    }
+
+    // Effective values (use debug values when debugMode is on)
+    readonly property real effectiveSunProgress: debugMode ? debugSunProgress : sunProgress
+    readonly property string effectiveTimeOfDay: debugMode ? debugTimeOfDay : timeOfDay
+    readonly property bool effectiveIsDay: debugMode ? debugIsDay : isDay
+    readonly property string effectiveWeatherSymbol: debugMode ? getWeatherCodeEmoji(debugWeatherCode) : weatherSymbol
+    readonly property string effectiveWeatherDescription: debugMode ? getWeatherDescription(debugWeatherCode) : weatherDescription
+
     // Internal state
     property int retryCount: 0
     property int maxRetries: 5
