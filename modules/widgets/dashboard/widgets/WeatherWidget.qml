@@ -270,18 +270,18 @@ ClippingRectangle {
 
         // Background layer - larger, slower, more transparent clouds
         Repeater {
-            model: 2
+            model: 4
 
             Item {
                 id: bgCloud
                 required property int index
-                property real startX: -width + (index * parent.width * 0.6)
+                property real startX: -width + (index * parent.width * 0.4)
                 property real speed: 0.15 + (index * 0.05)
 
                 x: startX
-                y: 5 + (index * 20)
-                width: 80 + (index * 20)
-                height: 30 + (index * 8)
+                y: 5 + (index * 15)
+                width: 160 + (index * 40)
+                height: 60 + (index * 16)
 
                 // Cloud shape - multiple overlapping circles
                 Rectangle {
@@ -320,18 +320,18 @@ ClippingRectangle {
 
         // Foreground layer - smaller, faster, more opaque clouds
         Repeater {
-            model: 3
+            model: 6
 
             Item {
                 id: fgCloud
                 required property int index
-                property real startX: -width + (index * parent.width * 0.35)
+                property real startX: -width + (index * parent.width * 0.25)
                 property real speed: 0.25 + (index * 0.1)
 
                 x: startX
-                y: 15 + (index * 18)
-                width: 45 + (index * 12)
-                height: 18 + (index * 5)
+                y: 20 + (index * 15)
+                width: 90 + (index * 24)
+                height: 36 + (index * 10)
 
                 // Cloud shape
                 Rectangle {
