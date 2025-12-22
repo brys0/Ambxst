@@ -201,26 +201,31 @@ Item {
                         color: Colors.overBackground
                     }
 
-                    Text {
-                        text: Math.round(Battery.percentage) + "% " + (Battery.isPluggedIn ? 
-                              (Battery.isCharging ? "Charging" : "Full") :
-                              "On battery")
-                        font.family: Styling.defaultFont
-                        font.pixelSize: Styling.fontSize(0)
-                        font.bold: true
-                        color: Colors.overBackground
-                    }
-
-                    Text {
-                        text: Battery.isPluggedIn ? 
-                              (Battery.timeToFull !== "" ? "Full in " + Battery.timeToFull : "") :
-                              (Battery.timeToEmpty !== "" ? Battery.timeToEmpty + " remaining" : "")
-                        font.family: Styling.defaultFont
-                        font.pixelSize: Styling.fontSize(-1)
-                        color: Colors.overBackground
-                        opacity: 0.8
+                    ColumnLayout {
                         Layout.fillWidth: true
-                        elide: Text.ElideRight
+                        spacing: 2
+
+                        Text {
+                            text: Math.round(Battery.percentage) + "% " + (Battery.isPluggedIn ? 
+                                  (Battery.isCharging ? "Charging" : "Full") :
+                                  "On battery")
+                            font.family: Styling.defaultFont
+                            font.pixelSize: Styling.fontSize(0)
+                            font.bold: true
+                            color: Colors.overBackground
+                        }
+
+                        Text {
+                            text: Battery.isPluggedIn ? 
+                                  (Battery.timeToFull !== "" ? "Full in " + Battery.timeToFull : "") :
+                                  (Battery.timeToEmpty !== "" ? Battery.timeToEmpty + " remaining" : "")
+                            font.family: Styling.defaultFont
+                            font.pixelSize: Styling.fontSize(-1)
+                            color: Colors.overBackground
+                            opacity: 0.8
+                            Layout.fillWidth: true
+                            elide: Text.ElideRight
+                        }
                     }
                 }
             }
@@ -230,8 +235,8 @@ Item {
                 Layout.fillWidth: true
                 spacing: 4
 
-            Repeater {
-                model: PowerProfile.availableProfiles
+                Repeater {
+                    model: PowerProfile.availableProfiles
 
                 delegate: StyledRect {
                     id: profileButton
@@ -286,6 +291,6 @@ Item {
                 }
             }
         }
+        }
     }
-}
 }
