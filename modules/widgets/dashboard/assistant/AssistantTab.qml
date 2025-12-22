@@ -473,7 +473,7 @@ Item {
                                 
                                 // Action Buttons (Visible on Hover, outside bubble)
                                 Row {
-                                    anchors.bottom: bubble.baseline
+                                    anchors.verticalCenter: bubble.verticalCenter
                                     // Make buttons appear to the side of the bubble
                                     anchors.left: isUser ? undefined : bubble.right
                                     anchors.right: isUser ? bubble.left : undefined
@@ -493,7 +493,7 @@ Item {
                                         contentItem: Text { 
                                             text: Icons.copy
                                             font.family: Icons.font
-                                            color: parent.down ? Colors.onPrimary : (parent.isHovered ? Colors.onSurface : Colors.onSurface)
+                                            color: parent.down ? Colors.overPrimary : (parent.isHovered ? Colors.overSurface : Colors.overSurface)
                                             horizontalAlignment: Text.AlignHCenter
                                             verticalAlignment: Text.AlignVCenter 
                                         }
@@ -521,7 +521,7 @@ Item {
                                         contentItem: Text { 
                                             text: Icons.arrowCounterClockwise
                                             font.family: Icons.font
-                                            color: parent.down ? Colors.onPrimary : (parent.isHovered ? Colors.onSurface : Colors.onSurface)
+                                            color: parent.down ? Colors.overPrimary : (parent.isHovered ? Colors.overSurface : Colors.overSurface)
                                             horizontalAlignment: Text.AlignHCenter
                                             verticalAlignment: Text.AlignVCenter 
                                         }
