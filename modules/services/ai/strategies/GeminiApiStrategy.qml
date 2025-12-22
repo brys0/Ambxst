@@ -65,7 +65,6 @@ ApiStrategy {
     
     function parseResponse(response) {
         try {
-            console.log("Gemini: Parsing response...");
             if (!response || response.trim() === "") return { content: "Error: Empty response from API" };
             
             let json = JSON.parse(response);

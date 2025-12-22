@@ -462,34 +462,48 @@ Item {
                                 }
                             }
                             
-                            // Bubble Area
+                            // Bubble Area (Full Width Hover)
                             MouseArea {
                                 id: bubbleArea
-                                width: Math.min(Math.max(bubbleContent.implicitWidth + 24, 100), chatView.width * (isSystem ? 0.9 : 0.7))
-                                height: bubble.height
+                                width: parent.width
+                                height: Math.max(bubble.height, 32)
                                 hoverEnabled: true
+                                acceptedButtons: Qt.NoButton // Passthrough clicks unless explicitly handled
+
                                 
-                                // Action Buttons (Visible on Hover)
+                                // Action Buttons (Visible on Hover, outside bubble)
                                 Row {
-                                    anchors.bottom: parent.top
-                                    anchors.right: isUser ? undefined : parent.right // Align right for assistant
-                                    anchors.left: isUser ? parent.left : undefined   // Align left for user
-                                    anchors.bottomMargin: 4
+                                    anchors.bottom: bubble.baseline
+                                    // Make buttons appear to the side of the bubble
+                                    anchors.left: isUser ? undefined : bubble.right
+                                    anchors.right: isUser ? bubble.left : undefined
+                                    anchors.leftMargin: 8
+                                    anchors.rightMargin: 8
                                     spacing: 4
-                                    visible: parent.containsMouse
+                                    visible: bubbleArea.containsMouse
                                     
                                     // Copy
                                     Button {
                                         width: 24; height: 24
                                         flat: true
                                         padding: 0
-                                        contentItem: Text { text: Icons.copy; font.family: Icons.font; color: Colors.surfaceDim; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
-                                        background: Rectangle { color: parent.hovered ? Colors.surfaceBright : "transparent"; radius: 4 }
+                                        
+                                        property bool isHovered: hovered
+                                        
+                                        contentItem: Text { 
+                                            text: Icons.copy
+                                            font.family: Icons.font
+                                            color: parent.down ? Colors.onPrimary : (parent.isHovered ? Colors.onSurface : Colors.onSurface)
+                                            horizontalAlignment: Text.AlignHCenter
+                                            verticalAlignment: Text.AlignVCenter 
+                                        }
+                                        
+                                        background: StyledRect { 
+                                            variant: parent.down ? "primary" : (parent.isHovered ? "focus" : "common")
+                                            radius: Styling.radius(4)
+                                        }
+                                        
                                         onClicked: {
-                                            // TODO: specific clipboard implementation 
-                                            // For now assuming a clipboard utility or just not implemented error
-                                            // Quickshell.clipboard seems not standard, might need QClipboard via C++ or `wl-copy`
-                                            // Using `wl-copy` via Process for safety
                                             let p = Qt.createQmlObject('import Quickshell; import Quickshell.Io; Process { command: ["wl-copy", "' + modelData.content.replace(/"/g, '\\"') + '"] }', parent);
                                             p.running = true;
                                         }
@@ -501,30 +515,46 @@ Item {
                                         width: 24; height: 24
                                         flat: true
                                         padding: 0
-                                        contentItem: Text { text: Icons.sync; font.family: Icons.font; color: Colors.surfaceDim; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
-                                        background: Rectangle { color: parent.hovered ? Colors.surfaceBright : "transparent"; radius: 4 }
+                                        
+                                        property bool isHovered: hovered
+
+                                        contentItem: Text { 
+                                            text: Icons.arrowCounterClockwise
+                                            font.family: Icons.font
+                                            color: parent.down ? Colors.onPrimary : (parent.isHovered ? Colors.onSurface : Colors.onSurface)
+                                            horizontalAlignment: Text.AlignHCenter
+                                            verticalAlignment: Text.AlignVCenter 
+                                        }
+                                        
+                                        background: StyledRect { 
+                                            variant: parent.down ? "primary" : (parent.isHovered ? "focus" : "common")
+                                            radius: Styling.radius(4)
+                                        }
+                                        
                                         onClicked: {
-                                            // Hacky regenerate: delete this and following, then re-send last user msg?
-                                            // Better: just delete this and everything after, then re-trigger Ai.makeRequest()?
-                                            // Ai service doesn't expose clean regenerate yet.
-                                            // For now: No-op or TODO
+                                            // TODO: Regenerate logic
                                         }
                                     }
                                 }
 
                                 StyledRect {
                                     id: bubble
-                                    width: parent.width
+                                    width: Math.min(Math.max(bubbleContent.implicitWidth + 32, 100), chatView.width * (isSystem ? 0.9 : 0.7))
                                     height: bubbleContent.implicitHeight + 24
+                                    
+                                    // Align bubble based on user/assistant
+                                    anchors.right: isUser ? parent.right : undefined
+                                    anchors.left: isUser ? undefined : parent.left
+                                    
                                     variant: isSystem ? "surface" : (isUser ? "primaryContainer" : "surfaceVariant")
-                                    radius: Styling.radius(12)
+                                    radius: Styling.radius(4)
                                     border.width: isSystem ? 1 : 0
                                     border.color: Colors.surfaceDim
                                     
                                     ColumnLayout {
                                         id: bubbleContent
                                         anchors.centerIn: parent
-                                        width: parent.width - 24
+                                        width: parent.width - 32
                                         spacing: 8
                                         
                                         // Text Content

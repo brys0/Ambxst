@@ -23,7 +23,6 @@ ApiStrategy {
     
     function parseResponse(response) {
         try {
-            console.log("Mistral: Parsing response...");
             let json = JSON.parse(response);
             if (json.choices && json.choices.length > 0) {
                 return { content: json.choices[0].message.content };

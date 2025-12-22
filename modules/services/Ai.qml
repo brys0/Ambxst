@@ -230,7 +230,6 @@ Singleton {
         
         if (processCommand(text)) return;
 
-        console.log("Ai: sendMessage called with '" + text + "'");
         isLoading = true;
         lastError = "";
         
@@ -244,7 +243,6 @@ Singleton {
     }
     
     function makeRequest() {
-        console.log("Ai: makeRequest called");
         // Prepare Request
         let apiKey = getApiKey(currentModel);
         if (!apiKey && currentModel.requires_key) {
@@ -316,7 +314,6 @@ Singleton {
         property var payload: ({})
         
         onExited: exitCode => {
-            console.log("Ai: requestProcess (mkdir) exited with " + exitCode);
             if (exitCode === 0 && step === "mkdir") {
                 executeRequest(payload);
             } else {
@@ -335,7 +332,6 @@ Singleton {
         stderr: StdioCollector { id: writeBodyStderr }
         
         onExited: exitCode => {
-            console.log("Ai: writeBodyProcess exited with " + exitCode);
             if (exitCode === 0) {
                 runCurl(payload);
             } else {
@@ -355,14 +351,9 @@ Singleton {
         stderr: StdioCollector { id: curlStderr }
         
         onExited: exitCode => {
-            console.log("Ai: curlProcess exited with " + exitCode);
             root.isLoading = false;
             if (exitCode === 0) {
                 let responseText = curlStdout.text;
-                console.log("Ai: curl response length: " + responseText.length); 
-                console.log("Ai: Strategy object: " + root.currentStrategy);
-                console.log("Ai: Raw response: " + responseText);
-                
                 let reply = root.currentStrategy.parseResponse(responseText);
                 
                 let newChat = Array.from(root.currentChat);
