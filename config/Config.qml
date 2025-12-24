@@ -1990,7 +1990,7 @@ Singleton {
 
     // Hyprland configuration
     property QtObject hyprland: hyprlandLoader.adapter
-    property int hyprlandRounding: hyprland.syncRoundness ? Math.max(0, roundness - (hyprland.gapsOut - hyprlandBorderSize)) : Math.max(0, hyprland.rounding - hyprlandBorderSize)
+    property int hyprlandRounding: hyprland.syncRoundness ? roundness : hyprland.rounding
     property int hyprlandBorderSize: hyprland.syncBorderWidth ? (theme.srBg.border[1] || 0) : hyprland.borderSize
     property string hyprlandBorderColor: hyprland.syncBorderColor ? (theme.srBg.border[0] || "primary") : (hyprland.activeBorderColor.length > 0 ? hyprland.activeBorderColor[0] : "primary")
     property real hyprlandShadowOpacity: hyprland.syncShadowOpacity ? theme.shadowOpacity : hyprland.shadowOpacity
