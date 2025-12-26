@@ -1,6 +1,7 @@
 import QtQuick
 import qs.modules.components
 import qs.modules.theme
+import qs.modules.globals
 import Quickshell.Io
 
 ActionGrid {
@@ -64,7 +65,11 @@ ActionGrid {
 
     onActionTriggered: action => {
         console.log("Tools action triggered:", action.tooltip);
-        // Functionality pending
+        
+        if (action.tooltip === "Screenshot") {
+            GlobalStates.screenshotToolVisible = true
+        }
+        
         root.itemSelected();
     }
 }

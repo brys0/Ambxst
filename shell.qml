@@ -162,6 +162,36 @@ ShellRoot {
         id: settingsWindow
     }
 
+    // Screenshot Tool
+    Loader {
+        id: screenshotLoader
+        active: true
+        source: "modules/tools/ScreenshotTool.qml"
+        
+        Connections {
+            target: GlobalStates
+            function onScreenshotToolVisibleChanged() {
+                if (screenshotLoader.status === Loader.Ready) {
+                    if (GlobalStates.screenshotToolVisible) {
+                        screenshotLoader.item.open();
+                    } else {
+                        screenshotLoader.item.close();
+                    }
+                }
+            }
+        }
+        
+        Connections {
+            target: screenshotLoader.item
+            ignoreUnknownSignals: true
+            function onVisibleChanged() {
+                if (!screenshotLoader.item.visible && GlobalStates.screenshotToolVisible) {
+                    GlobalStates.screenshotToolVisible = false;
+                }
+            }
+        }
+    }
+
     // Initialize clipboard service at startup to ensure clipboard watching starts immediately
     Connections {
         target: ClipboardService
