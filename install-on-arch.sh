@@ -2,10 +2,19 @@
 INSTALL_DIR="$HOME/Documents/Ambxst"
 
 cd "$HOME/Documents/"
-echo 'Fetching Repo..'
+
+if [ -d "$INSTALL_DIR/.git" ]; then
+    echo "✔ Repo already exists, pulling latest"
+    cd "$INSTALL_DIR" || exit 1
+    git fetch origin
+    git pull --ff-only
+    git submodule update --init --recursive
+else
+    echo 'Repo not found, cloning instead.'
     git clone --recurse-submodules https://github.com/brys0/Ambxst.git
     cd "$INSTALL_DIR"
-echo '✔ Downloaded repo'
+    echo '✔ Downloaded repo'
+fi
 
 echo 'Installing deps for quickshell..'
     sudo pacman -Su gcc-libs glibc hicolor-icon-theme jemalloc libdrm libglvnd libpipewire libxcb mesa pam qt6-base qt6-declarative qt6-svg qt6-wayland cli11 cmake ninja
@@ -13,7 +22,7 @@ echo '✔ Installed.'
 
 echo 'Building quickshell..'
     cd "$INSTALL_DIR/quickshell"
-    cmake -GNinja -B build
+    cmake -GNinja -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DDistributor="Built for Ambxst"
     cmake --build build
 echo '✔ Built quickshell.'
 
