@@ -9,8 +9,13 @@ git clone --recurse-submodules https://github.com/brys0/Ambxst.git
 cd "$INSTALL_DIR"
 echo '✔ Downloaded repo'
 
+echo 'Installing Matugen@2.4.1'
+cd "$INSTALL_DIR/matugen-bin"
+makepkg -si
+echo '✔ Installed.'
+
 echo 'Installing deps for quickshell.. (Pacman)'
-sudo pacman -Su --needed --noconfirm gcc-libs glibc hicolor-icon-theme jemalloc libdrm libglvnd libpipewire libxcb mesa pam qt6-base qt6-declarative qt6-svg qt6-wayland cli11 cmake ninja ttf-roboto ttf-roboto-mono ttf-terminus-nerd ttf-dejavu ttf-liberation noto-fonts noto-fonts-cjk noto-fonts-emoji noto-fonts-extra ttf-nerd-fonts-symbols	brightnessctl ddcutil fontconfig grim imagemagick jq	matugen slurp sqlite upower wl-clip-persist wl-clipboard wlsunset wtype zbar ffmpeg x264 playerctl pipewire  wireplumber networkmanager blueman easyeffects fuzzel breeze-icons hicolor-icon-theme
+sudo pacman -Su --needed --noconfirm gcc-libs glibc hicolor-icon-theme jemalloc libdrm libglvnd libpipewire libxcb mesa pam qt6-base qt6-declarative qt6-shadertools qt6-svg qt6-wayland cli11 cmake ninja ttf-roboto ttf-roboto-mono ttf-terminus-nerd ttf-dejavu ttf-liberation noto-fonts noto-fonts-cjk noto-fonts-emoji noto-fonts-extra ttf-nerd-fonts-symbols	brightnessctl ddcutil fontconfig grim imagemagick jq slurp sqlite upower wl-clip-persist wl-clipboard wlsunset wtype zbar ffmpeg x264 playerctl pipewire wireplumber networkmanager blueman easyeffects fuzzel breeze-icons hicolor-icon-theme
 echo '✔ Installed.'
 
 echo 'Installing deps for quickshell.. (Paru)'

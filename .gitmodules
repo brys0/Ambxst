@@ -1,3 +1,6 @@
 [submodule "quickshell"]
 	path = quickshell
 	url = https://git.outfoxxed.me/quickshell/quickshell
+[submodule "matugen-bin"]
+	path = matugen-bin
+	url = https://aur.archlinux.org/matugen-bin.git
