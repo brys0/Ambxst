@@ -1,14 +1,20 @@
 #!/usr/bin/sh
 INSTALL_DIR="$HOME/Documents/Ambxst"
 
+echo "This script requires pacman and paru to install dependencies!"
+
 cd "$HOME/Documents/"
 echo 'Fetching Repo..'
 git clone --recurse-submodules https://github.com/brys0/Ambxst.git
 cd "$INSTALL_DIR"
 echo '✔ Downloaded repo'
 
-echo 'Installing deps for quickshell..'
-sudo pacman -Su --needed --noconfirm gcc-libs glibc hicolor-icon-theme jemalloc libdrm libglvnd libpipewire libxcb mesa pam qt6-base qt6-declarative qt6-svg qt6-wayland cli11 cmake ninja
+echo 'Installing deps for quickshell.. (Pacman)'
+sudo pacman -Su --needed --noconfirm gcc-libs glibc hicolor-icon-theme jemalloc libdrm libglvnd libpipewire libxcb mesa pam qt6-base qt6-declarative qt6-svg qt6-wayland cli11 cmake ninja ttf-roboto ttf-roboto-mono ttf-terminus-nerd ttf-dejavu ttf-liberation noto-fonts noto-fonts-cjk noto-fonts-emoji noto-fonts-extra ttf-nerd-fonts-symbols	brightnessctl ddcutil fontconfig grim imagemagick jq	matugen slurp sqlite upower wl-clip-persist wl-clipboard wlsunset wtype zbar ffmpeg x264 playerctl pipewire  wireplumber networkmanager blueman easyeffects fuzzel breeze-icons hicolor-icon-theme
+echo '✔ Installed.'
+
+echo 'Installing deps for quickshell.. (Paru)'
+paru -Su --needed --noconfirm ttf-barlow ttf-phosphor-icons litellm pwvucontrol
 echo '✔ Installed.'
 
 echo 'Building quickshell..'
