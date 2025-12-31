@@ -17,17 +17,17 @@ else
 fi
 
 echo 'Installing deps for quickshell..'
-    sudo pacman -Su gcc-libs glibc hicolor-icon-theme jemalloc libdrm libglvnd libpipewire libxcb mesa pam qt6-base qt6-declarative qt6-svg qt6-wayland cli11 cmake ninja
+sudo pacman -Su gcc-libs glibc hicolor-icon-theme jemalloc libdrm libglvnd libpipewire libxcb mesa pam qt6-base qt6-declarative qt6-svg qt6-wayland cli11 cmake ninja
 echo '✔ Installed.'
 
 echo 'Building quickshell..'
-    cd "$INSTALL_DIR/quickshell"
-    cmake -GNinja -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DDistributor="Built for Ambxst"
-    cmake --build build
+cd "$INSTALL_DIR/quickshell"
+cmake -GNinja -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DDistributor="Built for Ambxst"
+cmake --build build
 echo '✔ Built quickshell.'
 
 echo 'Installing quickshell..'
-   sudo cmake --install build
+sudo cmake --install build
 echo '✔ Installed quickshell.'
 
 # === Compile ambxst-auth if missing OR if source updated ===
